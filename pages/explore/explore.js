@@ -38,20 +38,15 @@ Page({
     const player = app.getPlayer()
     if (player && player.isDead()) {
       wx.removeStorageSync('dungeon_save')
-      app.globalData.player = new (require('../../utils/game-engine').Player)('冒险者')
-      this.refreshPlayer()
+      app.globalData.player = null
       this.setData({ dead: true, event: null, canDescend: false })
       wx.showModal({
         title: '你死在了地牢中...',
-        content: '冒险到此结束。是否重新开始？',
-        confirmText: '重新开始',
-        cancelText: '返回主页',
-        success: (res) => {
-          if (res.confirm) {
-            this.setData({ dead: false, roomsExplored: 0 })
-          } else {
-            wx.navigateBack()
-          }
+        content: '冒险到此结束，返回主菜单。',
+        confirmText: '返回菜单',
+        showCancel: false,
+        success: () => {
+          wx.reLaunch({ url: '/pages/index/index' })
         }
       })
     }

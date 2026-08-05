@@ -136,10 +136,9 @@ Page({
     const player = app.getPlayer()
     if (player && player.isDead()) {
       wx.removeStorageSync('dungeon_save')
-      app.globalData.player = new (require('../../utils/game-engine').Player)('冒险者')
-      app.saveGame()
-      this.refreshGame()
-      wx.showToast({ title: '冒险结束，已重置', icon: 'none' })
+      app.globalData.player = null
+      this.setData({ screen: 'menu', hasSavedGame: false })
+      wx.showToast({ title: '冒险结束，返回菜单', icon: 'none' })
     }
   },
 

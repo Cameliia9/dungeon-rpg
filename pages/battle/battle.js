@@ -108,15 +108,15 @@ Page({
     })
   },
 
-  // 战斗失败：清除存档，强制重新开始
+  // 战斗失败：清除存档，回到主菜单
   onDefeat() {
     const monster = this.battle.monster
     wx.removeStorageSync('dungeon_save')
-    app.globalData.player = new (require('../../utils/game-engine').Player)('冒险者')
+    app.globalData.player = null
 
     this.setData({
       result: 'defeat',
-      player: app.getPlayer(),
+      player: null,
       totalMaxHp: 100,
       playerHpPercent: 100,
       monsterHpPercent: 0,
@@ -145,8 +145,8 @@ Page({
     wx.navigateBack()
   },
 
-  // 重新开始（从失败页面）
+  // 重新开始（从失败页面 → 清栈回菜单）
   restartGame() {
-    wx.navigateBack()
+    wx.reLaunch({ url: '/pages/index/index' })
   }
 })
