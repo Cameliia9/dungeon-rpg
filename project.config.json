@@ -1,0 +1,22 @@
+{
+  "description": "地牢冒险 - 文字RPG",
+  "packOptions": { "ignore": [] },
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "preloadBackgroundData": false,
+    "minified": true,
+    "newFeature": true,
+    "autoAudits": false,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.3.4",
+  "appid": "你的AppID",
+  "projectname": "dungeon-rpg",
+  "condition": {}
+}

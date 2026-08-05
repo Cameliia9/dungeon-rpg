@@ -1,0 +1,13 @@
+# 微信小程序
+node_modules/
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志
+*.log
+npm-debug.log*

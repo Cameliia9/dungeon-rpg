@@ -1,0 +1,61 @@
+<!-- 商店页面 -->
+<view class="container">
+  <view class="card" style="text-align: center;">
+    <text class="title">🏪 冒险者商店</text>
+    <text class="subtitle">金币：{{player.gold}} 💰</text>
+  </view>
+
+  <!-- 商品列表 -->
+  <view class="card">
+    <text style="font-size: 16px; color: #e0c080; margin-bottom: 12px;">🗡️ 武器</text>
+    <view wx:for="{{weapons}}" wx:key="name"
+      class="flex-between"
+      style="margin-bottom: 8px; padding: 10px; background: #141428; border-radius: 8px; border: 1px solid #2a2a4a;">
+      <view>
+        <text style="font-weight: bold;">{{item.name}}</text>
+        <view style="font-size: 12px; color: #e74c3c;">攻击 +{{item.attack}}</view>
+        <view style="font-size: 12px; color: #666;">{{item.desc}}</view>
+      </view>
+      <button class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
+        data-item="{{item}}" bindtap="buyWeapon">
+        💰 {{item.price}}
+      </button>
+    </view>
+  </view>
+
+  <view class="card">
+    <text style="font-size: 16px; color: #e0c080; margin-bottom: 12px;">🛡️ 护甲</text>
+    <view wx:for="{{armors}}" wx:key="name"
+      class="flex-between"
+      style="margin-bottom: 8px; padding: 10px; background: #141428; border-radius: 8px; border: 1px solid #2a2a4a;">
+      <view>
+        <text style="font-weight: bold;">{{item.name}}</text>
+        <view style="font-size: 12px; color: #3498db;">防御 +{{item.defense}}</view>
+        <view style="font-size: 12px; color: #666;">{{item.desc}}</view>
+      </view>
+      <button class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
+        data-item="{{item}}" bindtap="buyArmor">
+        💰 {{item.price}}
+      </button>
+    </view>
+  </view>
+
+  <view class="card">
+    <text style="font-size: 16px; color: #e0c080; margin-bottom: 12px;">💍 饰品</text>
+    <view wx:for="{{accessories}}" wx:key="name"
+      class="flex-between"
+      style="margin-bottom: 8px; padding: 10px; background: #141428; border-radius: 8px; border: 1px solid #2a2a4a;">
+      <view>
+        <text style="font-weight: bold;">{{item.name}}</text>
+        <view style="font-size: 12px; color: #2ecc71;">生命上限 +{{item.hp}}</view>
+        <view style="font-size: 12px; color: #666;">{{item.desc}}</view>
+      </view>
+      <button class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
+        data-item="{{item}}" bindtap="buyAccessory">
+        💰 {{item.price}}
+      </button>
+    </view>
+  </view>
+
+  <button class="btn btn-secondary" bindtap="goBack">↩️ 返回</button>
+</view>

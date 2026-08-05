@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/explore/explore",
+    "pages/battle/battle",
+    "pages/inventory/inventory",
+    "pages/shop/shop"
+  ],
+  "window": {
+    "navigationBarTitleText": "地牢冒险",
+    "navigationBarBackgroundColor": "#1a1a2e",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0f0f1a"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

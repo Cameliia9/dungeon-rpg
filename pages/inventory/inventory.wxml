@@ -1,0 +1,78 @@
+<!-- 背包/装备页面 -->
+<view class="container">
+  <view class="card" style="text-align: center;">
+    <text class="title">🎒 背包</text>
+  </view>
+
+  <!-- 当前装备 -->
+  <view class="card">
+    <text style="font-size: 16px; color: #e0c080; margin-bottom: 12px;">当前装备</text>
+
+    <!-- 武器 -->
+    <view class="flex-between" style="margin-bottom: 10px; padding: 8px; background: #1a1a3e; border-radius: 8px;">
+      <view>
+        <text style="color: #a080ff;">🗡️ 武器</text>
+        <text wx:if="{{player.weapon}}" style="margin-left: 8px;">{{player.weapon.name}} (+{{player.weapon.attack}}攻)</text>
+        <text wx:else style="margin-left: 8px; color: #666;">空</text>
+      </view>
+      <button wx:if="{{player.weapon}}" class="btn btn-secondary" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
+        bindtap="unequipWeapon">卸下</button>
+    </view>
+
+    <!-- 护甲 -->
+    <view class="flex-between" style="margin-bottom: 10px; padding: 8px; background: #1a1a3e; border-radius: 8px;">
+      <view>
+        <text style="color: #a080ff;">🛡️ 护甲</text>
+        <text wx:if="{{player.armor}}" style="margin-left: 8px;">{{player.armor.name}} (+{{player.armor.defense}}防)</text>
+        <text wx:else style="margin-left: 8px; color: #666;">空</text>
+      </view>
+      <button wx:if="{{player.armor}}" class="btn btn-secondary" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
+        bindtap="unequipArmor">卸下</button>
+    </view>
+
+    <!-- 饰品 -->
+    <view class="flex-between" style="margin-bottom: 10px; padding: 8px; background: #1a1a3e; border-radius: 8px;">
+      <view>
+        <text style="color: #a080ff;">💍 饰品</text>
+        <text wx:if="{{player.accessory}}" style="margin-left: 8px;">{{player.accessory.name}} (+{{player.accessory.hp}}血)</text>
+        <text wx:else style="margin-left: 8px; color: #666;">空</text>
+      </view>
+      <button wx:if="{{player.accessory}}" class="btn btn-secondary" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
+        bindtap="unequipAccessory">卸下</button>
+    </view>
+  </view>
+
+  <!-- 背包物品 -->
+  <view class="card">
+    <text style="font-size: 16px; color: #e0c080; margin-bottom: 12px;">
+      背包物品（{{player.inventory.length}}件）
+    </text>
+
+    <view wx:if="{{player.inventory.length === 0}}" style="text-align: center; color: #666; padding: 20px;">
+      背包空空如也，去地牢冒险获取装备吧！
+    </view>
+
+    <view wx:for="{{player.inventory}}" wx:key="index"
+      class="flex-between"
+      style="margin-bottom: 8px; padding: 10px; background: #141428; border-radius: 8px; border: 1px solid #2a2a4a;">
+      <view>
+        <text wx:if="{{item.type === 'weapon'}}">🗡️ </text>
+        <text wx:elif="{{item.type === 'armor'}}">🛡️ </text>
+        <text wx:else>💍 </text>
+        <text style="font-weight: bold;">{{item.name}}</text>
+        <view style="font-size: 12px; color: #8a8a9a;">
+          <text wx:if="{{item.attack}}">攻击+{{item.attack}} </text>
+          <text wx:if="{{item.defense}}">防御+{{item.defense}} </text>
+          <text wx:if="{{item.hp}}">生命+{{item.hp}}</text>
+        </view>
+        <view style="font-size: 12px; color: #666;">{{item.desc}}</view>
+      </view>
+      <button class="btn btn-primary" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
+        data-index="{{index}}" bindtap="equipItem">
+        装备
+      </button>
+    </view>
+  </view>
+
+  <button class="btn btn-secondary" bindtap="goBack">↩️ 返回</button>
+</view>

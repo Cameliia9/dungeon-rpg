@@ -1,0 +1,72 @@
+<!-- 战斗页面 -->
+<view class="container">
+  <!-- 怪物信息 -->
+  <view class="card" style="text-align: center;">
+    <text style="font-size: 48px; display: block;">👹</text>
+    <text class="title">{{monster.name}}</text>
+    <text class="subtitle">Lv.{{monster.level}}</text>
+
+    <view class="stat-row">
+      <text class="stat-label">生命值</text>
+      <text class="stat-value">{{monster.hp}} / {{monster.maxHp}}</text>
+    </view>
+    <view class="hp-bar-wrap">
+      <view class="hp-bar-fill" style="width: {{monsterHpPercent}}%; background: linear-gradient(90deg, #8b0000, #ff4444);"></view>
+    </view>
+  </view>
+
+  <!-- 玩家状态 -->
+  <view class="card">
+    <view class="stat-row">
+      <text class="stat-label">❤️ {{player.name}}</text>
+      <text class="stat-value">{{player.hp}} / {{player.totalMaxHp}}</text>
+    </view>
+    <view class="hp-bar-wrap">
+      <view class="hp-bar-fill" style="width: {{playerHpPercent}}%"></view>
+    </view>
+  </view>
+
+  <!-- 战斗操作 -->
+  <view wx:if="{{result === 'fighting'}}" class="card">
+    <button class="btn btn-primary" bindtap="attack">
+      ⚔️ 攻击
+    </button>
+    <button class="btn btn-secondary" bindtap="defend">
+      🛡️ 防御（减少50%伤害，本回合）
+    </button>
+    <button class="btn btn-danger" bindtap="flee">
+      🏃 逃跑（30%成功率）
+    </button>
+  </view>
+
+  <!-- 战斗结果 -->
+  <view wx:if="{{result === 'victory'}}" class="card" style="text-align: center;">
+    <text style="font-size: 40px; display: block;">🎉</text>
+    <text class="title">胜利！</text>
+    <text class="subtitle" style="color: #f0c040;">获得 {{battleReward.gold}} 金币</text>
+    <text class="subtitle" style="color: #3498db;">获得 {{battleReward.exp}} 经验</text>
+    <block wx:if="{{battleReward.leveled}}">
+      <text class="subtitle" style="color: #e0c080;">🎊 升级到 Lv.{{player.level}}！</text>
+    </block>
+    <button class="btn btn-primary" bindtap="goBack">
+      ↩️ 返回探索
+    </button>
+  </view>
+
+  <view wx:if="{{result === 'defeat'}}" class="card" style="text-align: center;">
+    <text style="font-size: 40px; display: block;">💀</text>
+    <text class="title">你被打倒了...</text>
+    <text class="subtitle">失去了一半金币</text>
+    <button class="btn btn-danger" bindtap="goBack">
+      ↩️ 返回主页
+    </button>
+  </view>
+
+  <!-- 战斗日志 -->
+  <view wx:if="{{logs.length > 0}}" class="log">
+    <text style="font-size: 14px; color: #e0c080; margin-bottom: 8px;">战斗日志：</text>
+    <view wx:for="{{logs}}" wx:key="index" class="log-item log-{{item.type}}">
+      {{item.msg}}
+    </view>
+  </view>
+</view>
