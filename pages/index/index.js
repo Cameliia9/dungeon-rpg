@@ -2,6 +2,13 @@ const app = getApp()
 
 Page({
   data: {
+    // 界面状态: menu | difficulty | game
+    screen: 'menu',
+    // 难度: easy | hard | nightmare
+    difficulty: 'easy',
+    hasSavedGame: false,
+
+    // 游戏界面数据
     player: null,
     hpPercent: 100,
     expPercent: 0,
@@ -12,11 +19,106 @@ Page({
   },
 
   onShow() {
-    this.refresh()
-    this.checkDead()
+    // 检查是否有旧存档
+    try {
+      const save = wx.getStorageSync('dungeon_save')
+      this.setData({ hasSavedGame: !!save })
+    } catch (e) {
+      this.setData({ hasSavedGame: false })
+    }
+
+    // 如果在游戏界面，刷新状态
+    if (this.data.screen === 'game') {
+      this.refreshGame()
+      this.checkDead()
+    }
+    // 如果在菜单，但已有 player 且继续过游戏，自动显示菜单即可
   },
 
-  refresh() {
+  // ==================== 菜单 ====================
+
+  // 新游戏 → 弹出难度选择
+  newGame() {
+    this.setData({ screen: 'difficulty' })
+  },
+
+  // 继续游戏
+  continueGame() {
+    if (!this.data.hasSavedGame) return
+    const save = wx.getStorageSync('dungeon_save')
+    const { loadPlayer } = require('../../utils/game-engine')
+    app.globalData.player = loadPlayer(save)
+    this.setData({ screen: 'game' })
+    this.refreshGame()
+  },
+
+  // 设置（占位）
+  openSettings() {
+    wx.showToast({ title: '设置功能开发中', icon: 'none' })
+  },
+
+  // 退出（小程序不能真退出，返回提示）
+  exitGame() {
+    wx.showModal({
+      title: '退出',
+      content: '确定要退出吗？',
+      confirmText: '退出',
+      success: (res) => {
+        if (res.confirm) {
+          // 微信小程序无法真退出，回到菜单
+          this.setData({ screen: 'menu' })
+        }
+      }
+    })
+  },
+
+  // ==================== 难度选择 ====================
+
+  selectDifficulty(e) {
+    const difficulty = e.currentTarget.dataset.level
+    const { Player } = require('../../utils/game-engine')
+
+    // 删除旧存档
+    wx.removeStorageSync('dungeon_save')
+
+    // 根据难度创建角色
+    const player = new Player('冒险者')
+
+    switch (difficulty) {
+      case 'easy':
+        // 当前设定就是简单难度
+        break
+      case 'hard':
+        // 后续实现
+        player.maxHp = 80
+        player.hp = 80
+        player.baseAttack = 9
+        player.gold = 30
+        break
+      case 'nightmare':
+        // 后续实现
+        player.maxHp = 60
+        player.hp = 60
+        player.baseAttack = 7
+        player.gold = 15
+        break
+    }
+
+    app.globalData.player = player
+    app.saveGame()
+
+    this.setData({ screen: 'game', difficulty })
+    this.refreshGame()
+  },
+
+  // 返回菜单
+  backToMenu() {
+    this.setData({ screen: 'menu' })
+  },
+
+  // ==================== 游戏主页 ====================
+
+  refreshGame() {
     const player = app.getPlayer()
     if (!player) return
     this.setData({
@@ -36,17 +138,14 @@ Page({
       wx.removeStorageSync('dungeon_save')
       app.globalData.player = new (require('../../utils/game-engine').Player)('冒险者')
       app.saveGame()
-      this.refresh()
+      this.refreshGame()
       wx.showToast({ title: '冒险结束，已重置', icon: 'none' })
     }
   },
 
   goExplore() {
     const player = app.getPlayer()
-    if (player.isDead()) {
-      this.checkDead()
-      return
-    }
+    if (player.isDead()) { this.checkDead(); return }
     wx.navigateTo({ url: '/pages/explore/explore' })
   },
 
@@ -69,7 +168,7 @@ Page({
           wx.removeStorageSync('dungeon_save')
           app.globalData.player = new (require('../../utils/game-engine').Player)('冒险者')
           app.saveGame()
-          this.refresh()
+          this.refreshGame()
         }
       }
     })

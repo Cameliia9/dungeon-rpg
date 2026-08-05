@@ -1,69 +1,132 @@
-<!-- 主页 -->
+<!--
+  地牢冒险 - 主页
+  screen: menu | difficulty | game
+-->
 <view class="container">
-  <!-- 标题 -->
-  <view class="card" style="text-align: center;">
-    <text class="title">⚔️ 地牢冒险 ⚔️</text>
-    <text class="subtitle">第 {{player.floor}} 层 · Lv.{{player.level}}</text>
+
+  <!-- ==================== 1. 主菜单 ==================== -->
+  <view wx:if="{{screen === 'menu'}}" style="display: flex; flex-direction: column; align-items: center; padding-top: 80px;">
+
+    <text style="font-size: 48px; display: block; margin-bottom: 8px;">⚔️</text>
+    <text style="font-size: 28px; font-weight: bold; color: #e0c080; margin-bottom: 40px;">地牢冒险</text>
+
+    <button class="btn btn-primary" style="width: 220px; margin-bottom: 16px;" bindtap="newGame">
+      🆕 新游戏
+    </button>
+
+    <button class="btn btn-primary" style="width: 220px; margin-bottom: 16px;"
+      bindtap="continueGame"
+      disabled="{{!hasSavedGame}}">
+      ▶️ 继续游戏
+      <text wx:if="{{!hasSavedGame}}" style="font-size: 11px; color: #666; display: block;">（无存档）</text>
+    </button>
+
+    <button class="btn btn-secondary" style="width: 220px; margin-bottom: 16px;" bindtap="openSettings">
+      ⚙️ 设置
+    </button>
+
+    <button class="btn btn-secondary" style="width: 220px;" bindtap="exitGame">
+      🚪 退出
+    </button>
+
   </view>
 
-  <!-- 角色状态 -->
-  <view class="card">
-    <view class="stat-row">
-      <text class="stat-label">❤️ 生命值</text>
-      <text class="stat-value">{{player.hp}} / {{totalMaxHp}}</text>
-    </view>
-    <view class="hp-bar-wrap">
-      <view class="hp-bar-fill" style="width: {{hpPercent}}%"></view>
-    </view>
+  <!-- ==================== 2. 难度选择 ==================== -->
+  <view wx:if="{{screen === 'difficulty'}}" style="display: flex; flex-direction: column; align-items: center; padding-top: 60px;">
 
-    <view class="stat-row">
-      <text class="stat-label">✨ 经验值</text>
-      <text class="stat-value">{{player.exp}} / {{expToLevel}}</text>
-    </view>
-    <view class="exp-bar-wrap">
-      <view class="exp-bar-fill" style="width: {{expPercent}}%"></view>
-    </view>
+    <text style="font-size: 32px; color: #e0c080; margin-bottom: 12px;">选择难度</text>
+    <text style="font-size: 14px; color: #8a8a9a; margin-bottom: 30px;">难度越高，资源越少，敌人越强</text>
 
-    <view class="stat-row">
-      <text class="stat-label">⚔️ 攻击力</text>
-      <text class="stat-value">{{totalAttack}}</text>
-    </view>
-    <view class="stat-row">
-      <text class="stat-label">🛡️ 防御力</text>
-      <text class="stat-value">{{totalDefense}}</text>
-    </view>
-    <view class="stat-row">
-      <text class="stat-label">💰 金币</text>
-      <text class="stat-value">{{player.gold}}</text>
-    </view>
-    <view class="stat-row">
-      <text class="stat-label">💀 击杀数</text>
-      <text class="stat-value">{{player.kills}}</text>
-    </view>
+    <button class="btn btn-primary" style="width: 220px; margin-bottom: 12px;"
+      data-level="easy" bindtap="selectDifficulty">
+      🟢 简单
+      <text style="font-size: 11px; color: #a0ffa0; display: block;">HP 100 · ATK 12 · GOLD 50</text>
+    </button>
 
-    <!-- 装备一览 -->
-    <view style="margin-top: 12px; font-size: 13px; color: #a080ff;">
-      <view>🗡️ 武器：{{player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'}}</view>
-      <view>🛡️ 护甲：{{player.armor ? player.armor.name + ' (+' + player.armor.defense + '防)' : '无'}}</view>
-      <view>💍 饰品：{{player.accessory ? player.accessory.name + ' (+' + player.accessory.hp + '血)' : '无'}}</view>
-    </view>
+    <button class="btn btn-secondary" style="width: 220px; margin-bottom: 12px;"
+      data-level="hard" bindtap="selectDifficulty">
+      🟡 困难
+      <text style="font-size: 11px; color: #ffe080; display: block;">HP 80 · ATK 9 · GOLD 30</text>
+    </button>
+
+    <button class="btn btn-danger" style="width: 220px; margin-bottom: 24px;"
+      data-level="nightmare" bindtap="selectDifficulty">
+      🔴 噩梦
+      <text style="font-size: 11px; color: #ff8080; display: block;">HP 60 · ATK 7 · GOLD 15</text>
+    </button>
+
+    <button class="btn btn-secondary" style="width: 220px;" bindtap="backToMenu">
+      ↩️ 返回
+    </button>
+
   </view>
 
-  <!-- 操作按钮 -->
-  <button class="btn btn-primary" bindtap="goExplore">
-    🏰 探索地牢
-  </button>
-  <button class="btn btn-secondary" bindtap="goInventory">
-    🎒 背包 ({{player.inventory.length}}件)
-  </button>
-  <button class="btn btn-gold" bindtap="goShop">
-    🏪 商店
-  </button>
+  <!-- ==================== 3. 游戏主页 ==================== -->
+  <view wx:if="{{screen === 'game'}}">
 
-  <view wx:if="{{player.isDead()}}" class="card" style="text-align: center;">
-    <text style="color: #e74c3c; font-size: 18px;">💀 你倒下了...</text>
-    <button class="btn btn-danger" bindtap="restart" style="margin-top: 12px;">
-      🔄 重新开始
+    <!-- 标题 -->
+    <view class="card" style="text-align: center;">
+      <text class="title">⚔️ 地牢冒险 ⚔️</text>
+      <text class="subtitle">第 {{player.floor}} 层 · Lv.{{player.level}}</text>
+    </view>
+
+    <!-- 角色状态 -->
+    <view class="card">
+      <view class="stat-row">
+        <text class="stat-label">❤️ 生命值</text>
+        <text class="stat-value">{{player.hp}} / {{totalMaxHp}}</text>
+      </view>
+      <view class="hp-bar-wrap">
+        <view class="hp-bar-fill" style="width: {{hpPercent}}%"></view>
+      </view>
+
+      <view class="stat-row">
+        <text class="stat-label">✨ 经验值</text>
+        <text class="stat-value">{{player.exp}} / {{expToLevel}}</text>
+      </view>
+      <view class="exp-bar-wrap">
+        <view class="exp-bar-fill" style="width: {{expPercent}}%"></view>
+      </view>
+
+      <view class="stat-row">
+        <text class="stat-label">⚔️ 攻击力</text>
+        <text class="stat-value">{{totalAttack}}</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">🛡️ 防御力</text>
+        <text class="stat-value">{{totalDefense}}</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">💰 金币</text>
+        <text class="stat-value">{{player.gold}}</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">💀 击杀数</text>
+        <text class="stat-value">{{player.kills}}</text>
+      </view>
+
+      <!-- 装备一览 -->
+      <view style="margin-top: 12px; font-size: 13px; color: #a080ff;">
+        <view>🗡️ 武器：{{player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'}}</view>
+        <view>🛡️ 护甲：{{player.armor ? player.armor.name + ' (+' + player.armor.defense + '防)' : '无'}}</view>
+        <view>💍 饰品：{{player.accessory ? player.accessory.name + ' (+' + player.accessory.hp + '血)' : '无'}}</view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <button class="btn btn-primary" bindtap="goExplore">
+      🏰 探索地牢
+    </button>
+    <button class="btn btn-secondary" bindtap="goInventory">
+      🎒 背包 ({{player.inventory.length}}件)
+    </button>
+    <button class="btn btn-gold" bindtap="goShop">
+      🏪 商店
+    </button>
+
+    <button class="btn btn-secondary" bindtap="backToMenu" style="margin-top: 12px;">
+      ↩️ 返回菜单
     </button>
   </view>
+
 </view>
