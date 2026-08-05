@@ -4,7 +4,11 @@ Page({
   data: {
     player: null,
     hpPercent: 100,
-    expPercent: 0
+    expPercent: 0,
+    totalAttack: 0,
+    totalDefense: 0,
+    totalMaxHp: 0,
+    expToLevel: 0
   },
 
   onShow() {
@@ -14,14 +18,18 @@ Page({
 
   refresh() {
     const player = app.getPlayer()
+    if (!player) return
     this.setData({
       player,
+      totalAttack: player.totalAttack,
+      totalDefense: player.totalDefense,
+      totalMaxHp: player.totalMaxHp,
+      expToLevel: player.expToLevel(),
       hpPercent: Math.max(0, Math.floor((player.hp / player.totalMaxHp) * 100)),
       expPercent: Math.floor((player.exp / player.expToLevel()) * 100)
     })
   },
 
-  // 检查死亡：血量为0时自动重置
   checkDead() {
     const player = app.getPlayer()
     if (player && player.isDead()) {

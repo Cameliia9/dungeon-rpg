@@ -19,7 +19,7 @@
   <view class="card">
     <view class="stat-row">
       <text class="stat-label">❤️ {{player.name}}</text>
-      <text class="stat-value">{{player.hp}} / {{player.totalMaxHp}}</text>
+      <text class="stat-value">{{player.hp}} / {{totalMaxHp}}</text>
     </view>
     <view class="hp-bar-wrap">
       <view class="hp-bar-fill" style="width: {{playerHpPercent}}%"></view>

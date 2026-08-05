@@ -10,11 +10,11 @@
   <view class="card">
     <view class="stat-row">
       <text class="stat-label">❤️</text>
-      <text class="stat-value">{{player.hp}} / {{player.totalMaxHp}}</text>
+      <text class="stat-value">{{player.hp}} / {{totalMaxHp}}</text>
     </view>
     <view class="stat-row">
       <text class="stat-label">⚔️</text>
-      <text class="stat-value">{{player.totalAttack}}攻  {{player.totalDefense}}防</text>
+      <text class="stat-value">{{totalAttack}}攻  {{totalDefense}}防</text>
     </view>
   </view>
 

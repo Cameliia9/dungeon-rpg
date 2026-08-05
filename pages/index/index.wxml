@@ -10,7 +10,7 @@
   <view class="card">
     <view class="stat-row">
       <text class="stat-label">❤️ 生命值</text>
-      <text class="stat-value">{{player.hp}} / {{player.totalMaxHp}}</text>
+      <text class="stat-value">{{player.hp}} / {{totalMaxHp}}</text>
     </view>
     <view class="hp-bar-wrap">
       <view class="hp-bar-fill" style="width: {{hpPercent}}%"></view>
@@ -18,7 +18,7 @@
 
     <view class="stat-row">
       <text class="stat-label">✨ 经验值</text>
-      <text class="stat-value">{{player.exp}} / {{player.expToLevel()}}</text>
+      <text class="stat-value">{{player.exp}} / {{expToLevel}}</text>
     </view>
     <view class="exp-bar-wrap">
       <view class="exp-bar-fill" style="width: {{expPercent}}%"></view>
@@ -26,11 +26,11 @@
 
     <view class="stat-row">
       <text class="stat-label">⚔️ 攻击力</text>
-      <text class="stat-value">{{player.totalAttack}}</text>
+      <text class="stat-value">{{totalAttack}}</text>
     </view>
     <view class="stat-row">
       <text class="stat-label">🛡️ 防御力</text>
-      <text class="stat-value">{{player.totalDefense}}</text>
+      <text class="stat-value">{{totalDefense}}</text>
     </view>
     <view class="stat-row">
       <text class="stat-label">💰 金币</text>
@@ -50,7 +50,7 @@
   </view>
 
   <!-- 操作按钮 -->
-  <button class="btn btn-primary" bindtap="goExplore" disabled="{{player.isDead()}}">
+  <button class="btn btn-primary" bindtap="goExplore">
     🏰 探索地牢
   </button>
   <button class="btn btn-secondary" bindtap="goInventory">

@@ -27,7 +27,8 @@ Page({
       player,
       monster,
       monsterHpPercent: 100,
-      playerHpPercent: Math.floor((player.hp / player.totalMaxHp) * 100)
+      playerHpPercent: Math.floor((player.hp / player.totalMaxHp) * 100),
+      totalMaxHp: player.totalMaxHp
     })
   },
 
@@ -100,6 +101,7 @@ Page({
       result: 'victory',
       battleReward: { gold: monster.gold, exp: monster.exp, leveled },
       player,
+      totalMaxHp: player.totalMaxHp,
       monsterHpPercent: 0,
       playerHpPercent: Math.floor((player.hp / player.totalMaxHp) * 100),
       logs: [...this.battle.logs].reverse()
@@ -115,6 +117,7 @@ Page({
     this.setData({
       result: 'defeat',
       player: app.getPlayer(),
+      totalMaxHp: 100,
       playerHpPercent: 100,
       monsterHpPercent: 0,
       logs: [...this.battle.logs, {
@@ -131,6 +134,7 @@ Page({
     this.setData({
       monster,
       player,
+      totalMaxHp: player.totalMaxHp,
       monsterHpPercent: Math.max(0, Math.floor((monster.hp / monster.maxHp) * 100)),
       playerHpPercent: Math.max(0, Math.floor((player.hp / player.totalMaxHp) * 100))
     })
