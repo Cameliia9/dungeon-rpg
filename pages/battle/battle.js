@@ -8,7 +8,7 @@ Page({
     monsterHpPercent: 100,
     playerHpPercent: 100,
     logs: [],
-    result: 'fighting', // fighting, victory, defeat, fled
+    result: 'fighting',
     battleReward: null
   },
 
@@ -31,11 +31,9 @@ Page({
     })
   },
 
-  // 攻击
   attack() {
     if (this.data.result !== 'fighting') return
 
-    // 玩家攻击
     const r1 = this.battle.playerAttack()
     this.refreshUI()
 
@@ -44,7 +42,6 @@ Page({
       return
     }
 
-    // 怪物反击
     const r2 = this.battle.monsterAttack()
     this.refreshUI()
 
@@ -56,14 +53,12 @@ Page({
     this.setData({ logs: [...this.battle.logs].reverse() })
   },
 
-  // 防御
   defend() {
     if (this.data.result !== 'fighting') return
 
     const player = this.battle.player
     const monster = this.battle.monster
 
-    // 防御姿态：伤害减半
     const rawDmg = monster.dealDamage(player.totalDefense * 2)
     const dmg = Math.floor(rawDmg / 2)
     player.hp = Math.max(0, player.hp - dmg)
@@ -77,7 +72,6 @@ Page({
     }
   },
 
-  // 逃跑
   flee() {
     if (this.data.result !== 'fighting') return
 
@@ -93,22 +87,18 @@ Page({
     }
   },
 
-  // 胜利 — 注意：Battle.playerAttack() 已经处理了金币和经验
   onVictory() {
     const player = this.battle.player
     const monster = this.battle.monster
-    const leveled = player.level > (this.data.player.level || player.level)
 
-    // 如果 playerAttack 没处理（比如旧逻辑），这里兜底
-    // 但当前 playerAttack 已处理，只检查是否升级
+    player.kills++
+    player.gold += monster.gold
+    const leveled = player.addExp(monster.exp)
+
     app.saveGame()
     this.setData({
       result: 'victory',
-      battleReward: {
-        gold: monster.gold,
-        exp: monster.exp,
-        leveled
-      },
+      battleReward: { gold: monster.gold, exp: monster.exp, leveled },
       player,
       monsterHpPercent: 0,
       playerHpPercent: Math.floor((player.hp / player.totalMaxHp) * 100),
@@ -116,21 +106,25 @@ Page({
     })
   },
 
-  // 失败
+  // 战斗失败：清除存档，强制重新开始
   onDefeat() {
-    const player = this.battle.player
-    player.gold = Math.floor(player.gold / 2)
-    player.hp = 1
-    app.saveGame()
+    const monster = this.battle.monster
+    wx.removeStorageSync('dungeon_save')
+    app.globalData.player = new (require('../../utils/game-engine').Player)('冒险者')
+
     this.setData({
       result: 'defeat',
-      player,
-      playerHpPercent: 1,
-      logs: [...this.battle.logs].reverse()
+      player: app.getPlayer(),
+      playerHpPercent: 100,
+      monsterHpPercent: 0,
+      logs: [...this.battle.logs, {
+        msg: `${monster.name} 击败了你... 冒险到此结束。`,
+        type: 'info',
+        turn: this.battle.turn
+      }].reverse()
     })
   },
 
-  // 统一刷新 UI 数据 — 始终从 this.battle 读取最新值
   refreshUI() {
     const monster = this.battle.monster
     const player = this.battle.player
@@ -142,7 +136,13 @@ Page({
     })
   },
 
+  // 返回主页
   goBack() {
+    wx.navigateBack()
+  },
+
+  // 重新开始（从失败页面）
+  restartGame() {
     wx.navigateBack()
   }
 })
