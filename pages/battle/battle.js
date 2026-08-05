@@ -37,7 +37,7 @@ Page({
 
     // 玩家攻击
     const r1 = this.battle.playerAttack()
-    this.updateBars()
+    this.refreshUI()
 
     if (r1 === 'victory') {
       this.onVictory()
@@ -46,7 +46,7 @@ Page({
 
     // 怪物反击
     const r2 = this.battle.monsterAttack()
-    this.updateBars()
+    this.refreshUI()
 
     if (r2 === 'defeat') {
       this.onDefeat()
@@ -60,74 +60,85 @@ Page({
   defend() {
     if (this.data.result !== 'fighting') return
 
-    const player = app.getPlayer()
-    // 防御姿态：受到伤害减半
-    const dmg = Math.floor(player.takeDamage(
-      this.battle.monster.dealDamage(player.totalDefense * 2)
-    ) * 0.5)
+    const player = this.battle.player
+    const monster = this.battle.monster
 
-    this.battle.log(`你进入防御姿态，${this.battle.monster.name} 造成 ${dmg} 点伤害`, 'info')
-    this.updateBars()
+    // 防御姿态：伤害减半
+    const rawDmg = monster.dealDamage(player.totalDefense * 2)
+    const dmg = Math.floor(rawDmg / 2)
+    player.hp = Math.max(0, player.hp - dmg)
+
+    this.battle.log(`你进入防御姿态，${monster.name} 造成 ${dmg} 点伤害`, 'info')
+    this.refreshUI()
     this.setData({ logs: [...this.battle.logs].reverse() })
 
-    if (this.data.player.isDead()) {
+    if (player.isDead()) {
       this.onDefeat()
     }
   },
 
   // 逃跑
   flee() {
+    if (this.data.result !== 'fighting') return
+
     if (Math.random() < 0.3) {
       this.battle.log('你成功逃脱了！', 'info')
       this.setData({ result: 'fled', logs: [...this.battle.logs].reverse() })
     } else {
       this.battle.log('逃跑失败！', 'info')
       const r2 = this.battle.monsterAttack()
-      this.updateBars()
+      this.refreshUI()
       this.setData({ logs: [...this.battle.logs].reverse() })
       if (r2 === 'defeat') this.onDefeat()
     }
   },
 
-  // 胜利
+  // 胜利 — 注意：Battle.playerAttack() 已经处理了金币和经验
   onVictory() {
-    const player = app.getPlayer()
-    const monster = this.data.monster
+    const player = this.battle.player
+    const monster = this.battle.monster
+    const leveled = player.level > (this.data.player.level || player.level)
 
-    const reward = {
-      gold: monster.gold,
-      exp: monster.exp,
-      leveled: player.addExp(monster.exp)
-    }
-
+    // 如果 playerAttack 没处理（比如旧逻辑），这里兜底
+    // 但当前 playerAttack 已处理，只检查是否升级
     app.saveGame()
     this.setData({
       result: 'victory',
-      battleReward: reward,
+      battleReward: {
+        gold: monster.gold,
+        exp: monster.exp,
+        leveled
+      },
       player,
       monsterHpPercent: 0,
+      playerHpPercent: Math.floor((player.hp / player.totalMaxHp) * 100),
       logs: [...this.battle.logs].reverse()
     })
   },
 
   // 失败
   onDefeat() {
-    const player = app.getPlayer()
-    player.gold = Math.floor(player.gold / 2) // 失去一半金币
-    player.hp = 1 // 保留1点血
+    const player = this.battle.player
+    player.gold = Math.floor(player.gold / 2)
+    player.hp = 1
     app.saveGame()
     this.setData({
       result: 'defeat',
       player,
-      playerHpPercent: Math.floor((player.hp / player.totalMaxHp) * 100),
+      playerHpPercent: 1,
       logs: [...this.battle.logs].reverse()
     })
   },
 
-  updateBars() {
+  // 统一刷新 UI 数据 — 始终从 this.battle 读取最新值
+  refreshUI() {
+    const monster = this.battle.monster
+    const player = this.battle.player
     this.setData({
-      monsterHpPercent: Math.max(0, Math.floor((this.data.monster.hp / this.data.monster.maxHp) * 100)),
-      playerHpPercent: Math.max(0, Math.floor((this.data.player.hp / this.data.player.totalMaxHp) * 100))
+      monster,
+      player,
+      monsterHpPercent: Math.max(0, Math.floor((monster.hp / monster.maxHp) * 100)),
+      playerHpPercent: Math.max(0, Math.floor((player.hp / player.totalMaxHp) * 100))
     })
   },
 

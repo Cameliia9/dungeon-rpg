@@ -148,7 +148,7 @@ class Monster {
     return this.hp <= 0
   }
 
-  // 怪物攻击
+  // 怪物攻击（返回原始伤害值，不直接修改 player）
   dealDamage(targetDefense) {
     const raw = this.attack * (0.8 + Math.random() * 0.4)
     return Math.max(1, Math.floor(raw - targetDefense * 0.5))
@@ -164,7 +164,7 @@ class Battle {
     this.turn = 0
   }
 
-  // 玩家攻击
+  // 玩家攻击 — 只负责伤害计算和日志，奖励由页面层统一处理
   playerAttack() {
     const dmg = this.monster.takeDamage(this.player.totalAttack)
     this.log(`你对 ${this.monster.name} 造成了 ${dmg} 点伤害`, 'damage')
@@ -172,10 +172,6 @@ class Battle {
 
     if (this.monster.isDead()) {
       this.log(`你击败了 ${this.monster.name}！`, 'loot')
-      this.player.kills++
-      this.player.gold += this.monster.gold
-      this.player.addExp(this.monster.exp)
-      this.log(`获得 ${this.monster.gold} 金币，${this.monster.exp} 经验`, 'loot')
       return 'victory'
     }
     return 'continue'
