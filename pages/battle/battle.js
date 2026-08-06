@@ -1,5 +1,5 @@
 const app = getApp()
-const { Battle } = require('../../utils/game-engine')
+const { Battle, Monster } = require('../../utils/game-engine')
 
 Page({
   data: {
@@ -14,14 +14,16 @@ Page({
 
   onLoad() {
     const player = app.getPlayer()
-    const monster = app.globalData.currentMonster
+    const data = app.globalData.currentMonsterData
 
-    if (!monster) {
+    if (!data) {
       wx.showToast({ title: '怪物数据丢失', icon: 'error' })
       setTimeout(() => wx.navigateBack(), 1000)
       return
     }
 
+    // ★ 用数据副本重建 Monster 实例，不会污染 explore 页
+    const monster = new Monster(data)
     this.battle = new Battle(player, monster)
     this.setData({
       player,
@@ -78,8 +80,7 @@ Page({
 
     if (Math.random() < 0.3) {
       this.battle.log('你成功逃脱了！', 'info')
-      app.globalData.currentMonster = null
-      app.globalData.battleWon = false
+      app.globalData.currentMonsterData = null
       this.setData({ result: 'fled', logs: [...this.battle.logs].reverse() })
     } else {
       this.battle.log('逃跑失败！', 'info')
@@ -98,11 +99,9 @@ Page({
     player.gold += monster.gold
     const leveled = player.addExp(monster.exp)
 
-    // 清除怪物引用，防止 explore 页残留
-    app.globalData.currentMonster = null
-    app.globalData.battleWon = true
-
+    app.globalData.currentMonsterData = null
     app.saveGame()
+
     this.setData({
       result: 'victory',
       battleReward: { gold: monster.gold, exp: monster.exp, leveled },
@@ -119,6 +118,7 @@ Page({
     const monster = this.battle.monster
     wx.removeStorageSync('dungeon_save')
     app.globalData.player = null
+    app.globalData.currentMonsterData = null
 
     this.setData({
       result: 'defeat',
@@ -146,24 +146,28 @@ Page({
     })
   },
 
-  // 返回探索页 — 直接清除 explore 页的怪物事件
+  // ★ 通过 EventChannel 通知 explore 页清除怪物事件
   goBack() {
-    const pages = getCurrentPages()
-    const explorePage = pages[pages.length - 2]
-    if (explorePage) {
-      explorePage.setData({ event: null })
+    try {
+      this.getOpenerEventChannel().emit('battleResolved')
+    } catch (e) {
+      console.warn('EventChannel emit failed:', e)
     }
-    app.globalData.currentMonster = null
+    app.globalData.currentMonsterData = null
     wx.navigateBack()
   },
 
-  // 安全兜底：系统手势返回/物理返回键
+  // ★ 系统手势返回/物理返回键也发送通知
   onUnload() {
-    app.globalData.currentMonster = null
+    try {
+      this.getOpenerEventChannel().emit('battleResolved')
+    } catch (e) {}
+    app.globalData.currentMonsterData = null
   },
 
   // 重新开始（从失败页面 → 清栈回菜单）
   restartGame() {
+    app.globalData.currentMonsterData = null
     wx.reLaunch({ url: '/pages/index/index' })
   }
 })

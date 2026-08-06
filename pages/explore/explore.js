@@ -20,8 +20,8 @@ Page({
 
   onShow() {
     this.refreshPlayer()
-    // 兜底：战斗页可能已清除 currentMonster，若 event 仍是怪物则同步清掉
-    if (this.data.event && this.data.event.type === 'monster' && !app.globalData.currentMonster) {
+    // 兜底：若 EventChannel 未触发但战斗页已清除 currentMonsterData
+    if (this.data.event && this.data.event.type === 'monster' && !app.globalData.currentMonsterData) {
       this.setData({ event: null })
     }
     this.checkDead()
@@ -92,8 +92,31 @@ Page({
 
   goBattle() {
     if (this.data.dead) return
-    app.globalData.currentMonster = this.data.event.monster
-    wx.navigateTo({ url: '/pages/battle/battle' })
+
+    // ★ 传数据副本，不传 Monster 实例，防止战斗修改 explore 页数据
+    const m = this.data.event.monster
+    app.globalData.currentMonsterData = {
+      name: m.name,
+      hp: m.maxHp,
+      attack: m.attack,
+      defense: m.defense,
+      exp: m.exp,
+      gold: m.gold,
+      desc: m.desc,
+      level: m.level
+    }
+
+    wx.navigateTo({
+      url: '/pages/battle/battle',
+      events: {
+        // ★ 战斗页通过 EventChannel 通知本页战斗已结束
+        battleResolved: () => {
+          if (this.data.event && this.data.event.type === 'monster') {
+            this.setData({ event: null })
+          }
+        }
+      }
+    })
   },
 
   runAway() {
