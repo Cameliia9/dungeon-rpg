@@ -146,9 +146,20 @@ Page({
     })
   },
 
-  // 返回主页
+  // 返回探索页 — 直接清除 explore 页的怪物事件
   goBack() {
+    const pages = getCurrentPages()
+    const explorePage = pages[pages.length - 2]
+    if (explorePage) {
+      explorePage.setData({ event: null })
+    }
+    app.globalData.currentMonster = null
     wx.navigateBack()
+  },
+
+  // 安全兜底：系统手势返回/物理返回键
+  onUnload() {
+    app.globalData.currentMonster = null
   },
 
   // 重新开始（从失败页面 → 清栈回菜单）

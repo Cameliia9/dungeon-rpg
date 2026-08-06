@@ -53,6 +53,15 @@
     </button>
   </view>
 
+  <view wx:if="{{result === 'fled'}}" class="card" style="text-align: center;">
+    <text style="font-size: 40px; display: block;">🏃</text>
+    <text class="title">逃脱成功！</text>
+    <text class="subtitle">暂时远离了危险</text>
+    <button class="btn btn-primary" bindtap="goBack">
+      ↩️ 返回探索
+    </button>
+  </view>
+
   <view wx:if="{{result === 'defeat'}}" class="card" style="text-align: center;">
     <text style="font-size: 40px; display: block;">💀</text>
     <text class="title">你被打倒了...</text>
