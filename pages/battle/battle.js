@@ -78,6 +78,8 @@ Page({
 
     if (Math.random() < 0.3) {
       this.battle.log('你成功逃脱了！', 'info')
+      app.globalData.currentMonster = null
+      app.globalData.battleWon = false
       this.setData({ result: 'fled', logs: [...this.battle.logs].reverse() })
     } else {
       this.battle.log('逃跑失败！', 'info')
@@ -95,6 +97,10 @@ Page({
     player.kills++
     player.gold += monster.gold
     const leveled = player.addExp(monster.exp)
+
+    // 清除怪物引用，防止 explore 页残留
+    app.globalData.currentMonster = null
+    app.globalData.battleWon = true
 
     app.saveGame()
     this.setData({

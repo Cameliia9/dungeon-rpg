@@ -20,6 +20,22 @@ Page({
 
   onShow() {
     this.refreshPlayer()
+
+    // 从战斗页返回后，检查战斗结果
+    if (this.data.event && this.data.event.type === 'monster' && !app.globalData.currentMonster) {
+      if (app.globalData.battleWon) {
+        app.globalData.battleWon = false
+        wx.showToast({ title: '怪物已击败！', icon: 'success' })
+        this.nextRoom()
+        return
+      } else {
+        // 战斗中逃跑，继续探索
+        wx.showToast({ title: '已逃脱战斗', icon: 'none' })
+        this.nextRoom()
+        return
+      }
+    }
+
     this.checkDead()
   },
 
