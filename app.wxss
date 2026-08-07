@@ -182,3 +182,33 @@ page {
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* 房间卡片堆叠 */
+.stack-container {
+  margin-bottom: 16px;
+}
+
+.stack-wrapper {
+  position: relative;
+  min-height: 80px;
+}
+
+.stack-card {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #1a1a2e, #2a2a4a);
+  border: 2px solid #3a3a5a;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s ease-out;
+}
+
+.stack-card-out {
+  transform: translateX(-50%) translateY(-60px);
+  opacity: 0;
+}
