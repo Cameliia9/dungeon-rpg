@@ -77,6 +77,12 @@ page {
   color: white;
 }
 
+/* Boss 战卡片 */
+.boss-card {
+  border: 1px solid #ff5555 !important;
+  box-shadow: 0 0 12px rgba(255, 85, 85, 0.35) !important;
+}
+
 /* 属性条 */
 .stat-row {
   display: flex;
@@ -141,6 +147,15 @@ page {
 
 .log-damage {
   color: #e74c3c;
+}
+
+.log-crit {
+  color: #ffaa00;
+  font-weight: bold;
+}
+
+.log-dodge {
+  color: #3498db;
 }
 
 .log-heal {
@@ -209,3 +224,4 @@ page {
 .btn-sm-primary { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; }
 .btn-sm-secondary { background: linear-gradient(135deg, #2c3e50, #34495e); color: #ccc; }
 .btn-sm-gold { background: linear-gradient(135deg, #d4a017, #f0c040); color: #1a1a2e; }
+.btn-sm-danger { background: linear-gradient(135deg, #8b0000, #ff4444); color: white; }

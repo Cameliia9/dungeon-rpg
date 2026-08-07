@@ -1,6 +1,5 @@
 const app = getApp()
-const { generateTwoRoomEvents } = require('../../utils/game-engine')
-const ROOMS_PER_FLOOR = 10
+const { generateTwoRoomEvents, getBossForFloor, getRoomsPerFloor } = require('../../utils/game-engine')
 
 Page({
   data: {
@@ -14,7 +13,7 @@ Page({
     totalDefense: 0,
     totalMaxHp: 0,
     expToLevel: 0,
-    ROOMS_PER_FLOOR: ROOMS_PER_FLOOR,
+    roomsPerFloor: 15,
 
     leftOut: false,
     rightOut: false
@@ -38,8 +37,13 @@ Page({
       player,
       totalAttack: player.totalAttack,
       totalDefense: player.totalDefense,
+      totalCritPercent: Math.round(player.totalCrit * 100),
+      totalDodgePercent: Math.round(player.totalDodge * 100),
+      // 战斗前逃跑成功率：基础 40%，每失败一次 +10%
+      fleePercent: Math.round(Math.min(0.9, 0.4 + player.fleeFails * 0.1) * 100),
       totalMaxHp: player.totalMaxHp,
-      expToLevel: player.expToLevel()
+      expToLevel: player.expToLevel(),
+      roomsPerFloor: getRoomsPerFloor(player.floor)
     })
   },
 
@@ -84,10 +88,15 @@ Page({
   // ==================== 左卡片操作 ====================
 
   goLeft() {
-    if (this.data.rightState !== 'door') { wx.showToast({ title: '先完成当前事件', icon: 'none' }); return }
+    const rightState = this.data.rightState
+    // 死路/封锁侧无需完成，放行
+    if (rightState !== 'door' && rightState !== 'deadend' && rightState !== 'blocked') {
+      wx.showToast({ title: '先完成当前事件', icon: 'none' }); return
+    }
     this.pickSide('left')
   },
   finishLeft() { this.finishSide('left') },
+  blockLeft() { this.blockSide('left') },
   goBattleLeft() { this.startBattle('left') },
   runAwayLeft() { this.runAway('left') },
   buyItemLeft(e) { this.buyItem('left', e) },
@@ -99,10 +108,15 @@ Page({
   // ==================== 右卡片操作 ====================
 
   goRight() {
-    if (this.data.leftState !== 'door') { wx.showToast({ title: '先完成当前事件', icon: 'none' }); return }
+    const leftState = this.data.leftState
+    // 死路/封锁侧无需完成，放行
+    if (leftState !== 'door' && leftState !== 'deadend' && leftState !== 'blocked') {
+      wx.showToast({ title: '先完成当前事件', icon: 'none' }); return
+    }
     this.pickSide('right')
   },
   finishRight() { this.finishSide('right') },
+  blockRight() { this.blockSide('right') },
   goBattleRight() { this.startBattle('right') },
   runAwayRight() { this.runAway('right') },
   buyItemRight(e) { this.buyItem('right', e) },
@@ -142,8 +156,10 @@ Page({
         break
       }
       case 'deadend':
+        // 死路：算作探索了一个房间，该侧进入死路状态（等待封锁）
+        player.roomsExplored++
         app.saveGame()
-        this.setData({ [stateKey]: 'result' })
+        this.setData({ [stateKey]: 'deadend' })
         break
       case 'coins':
         player.gold += event.gold
@@ -162,6 +178,9 @@ Page({
       case 'stairs':
         this.descend()
         break
+      case 'boss':
+        this.startBattle(side, true)
+        break
       case 'merchant':
       case 'camp':
       case 'altar':
@@ -174,6 +193,13 @@ Page({
     if (player.isDead()) this.checkDead()
   },
 
+  // ==================== 死路封锁 ====================
+
+  // 封锁死路一侧（该侧不可再点击）
+  blockSide(side) {
+    this.setData({ [side + 'State']: 'blocked' })
+  },
+
   // ==================== 完成事件 → 推门 ====================
 
   finishSide(side) {
@@ -184,15 +210,31 @@ Page({
     app.saveGame()
     this._animateCardOut(side)
 
-    // 第10间探索完 → 该卡片直接变楼梯
-    if (player.roomsExplored >= ROOMS_PER_FLOOR) {
+    // 本层房间数达到上限 → 该卡片直接变楼梯（5的倍数层变 Boss 门）
+    if (player.roomsExplored >= this.data.roomsPerFloor) {
       const evtKey = side + 'Event'
       const otherSide = side === 'left' ? 'right' : 'left'
+      const isBossFloor = player.floor % 5 === 0
       this.setData({
-        [evtKey]: { type: 'stairs' },
+        [evtKey]: { type: isBossFloor ? 'boss' : 'stairs' },
         [side + 'State']: 'door',
         [otherSide + 'State']: 'door',
         [otherSide + 'Event']: null
+      })
+      this.refreshPlayer()
+      return
+    }
+
+    // 另一侧是死路/封锁 → 重新生成两侧（死路侧恢复可点）
+    const otherSide = side === 'left' ? 'right' : 'left'
+    const otherState = this.data[otherSide + 'State']
+    if (otherState === 'deadend' || otherState === 'blocked') {
+      const [a, b] = generateTwoRoomEvents(player)
+      this.setData({
+        leftEvent: a,
+        rightEvent: b,
+        leftState: 'door',
+        rightState: 'door'
       })
       this.refreshPlayer()
       return
@@ -214,16 +256,22 @@ Page({
 
   // ==================== 战斗 ====================
 
-  startBattle(side) {
+  startBattle(side, isBoss) {
     const event = side === 'left' ? this.data.leftEvent : this.data.rightEvent
-    if (!event || !event.monster) return
+    if (!event) return
 
-    const m = event.monster
+    const player = app.getPlayer()
+    // Boss 战：用当前层生成对应 Boss
+    const m = isBoss ? getBossForFloor(player.floor, player.difficulty) : event.monster
+    if (!m) return
+
     app.globalData.currentMonsterData = {
       name: m.name, hp: m.maxHp,
       attack: m.attack, defense: m.defense,
       exp: m.exp, gold: m.gold,
-      desc: m.desc, level: m.level
+      desc: m.desc, level: m.level,
+      critChance: m.critChance, dodgeChance: m.dodgeChance,
+      isBoss: !!isBoss, skills: m.skills, loot: m.loot
     }
     app.globalData.battleSide = side
 
@@ -231,6 +279,20 @@ Page({
       url: '/pages/battle/battle',
       events: {
         battleResolved: () => {
+          // Boss 被打败 → 该卡片变楼梯
+          if (isBoss && app.globalData.bossDefeated) {
+            const evtKey = side + 'Event'
+            const otherSide = side === 'left' ? 'right' : 'left'
+            this.setData({
+              [evtKey]: { type: 'stairs' },
+              [side + 'State']: 'door',
+              [otherSide + 'State']: 'door',
+              [otherSide + 'Event']: null
+            })
+            app.globalData.bossDefeated = false
+            this.refreshPlayer()
+            return
+          }
           this.finishSide(app.globalData.battleSide)
         }
       }
@@ -238,11 +300,18 @@ Page({
   },
 
   runAway(side) {
-    if (Math.random() < 0.5) {
+    const player = app.getPlayer()
+    // 战斗前逃跑：基础 40%，每失败一次 +10%
+    const chance = Math.min(0.9, 0.4 + player.fleeFails * 0.1)
+    if (Math.random() < chance) {
+      player.fleeFails = 0
+      app.saveGame()
       wx.showToast({ title: '逃跑成功！', icon: 'success' })
       this.finishSide(side)
     } else {
-      wx.showToast({ title: '逃跑失败！', icon: 'error' })
+      player.fleeFails++
+      app.saveGame()
+      wx.showToast({ title: `逃跑失败！下次成功率 ${Math.min(0.9, chance + 0.1) * 100}%`, icon: 'error' })
       this.startBattle(side)
     }
   },

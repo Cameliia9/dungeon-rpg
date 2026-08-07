@@ -24,10 +24,16 @@ Page({
 
     // ★ 用数据副本重建 Monster 实例，不会污染 explore 页
     const monster = new Monster(data)
+    this.isBoss = !!data.isBoss
     this.battle = new Battle(player, monster)
     this.setData({
       player,
       monster,
+      isBoss: this.isBoss,
+      playerCritPercent: Math.round(player.totalCrit * 100),
+      playerDodgePercent: Math.round(player.totalDodge * 100),
+      // 战斗内逃跑成功率：基础 20%，每失败一次 +10%
+      fleePercent: Math.round(Math.min(0.9, 0.2 + player.fleeFails * 0.1) * 100),
       monsterHpPercent: 100,
       playerHpPercent: Math.floor((player.hp / player.totalMaxHp) * 100),
       totalMaxHp: player.totalMaxHp
@@ -45,7 +51,10 @@ Page({
       return
     }
 
-    const r2 = this.battle.monsterAttack()
+    // Boss：30% 概率释放技能
+    const r2 = this.isBoss && Math.random() < 0.3
+      ? this.battle.monsterSkillAttack()
+      : this.battle.monsterAttack()
     this.refreshUI()
 
     if (r2 === 'defeat') {
@@ -62,11 +71,24 @@ Page({
     const player = this.battle.player
     const monster = this.battle.monster
 
-    const rawDmg = monster.dealDamage(player.totalDefense * 2)
-    const dmg = Math.floor(rawDmg / 2)
+    // 玩家闪避判定
+    if (Math.random() < player.totalDodge) {
+      this.battle.log(`你侧身躲开了 ${monster.name} 的攻击！`, 'dodge')
+      this.refreshUI()
+      this.setData({ logs: [...this.battle.logs].reverse() })
+      return
+    }
+
+    // 基础伤害（防御姿态减半）
+    let base = monster.dealDamage(player.totalDefense)
+    const isCrit = Math.random() < monster.critChance
+    if (isCrit) base = Math.floor(base * 1.5)
+    const dmg = Math.max(1, Math.floor(base / 2))
     player.hp = Math.max(0, player.hp - dmg)
 
-    this.battle.log(`你进入防御姿态，${monster.name} 造成 ${dmg} 点伤害`, 'info')
+    this.battle.log(isCrit
+      ? `你进入防御姿态，${monster.name} 暴击造成 ${dmg} 点伤害`
+      : `你进入防御姿态，${monster.name} 造成 ${dmg} 点伤害`, isCrit ? 'crit' : 'info')
     this.refreshUI()
     this.setData({ logs: [...this.battle.logs].reverse() })
 
@@ -78,15 +100,32 @@ Page({
   flee() {
     if (this.data.result !== 'fighting') return
 
-    if (Math.random() < 0.3) {
+    // Boss 战无法逃跑
+    if (this.isBoss) {
+      this.battle.log('Boss 拦住了去路，无法逃跑！', 'info')
+      this.setData({ logs: [...this.battle.logs].reverse() })
+      return
+    }
+
+    const player = this.battle.player
+    // 战斗内逃跑：基础 20%，每失败一次 +10%（与战斗前共享累积）
+    const chance = Math.min(0.9, 0.2 + player.fleeFails * 0.1)
+    if (Math.random() < chance) {
+      player.fleeFails = 0
+      app.saveGame()
       this.battle.log('你成功逃脱了！', 'info')
       app.globalData.currentMonsterData = null
       this.setData({ result: 'fled', logs: [...this.battle.logs].reverse() })
     } else {
-      this.battle.log('逃跑失败！', 'info')
+      player.fleeFails++
+      app.saveGame()
+      this.battle.log(`逃跑失败！下次成功率 ${Math.min(0.9, chance + 0.1) * 100}%`, 'info')
       const r2 = this.battle.monsterAttack()
       this.refreshUI()
-      this.setData({ logs: [...this.battle.logs].reverse() })
+      this.setData({
+        fleePercent: Math.round(Math.min(0.9, 0.2 + player.fleeFails * 0.1) * 100),
+        logs: [...this.battle.logs].reverse()
+      })
       if (r2 === 'defeat') this.onDefeat()
     }
   },
@@ -99,12 +138,20 @@ Page({
     player.gold += monster.gold
     const leveled = player.addExp(monster.exp)
 
+    // Boss 掉落专属装备
+    let bossLoot = null
+    if (this.isBoss && monster.loot) {
+      bossLoot = { ...monster.loot }
+      player.inventory.push(bossLoot)
+      app.globalData.bossDefeated = true
+    }
+
     app.globalData.currentMonsterData = null
     app.saveGame()
 
     this.setData({
       result: 'victory',
-      battleReward: { gold: monster.gold, exp: monster.exp, leveled },
+      battleReward: { gold: monster.gold, exp: monster.exp, leveled, bossLoot },
       player,
       totalMaxHp: player.totalMaxHp,
       monsterHpPercent: 0,

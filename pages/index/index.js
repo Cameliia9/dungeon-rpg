@@ -82,25 +82,25 @@ Page({
     wx.removeStorageSync('dungeon_save')
 
     // 根据难度创建角色
-    const player = new Player('冒险者')
+    const player = new Player('冒险者', difficulty)
 
     switch (difficulty) {
       case 'easy':
         // 当前设定就是简单难度
         break
       case 'hard':
-        // 后续实现
-        player.maxHp = 80
-        player.hp = 80
-        player.baseAttack = 9
-        player.gold = 30
+        // 玩家略弱，敌人攻×1.25 HP×1.1
+        player.maxHp = 95
+        player.hp = 95
+        player.baseAttack = 11
+        player.gold = 35
         break
       case 'nightmare':
-        // 后续实现
-        player.maxHp = 60
-        player.hp = 60
-        player.baseAttack = 7
-        player.gold = 15
+        // 玩家更弱，敌人攻×1.5 HP×1.2
+        player.maxHp = 90
+        player.hp = 90
+        player.baseAttack = 10
+        player.gold = 20
         break
     }
 
@@ -125,6 +125,8 @@ Page({
       player,
       totalAttack: player.totalAttack,
       totalDefense: player.totalDefense,
+      totalCritPercent: Math.round(player.totalCrit * 100),
+      totalDodgePercent: Math.round(player.totalDodge * 100),
       totalMaxHp: player.totalMaxHp,
       expToLevel: player.expToLevel(),
       hpPercent: Math.max(0, Math.floor((player.hp / player.totalMaxHp) * 100)),

@@ -5,7 +5,7 @@
   <view class="card" style="text-align: center;">
     <text class="title">🏰 地牢第 {{player.floor}} 层</text>
     <text class="subtitle">小心前进...</text>
-    <text style="display: block; font-size: 12px; color: #6a6a7a; text-align: center;">已探索 {{player.roomsExplored}} / {{ROOMS_PER_FLOOR}} 个房间</text>
+    <text style="display: block; font-size: 12px; color: #6a6a7a; text-align: center;">已探索 {{player.roomsExplored}} / {{roomsPerFloor}} 个房间</text>
   </view>
 
   <!-- ========== 两个门 ========== -->
@@ -19,7 +19,7 @@
       <!-- 门状态 -->
       <block wx:if="{{leftState === 'door'}}">
         <!-- 普通门 -->
-        <block wx:if="{{!leftEvent || leftEvent.type !== 'stairs'}}">
+        <block wx:if="{{!leftEvent || (leftEvent.type !== 'stairs' && leftEvent.type !== 'boss')}}">
           <text style="font-size: 48px; display: block;">🚪</text>
           <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 14px;" bindtap="goLeft">前进探索</button>
         </block>
@@ -28,6 +28,13 @@
           <text style="font-size: 44px; display: block;">🪜</text>
           <text style="font-size: 16px; font-weight: bold; color: #f0c040; margin: 8px 0;">发现楼梯！</text>
           <button class="btn-sm btn-sm-gold" bindtap="goLeft">⬇️ 下到 {{player.floor + 1}} 层</button>
+        </block>
+        <!-- Boss -->
+        <block wx:if="{{leftEvent.type === 'boss'}}">
+          <text style="font-size: 44px; display: block;">👑</text>
+          <text style="font-size: 16px; font-weight: bold; color: #ff5555; margin: 8px 0;">⚠️ Boss 拦路！</text>
+          <text style="font-size: 11px; color: #8a8a9a; margin-bottom: 6px;">击败它才能继续前进</text>
+          <button class="btn-sm btn-sm-danger" bindtap="goLeft">⚔️ 挑战 Boss</button>
         </block>
       </block>
 
@@ -41,14 +48,29 @@
         <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 10px;" bindtap="finishLeft">好的</button>
       </block>
 
+      <!-- 死路 -->
+      <block wx:if="{{leftState === 'deadend'}}">
+        <text style="font-size: 36px; display: block;">🚧</text>
+        <text class="title" style="font-size: 16px;">死路</text>
+        <text class="subtitle" style="font-size: 12px; color: #8a8a9a;">前方没有路了，只能从另一边前进</text>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 10px;" bindtap="blockLeft">💨 返回</button>
+      </block>
+
+      <!-- 封锁（死路已封，不可再点击） -->
+      <block wx:if="{{leftState === 'blocked'}}">
+        <text style="font-size: 36px; display: block;">🔒</text>
+        <text style="font-size: 13px; color: #555565; margin-top: 4px;">此路不通</text>
+      </block>
+
       <!-- 怪物 -->
       <block wx:if="{{leftState === 'monster'}}">
         <text style="font-size: 30px; display: block;">👹</text>
         <text style="font-size: 15px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{leftEvent.monster.name}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 1px 0;">{{leftEvent.monster.desc}}</text>
-        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}  ⚔️{{leftEvent.monster.attack}}</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}  ⚔️{{leftEvent.monster.attack}}  🛡️{{leftEvent.monster.defense}}</text>
+        <text style="font-size: 11px; color: #7a7a8a; margin: 1px 0;">⚡{{leftEvent.monster.critPercent}}%暴  💨{{leftEvent.monster.dodgePercent}}%闪</text>
         <button class="btn-sm btn-sm-primary" bindtap="goBattleLeft">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" bindtap="runAwayLeft">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayLeft">🏃 逃跑({{fleePercent}}%)</button>
       </block>
 
       <!-- 商人 -->
@@ -99,9 +121,9 @@
       <block wx:if="{{leftState === 'camp_ambush'}}">
         <text style="font-size: 30px; display: block;">👹</text>
         <text style="font-size: 14px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{leftEvent.monster.name}}突袭！</text>
-        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}  ⚔️{{leftEvent.monster.attack}}  ⚡{{leftEvent.monster.critPercent}}%暴</text>
         <button class="btn-sm btn-sm-primary" bindtap="goBattleLeft">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" bindtap="runAwayLeft">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayLeft">🏃 逃跑({{fleePercent}}%)</button>
       </block>
 
     </view>
@@ -116,7 +138,7 @@
       <!-- 门状态 -->
       <block wx:if="{{rightState === 'door'}}">
         <!-- 普通门 -->
-        <block wx:if="{{!rightEvent || rightEvent.type !== 'stairs'}}">
+        <block wx:if="{{!rightEvent || (rightEvent.type !== 'stairs' && rightEvent.type !== 'boss')}}">
           <text style="font-size: 48px; display: block;">🚪</text>
           <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 14px;" bindtap="goRight">前进探索</button>
         </block>
@@ -125,6 +147,13 @@
           <text style="font-size: 44px; display: block;">🪜</text>
           <text style="font-size: 16px; font-weight: bold; color: #f0c040; margin: 8px 0;">发现楼梯！</text>
           <button class="btn-sm btn-sm-gold" bindtap="goRight">⬇️ 下到 {{player.floor + 1}} 层</button>
+        </block>
+        <!-- Boss -->
+        <block wx:if="{{rightEvent.type === 'boss'}}">
+          <text style="font-size: 44px; display: block;">👑</text>
+          <text style="font-size: 16px; font-weight: bold; color: #ff5555; margin: 8px 0;">⚠️ Boss 拦路！</text>
+          <text style="font-size: 11px; color: #8a8a9a; margin-bottom: 6px;">击败它才能继续前进</text>
+          <button class="btn-sm btn-sm-danger" bindtap="goRight">⚔️ 挑战 Boss</button>
         </block>
       </block>
 
@@ -138,14 +167,29 @@
         <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 10px;" bindtap="finishRight">好的</button>
       </block>
 
+      <!-- 死路 -->
+      <block wx:if="{{rightState === 'deadend'}}">
+        <text style="font-size: 36px; display: block;">🚧</text>
+        <text class="title" style="font-size: 16px;">死路</text>
+        <text class="subtitle" style="font-size: 12px; color: #8a8a9a;">前方没有路了，只能从另一边前进</text>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 10px;" bindtap="blockRight">💨 返回</button>
+      </block>
+
+      <!-- 封锁（死路已封，不可再点击） -->
+      <block wx:if="{{rightState === 'blocked'}}">
+        <text style="font-size: 36px; display: block;">🔒</text>
+        <text style="font-size: 13px; color: #555565; margin-top: 4px;">此路不通</text>
+      </block>
+
       <!-- 怪物 -->
       <block wx:if="{{rightState === 'monster'}}">
         <text style="font-size: 30px; display: block;">👹</text>
         <text style="font-size: 15px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{rightEvent.monster.name}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 1px 0;">{{rightEvent.monster.desc}}</text>
-        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}  ⚔️{{rightEvent.monster.attack}}</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}  ⚔️{{rightEvent.monster.attack}}  🛡️{{rightEvent.monster.defense}}</text>
+        <text style="font-size: 11px; color: #7a7a8a; margin: 1px 0;">⚡{{rightEvent.monster.critPercent}}%暴  💨{{rightEvent.monster.dodgePercent}}%闪</text>
         <button class="btn-sm btn-sm-primary" bindtap="goBattleRight">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" bindtap="runAwayRight">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayRight">🏃 逃跑({{fleePercent}}%)</button>
       </block>
 
       <!-- 商人 -->
@@ -196,9 +240,9 @@
       <block wx:if="{{rightState === 'camp_ambush'}}">
         <text style="font-size: 30px; display: block;">👹</text>
         <text style="font-size: 14px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{rightEvent.monster.name}}突袭！</text>
-        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}  ⚔️{{rightEvent.monster.attack}}  ⚡{{rightEvent.monster.critPercent}}%暴</text>
         <button class="btn-sm btn-sm-primary" bindtap="goBattleRight">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" bindtap="runAwayRight">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayRight">🏃 逃跑({{fleePercent}}%)</button>
       </block>
 
     </view>
@@ -213,6 +257,7 @@
         <view class="stat-row"><text class="stat-label">❤️ {{player.hp}} / {{totalMaxHp}}</text></view>
         <view class="hp-bar-wrap" style="margin: 4px 0;"><view class="hp-bar-fill" style="width: {{player.hp / totalMaxHp * 100}}%"></view></view>
         <view class="stat-row"><text class="stat-label">⚔️ {{totalAttack}}攻  🛡️ {{totalDefense}}防</text></view>
+        <view class="stat-row"><text class="stat-label">⚡ {{totalCritPercent}}%暴  💨 {{totalDodgePercent}}%闪</text></view>
         <view class="stat-row" style="margin-top: 2px;"><text class="stat-label">💰 {{player.gold}}金币  ⭐ {{player.exp}} / {{expToLevel}}经验</text></view>
       </view>
       <button class="btn-sm btn-sm-secondary" style="width: auto; padding: 8px 18px; margin: 0; font-size: 14px;" bindtap="exitExplore">🚪 退出</button>
