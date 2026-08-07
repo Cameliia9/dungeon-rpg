@@ -212,3 +212,13 @@ page {
   transform: translateX(-50%) translateY(-60px);
   opacity: 0;
 }
+
+/* 卡片滑出动画 */
+.card-slide-out {
+  animation: slideOutUp 0.45s ease-out forwards;
+}
+
+@keyframes slideOutUp {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-40px); opacity: 0; }
+}
