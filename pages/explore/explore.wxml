@@ -4,7 +4,8 @@
   <!-- ========== 顶部：楼层标题 ========== -->
   <view class="card" style="text-align: center;">
     <text class="title">🏰 地牢第 {{player.floor}} 层</text>
-    <text class="subtitle">已探索 {{player.roomsExplored}} / {{ROOMS_PER_FLOOR}} 个房间</text>
+    <text class="subtitle">小心前进...</text>
+    <text class="subtitle" style="font-size: 12px; color: #6a6a7a;">已探索 {{player.roomsExplored}} / {{ROOMS_PER_FLOOR}} 个房间</text>
   </view>
 
   <!-- ========== 两个门 ========== -->
