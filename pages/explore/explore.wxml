@@ -11,12 +11,22 @@
   <!-- ========== 两个门 ========== -->
   <view wx:if="{{!canDescend}}" style="display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
 
-    <!-- ===== 左卡片 ===== -->
-    <view class="card {{leftOut ? 'card-slide-out' : ''}}" style="flex: 1; padding: 20px 10px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden;">
+    <!-- ===== 左卡片区域 ===== -->
+    <view style="flex: 1; position: relative; min-height: 200px;">
 
-      <!-- 叠层背景 -->
-      <view wx:if="{{leftState === 'door' && leftDepth > 1}}" style="position: absolute; bottom: -6px; left: 8px; right: 8px; height: 14px; background: #141428; border-radius: 0 0 10px 10px; border: 1px solid #2a2a4a; z-index: 0;"></view>
-      <view wx:if="{{leftState === 'door' && leftDepth > 2}}" style="position: absolute; bottom: -3px; left: 4px; right: 4px; height: 10px; background: #111122; border-radius: 0 0 8px 8px; border: 1px solid #222240; z-index: 0;"></view>
+      <!-- 叠层幽灵卡片（门状态时显示） -->
+      <block wx:if="{{leftState === 'door'}}">
+        <view wx:if="{{leftDepth >= 4}}" class="ghost-card"
+          style="transform: translateY(15px) scale(0.91); z-index: 1;"></view>
+        <view wx:if="{{leftDepth >= 3}}" class="ghost-card"
+          style="transform: translateY(10px) scale(0.94); z-index: 2;"></view>
+        <view wx:if="{{leftDepth >= 2}}" class="ghost-card"
+          style="transform: translateY(5px) scale(0.97); z-index: 3;"></view>
+      </block>
+
+      <!-- 主卡片（交互层） -->
+      <view class="card {{leftOut ? 'fly-out-right' : ''}}"
+        style="position: relative; z-index: 10; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px;">
 
       <!-- 门状态 -->
       <block wx:if="{{leftState === 'door'}}">
@@ -100,12 +110,24 @@
 
     </view>
 
-    <!-- ===== 右卡片 ===== -->
-    <view class="card {{rightOut ? 'card-slide-out' : ''}}" style="flex: 1; padding: 20px 10px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden;">
+    </view>
 
-      <!-- 叠层背景 -->
-      <view wx:if="{{rightState === 'door' && rightDepth > 1}}" style="position: absolute; bottom: -6px; left: 8px; right: 8px; height: 14px; background: #141428; border-radius: 0 0 10px 10px; border: 1px solid #2a2a4a; z-index: 0;"></view>
-      <view wx:if="{{rightState === 'door' && rightDepth > 2}}" style="position: absolute; bottom: -3px; left: 4px; right: 4px; height: 10px; background: #111122; border-radius: 0 0 8px 8px; border: 1px solid #222240; z-index: 0;"></view>
+    <!-- ===== 右卡片区域 ===== -->
+    <view style="flex: 1; position: relative; min-height: 200px;">
+
+      <!-- 叠层幽灵卡片（门状态时显示） -->
+      <block wx:if="{{rightState === 'door'}}">
+        <view wx:if="{{rightDepth >= 4}}" class="ghost-card"
+          style="transform: translateY(15px) scale(0.91); z-index: 1;"></view>
+        <view wx:if="{{rightDepth >= 3}}" class="ghost-card"
+          style="transform: translateY(10px) scale(0.94); z-index: 2;"></view>
+        <view wx:if="{{rightDepth >= 2}}" class="ghost-card"
+          style="transform: translateY(5px) scale(0.97); z-index: 3;"></view>
+      </block>
+
+      <!-- 主卡片（交互层） -->
+      <view class="card {{rightOut ? 'fly-out-right' : ''}}"
+        style="position: relative; z-index: 10; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px;">
 
       <!-- 门状态 -->
       <block wx:if="{{rightState === 'door'}}">
@@ -186,6 +208,8 @@
         <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="goBattleRight">⚔️ 战斗</button>
         <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="runAwayRight">🏃 逃跑</button>
       </block>
+
+    </view>
 
     </view>
   </view>

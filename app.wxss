@@ -213,12 +213,22 @@ page {
   opacity: 0;
 }
 
-/* 卡片滑出动画 */
-.card-slide-out {
-  animation: slideOutUp 0.45s ease-out forwards;
+/* 幽灵卡片 */
+.ghost-card {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #151525, #1a1a30);
+  border: 2px solid #3a3a5a;
+  border-radius: 12px;
+  transition: all 0.4s ease;
 }
 
-@keyframes slideOutUp {
-  from { transform: translateY(0); opacity: 1; }
-  to   { transform: translateY(-40px); opacity: 0; }
+/* 主卡片右上方飞出 */
+.fly-out-right {
+  animation: flyOut 0.5s ease-out forwards;
+}
+
+@keyframes flyOut {
+  from { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  to   { transform: translate(32px, -50px) rotate(12deg); opacity: 0; }
 }
