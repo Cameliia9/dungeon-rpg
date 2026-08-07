@@ -108,10 +108,10 @@
       </block>
 
       <!-- 楼梯 -->
-      <block wx:if="{{leftState === 'stairs'}}">
-        <text style="font-size: 36px; display: block;">🪜</text>
-        <text style="font-size: 15px; font-weight: bold; color: #e0c080; margin: 6px 0;">发现楼梯！</text>
-        <button class="btn-sm btn-sm-gold" bindtap="descend">⬇️ 下到 {{player.floor + 1}} 层</button>
+      <block wx:if="{{leftEvent.type === 'stairs'}}">
+        <text style="font-size: 40px; display: block;">🪜</text>
+        <text style="font-size: 14px; font-weight: bold; color: #f0c040; margin: 4px 0;">发现楼梯！</text>
+        <button class="btn-sm btn-sm-gold" bindtap="goLeft">⬇️ 下到 {{player.floor + 1}} 层</button>
       </block>
 
     </view>
@@ -212,6 +212,13 @@
         <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}</text>
         <button class="btn-sm btn-sm-primary" bindtap="goBattleRight">⚔️ 战斗</button>
         <button class="btn-sm btn-sm-secondary" bindtap="runAwayRight">🏃 逃跑</button>
+      </block>
+
+      <!-- 楼梯门 -->
+      <block wx:if="{{rightEvent.type === 'stairs'}}">
+        <text style="font-size: 40px; display: block;">🪜</text>
+        <text style="font-size: 14px; font-weight: bold; color: #f0c040; margin: 4px 0;">发现楼梯！</text>
+        <button class="btn-sm btn-sm-gold" bindtap="goRight">⬇️ 下到 {{player.floor + 1}} 层</button>
       </block>
 
     </view>

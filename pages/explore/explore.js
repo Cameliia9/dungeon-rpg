@@ -25,23 +25,12 @@ Page({
 
   onLoad() {
     this.refreshPlayer()
-    // 恢复存档进度
-    const player = app.getPlayer()
-    if (player && player.roomsExplored >= ROOMS_PER_FLOOR) {
-      this.setData({ leftState: 'stairs', rightState: 'door', rightEvent: null })
-    } else {
-      this.generateEvents()
-    }
+    this.generateEvents()
     this.checkDead()
   },
 
   onShow() {
     this.refreshPlayer()
-    // 如果已到楼梯但尚未下楼，保持楼梯状态
-    const player = app.getPlayer()
-    if (player && player.roomsExplored >= ROOMS_PER_FLOOR && this.data.leftState !== 'stairs') {
-      this.setData({ leftState: 'stairs', rightState: 'door', rightEvent: null })
-    }
     this.checkDead()
   },
 
@@ -180,6 +169,9 @@ Page({
       case 'camp_ambush':
         this.setData({ [stateKey]: event.type })
         break
+      case 'stairs':
+        this.descend()
+        break
       case 'merchant':
       case 'camp':
       case 'altar':
@@ -201,15 +193,6 @@ Page({
     player.roomsExplored++
     app.saveGame()
     this._animateCardOut(side)
-
-    if (player.roomsExplored >= ROOMS_PER_FLOOR) {
-      this.setData({
-        leftState: 'stairs',
-        rightState: 'door',
-        rightEvent: null
-      })
-      return
-    }
 
     if (side === 'left') {
       this.setData({
