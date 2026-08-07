@@ -146,22 +146,24 @@ Page({
     })
   },
 
-  // ★ 通过 EventChannel 通知 explore 页清除怪物事件
-  goBack() {
+  // ★ 通过 EventChannel 通知 explore 页（防重复发射）
+  _emitBattleResolved() {
+    if (this._emitted) return
+    this._emitted = true
     try {
       this.getOpenerEventChannel().emit('battleResolved')
-    } catch (e) {
-      console.warn('EventChannel emit failed:', e)
-    }
+    } catch (e) {}
+  },
+
+  goBack() {
+    this._emitBattleResolved()
     app.globalData.currentMonsterData = null
     wx.navigateBack()
   },
 
   // ★ 系统手势返回/物理返回键也发送通知
   onUnload() {
-    try {
-      this.getOpenerEventChannel().emit('battleResolved')
-    } catch (e) {}
+    this._emitBattleResolved()
     app.globalData.currentMonsterData = null
   },
 
