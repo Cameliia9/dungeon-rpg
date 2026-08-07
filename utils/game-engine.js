@@ -1,20 +1,31 @@
 /**
  * 地牢冒险 - 游戏核心引擎
  * 角色、战斗、装备系统 + 扩展事件池
+ * 伤害公式: floor(攻击力 - 防御力 * 0.8)，保底 1
  */
 
 const GameData = require('./data')
 
+// 难度系数: 影响怪物强度（攻击/防御/经验/金币大幅，HP 小幅）
+const DIFFICULTY_MULT = {
+  easy: { atk: 1.0, hp: 1.0 },
+  hard: { atk: 1.25, hp: 1.1 },
+  nightmare: { atk: 1.5, hp: 1.2 }
+}
+
 // ==================== 玩家类 ====================
 class Player {
-  constructor(name) {
+  constructor(name, difficulty) {
     this.name = name
+    this.difficulty = difficulty || 'easy'
     this.level = 1
     this.exp = 0
     this.maxHp = 100
     this.hp = 100
     this.baseAttack = 12
     this.baseDefense = 5
+    this.baseCrit = 0.10   // 基础暴击率 10%
+    this.baseDodge = 0.05  // 基础闪避率 5%
     this.gold = 50
     this.weapon = null
     this.armor = null
@@ -25,6 +36,7 @@ class Player {
     this.roomsExplored = 0 // 当前层已探索房间数
     this.tempAttackBuff = 0  // 增益石碑临时攻击加成
     this.tempDefenseBuff = 0 // 破旧装备临时防御加成
+    this.fleeFails = 0       // 本次遭遇逃跑失败次数（每失败+10%成功率）
   }
 
   get totalAttack() {
@@ -45,6 +57,24 @@ class Player {
     return h
   }
 
+  // 总暴击率 = 基础 + 装备
+  get totalCrit() {
+    let c = this.baseCrit
+    if (this.weapon) c += this.weapon.critChance || 0
+    if (this.armor) c += this.armor.critChance || 0
+    if (this.accessory) c += this.accessory.critChance || 0
+    return Math.min(0.6, c)
+  }
+
+  // 总闪避率 = 基础 + 装备
+  get totalDodge() {
+    let d = this.baseDodge
+    if (this.weapon) d += this.weapon.dodgeChance || 0
+    if (this.armor) d += this.armor.dodgeChance || 0
+    if (this.accessory) d += this.accessory.dodgeChance || 0
+    return Math.min(0.5, d)
+  }
+
   expToLevel() {
     return this.level * 80 + 20
   }
@@ -60,17 +90,31 @@ class Player {
     return leveled
   }
 
+  // 升级回复比例（恢复已损失生命值的百分比，按难度）
+  get levelUpHealRatio() {
+    switch (this.difficulty) {
+      case 'hard': return 0.6
+      case 'nightmare': return 0.4
+      default: return 0.8
+    }
+  }
+
   levelUp() {
+    // 记录升级前的损失生命值
+    const lostBefore = Math.max(0, this.totalMaxHp - this.hp)
     this.level++
     this.baseAttack += 3
     this.baseDefense += 1
     this.maxHp += 20
-    this.hp = this.totalMaxHp
+    // 升级不回复满血，只恢复已损失生命的比例（easy 80% / hard 60% / nightmare 40%）
+    // 用整数百分比避免浮点误差（如 1-0.8=0.19999999999999996）
+    const healPercent = Math.round(this.levelUpHealRatio * 100)
+    const remaining = Math.floor(lostBefore * (100 - healPercent) / 100)
+    this.hp = Math.max(1, this.totalMaxHp - remaining)
   }
 
   takeDamage(rawDamage) {
-    const reduced = Math.max(1, rawDamage - this.totalDefense)
-    const actual = Math.floor(reduced * (0.9 + Math.random() * 0.2))
+    const actual = Math.max(1, Math.floor(rawDamage))
     this.hp = Math.max(0, this.hp - actual)
     return actual
   }
@@ -127,10 +171,18 @@ class Monster {
     this.gold = template.gold
     this.desc = template.desc
     this.level = template.level || 1
+    this.critChance = template.critChance || 0.05   // 暴击率
+    this.dodgeChance = template.dodgeChance || 0    // 闪避率
+    // 用于界面显示（WXML 不支持 Math.round）
+    this.critPercent = Math.round(this.critChance * 100)
+    this.dodgePercent = Math.round(this.dodgeChance * 100)
+    this.isBoss = !!template.isBoss
+    this.skills = template.skills || []
+    this.loot = template.loot || null
   }
 
   takeDamage(rawDamage) {
-    const actual = Math.max(1, rawDamage - this.defense)
+    const actual = Math.max(1, Math.floor(rawDamage))
     this.hp = Math.max(0, this.hp - actual)
     return actual
   }
@@ -139,9 +191,9 @@ class Monster {
     return this.hp <= 0
   }
 
+  // 基础伤害: floor(攻击 - 防御*0.8)
   dealDamage(targetDefense) {
-    const raw = this.attack * (0.8 + Math.random() * 0.4)
-    return Math.max(1, Math.floor(raw - targetDefense * 0.5))
+    return Math.max(1, Math.floor(this.attack - targetDefense * 0.8))
   }
 }
 
@@ -154,20 +206,95 @@ class Battle {
     this.turn = 0
   }
 
+  // 玩家攻击: 先判怪物闪避，再判玩家暴击
   playerAttack() {
-    const dmg = this.monster.takeDamage(this.player.totalAttack)
-    this.log(`你对 ${this.monster.name} 造成了 ${dmg} 点伤害`, 'damage')
+    const m = this.monster
+
+    // 怪物闪避
+    if (Math.random() < m.dodgeChance) {
+      this.log(`${m.name} 灵巧地闪避了你的攻击！`, 'dodge')
+      this.turn++
+      return 'continue'
+    }
+
+    // 基础伤害 = floor(玩家攻击 - 怪物防御*0.8)
+    let dmg = Math.max(1, Math.floor(this.player.totalAttack - m.defense * 0.8))
+
+    // 玩家暴击
+    const isCrit = Math.random() < this.player.totalCrit
+    if (isCrit) dmg = Math.floor(dmg * 1.5)
+
+    m.takeDamage(dmg)
+    this.log(isCrit
+      ? `你对 ${m.name} 造成暴击 ${dmg} 点伤害！`
+      : `你对 ${m.name} 造成了 ${dmg} 点伤害`, isCrit ? 'crit' : 'damage')
     this.turn++
-    if (this.monster.isDead()) {
-      this.log(`你击败了 ${this.monster.name}！`, 'loot')
+    if (m.isDead()) {
+      this.log(`你击败了 ${m.name}！`, 'loot')
       return 'victory'
     }
     return 'continue'
   }
 
+  // 怪物攻击: 先判玩家闪避，再判怪物暴击
   monsterAttack() {
-    const dmg = this.player.takeDamage(this.monster.dealDamage(this.player.totalDefense))
-    this.log(`${this.monster.name} 对你造成了 ${dmg} 点伤害`, 'damage')
+    const p = this.player
+
+    // 玩家闪避
+    if (Math.random() < p.totalDodge) {
+      this.log(`你侧身躲开了 ${this.monster.name} 的攻击！`, 'dodge')
+      this.turn++
+      return 'continue'
+    }
+
+    // 基础伤害 = floor(怪物攻击 - 玩家防御*0.8)
+    let dmg = Math.max(1, Math.floor(this.monster.attack - p.totalDefense * 0.8))
+
+    // 怪物暴击
+    const isCrit = Math.random() < this.monster.critChance
+    if (isCrit) dmg = Math.floor(dmg * 1.5)
+
+    p.takeDamage(dmg)
+    this.log(isCrit
+      ? `${this.monster.name} 对你造成暴击 ${dmg} 点伤害！`
+      : `${this.monster.name} 对你造成了 ${dmg} 点伤害`, isCrit ? 'crit' : 'damage')
+    this.turn++
+    if (p.isDead()) {
+      this.log('你被打倒了...', 'info')
+      return 'defeat'
+    }
+    return 'continue'
+  }
+
+  // Boss 释放技能（30%概率由调用方决定）
+  monsterSkillAttack() {
+    const skills = this.monster.skills
+    if (!skills || skills.length === 0) return this.monsterAttack()
+    const skill = skills[Math.floor(Math.random() * skills.length)]
+
+    switch (skill.type) {
+      case 'heavy': {
+        const raw = this.monster.dealDamage(this.player.totalDefense) * skill.multiplier
+        const dmg = this.player.takeDamage(raw)
+        this.log(`${this.monster.name} 使出【${skill.name}】！对你造成 ${dmg} 点伤害！`, 'skill')
+        break
+      }
+      case 'drain': {
+        const dmg = this.player.takeDamage(this.monster.dealDamage(this.player.totalDefense))
+        const healed = Math.min(this.monster.maxHp - this.monster.hp, Math.floor(dmg * skill.percent))
+        this.monster.hp += healed
+        this.log(`${this.monster.name} 使出【${skill.name}】！造成 ${dmg} 点伤害并恢复 ${healed} 点生命！`, 'skill')
+        break
+      }
+      case 'rage': {
+        this.monster.attack = Math.floor(this.monster.attack * skill.multiplier)
+        this.log(`${this.monster.name} 使出【${skill.name}】！攻击力大幅提升！`, 'skill')
+        break
+      }
+      default:
+        return this.monsterAttack()
+    }
+
     this.turn++
     if (this.player.isDead()) {
       this.log('你被打倒了...', 'info')
@@ -222,7 +349,7 @@ function generateTwoRoomEvents(player) {
 function buildEvent(type, player, floor) {
   switch (type) {
     case 'monster':
-      return { type: 'monster', monster: getRandomMonster(floor) }
+      return { type: 'monster', monster: getRandomMonster(floor, player.difficulty) }
 
     case 'treasure':
       return { type: 'treasure', gold: Math.floor(15 + floor * 8 + Math.random() * floor * 15) }
@@ -267,7 +394,7 @@ function buildEvent(type, player, floor) {
       return {
         type: 'camp',
         ambushChance: 0.3,
-        ambushMonster: getRandomMonster(floor)
+        ambushMonster: getRandomMonster(floor, player.difficulty)
       }
 
     case 'altar':
@@ -300,9 +427,10 @@ function generateRoomEvent(player) {
   return buildEvent(EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)], player, player.floor)
 }
 
-// 根据层数获取随机怪物
-function getRandomMonster(floor) {
-  const available = GameData.monsters.filter(m => m.level <= floor + 2 && m.level >= floor - 1)
+// 根据层数获取随机怪物（按难度缩放）
+function getRandomMonster(floor, difficulty) {
+  const d = DIFFICULTY_MULT[difficulty] || DIFFICULTY_MULT.easy
+  const available = GameData.monsters.filter(m => m.level <= floor + 1 && m.level >= floor - 1)
   if (available.length === 0) return new Monster(GameData.monsters[GameData.monsters.length - 1])
   const template = available[Math.floor(Math.random() * available.length)]
   const scaled = { ...template }
@@ -314,7 +442,48 @@ function getRandomMonster(floor) {
     scaled.exp = Math.floor(template.exp * scale)
     scaled.gold = Math.floor(template.gold * scale)
   }
+  // 难度缩放: 攻击/防御/奖励大幅，HP 小幅
+  if (d.atk > 1 || d.hp > 1) {
+    scaled.hp = Math.floor(scaled.hp * d.hp)
+    scaled.attack = Math.floor(scaled.attack * d.atk)
+    scaled.defense = Math.floor(scaled.defense * d.atk)
+    scaled.exp = Math.floor(scaled.exp * d.atk)
+    scaled.gold = Math.floor(scaled.gold * d.atk)
+  }
   return new Monster(scaled)
+}
+
+// 获取当前层对应的 Boss（每5层一个，超过25层后强化远古邪龙，按难度缩放）
+function getBossForFloor(floor, difficulty) {
+  const d = DIFFICULTY_MULT[difficulty] || DIFFICULTY_MULT.easy
+  const index = Math.floor((floor - 1) / 5)
+  const bossIndex = Math.min(index, GameData.bosses.length - 1)
+  const template = GameData.bosses[bossIndex]
+
+  // 25层之后：每多5层，Boss 强化 15%
+  const extra = Math.max(0, index - (GameData.bosses.length - 1))
+  const atkScale = Math.pow(1.15, extra) * d.atk
+  const hpScale = Math.pow(1.15, extra) * d.hp
+
+  const scaled = {
+    ...template,
+    hp: Math.floor(template.hp * hpScale),
+    attack: Math.floor(template.attack * atkScale),
+    defense: Math.floor(template.defense * atkScale),
+    exp: Math.floor(template.exp * atkScale),
+    gold: Math.floor(template.gold * atkScale),
+    level: Math.floor(template.level * atkScale)
+  }
+  const boss = new Monster(scaled)
+  boss.isBoss = true
+  return boss
+}
+
+// 每层需要探索的房间数：基础 15，每打完一个 Boss（第5/10/15...层）后续每层 +3
+// 例：1-5层=15间，6-10层=18间，11-15层=21间
+function getRoomsPerFloor(floor) {
+  const bossesDefeated = Math.floor((floor - 1) / 5)
+  return 15 + bossesDefeated * 3
 }
 
 // 获取随机装备
@@ -332,6 +501,7 @@ function getRandomEquipment(floor) {
 function savePlayer(player) {
   return {
     name: player.name,
+    difficulty: player.difficulty,
     level: player.level,
     exp: player.exp,
     maxHp: player.maxHp,
@@ -347,12 +517,13 @@ function savePlayer(player) {
     kills: player.kills,
     roomsExplored: player.roomsExplored,
     tempAttackBuff: player.tempAttackBuff,
-    tempDefenseBuff: player.tempDefenseBuff
+    tempDefenseBuff: player.tempDefenseBuff,
+    fleeFails: player.fleeFails
   }
 }
 
 function loadPlayer(data) {
-  const p = new Player(data.name)
+  const p = new Player(data.name, data.difficulty || 'easy')
   p.level = data.level
   p.exp = data.exp
   p.maxHp = data.maxHp
@@ -369,6 +540,7 @@ function loadPlayer(data) {
   p.roomsExplored = data.roomsExplored || 0
   p.tempAttackBuff = data.tempAttackBuff || 0
   p.tempDefenseBuff = data.tempDefenseBuff || 0
+  p.fleeFails = data.fleeFails || 0
   return p
 }
 
@@ -376,10 +548,13 @@ module.exports = {
   Player,
   Monster,
   Battle,
+  DIFFICULTY_MULT,
   generateRoomEvent,
   generateTwoRoomEvents,
   getRandomMonster,
+  getBossForFloor,
   getRandomEquipment,
+  getRoomsPerFloor,
   savePlayer,
   loadPlayer
 }
