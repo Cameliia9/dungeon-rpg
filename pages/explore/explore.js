@@ -13,7 +13,8 @@ Page({
     roomsExplored: 0,
     totalAttack: 0,
     totalDefense: 0,
-    totalMaxHp: 0
+    totalMaxHp: 0,
+    expToLevel: 0
   },
 
   onLoad() {
@@ -39,7 +40,8 @@ Page({
       player,
       totalAttack: player.totalAttack,
       totalDefense: player.totalDefense,
-      totalMaxHp: player.totalMaxHp
+      totalMaxHp: player.totalMaxHp,
+      expToLevel: player.expToLevel()
     })
   },
 

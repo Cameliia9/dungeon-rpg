@@ -168,6 +168,9 @@
         <view class="stat-row" style="margin-top: 2px;">
           <text class="stat-label">⚔️ {{totalAttack}}攻  🛡️ {{totalDefense}}防</text>
         </view>
+        <view class="stat-row" style="margin-top: 2px;">
+          <text class="stat-label">💰 {{player.gold}}金币  ⭐ {{player.exp}} / {{expToLevel}}经验</text>
+        </view>
       </view>
       <button class="btn btn-secondary" style="width: auto; padding: 8px 18px; margin: 0; font-size: 14px;" bindtap="exitExplore">
         🚪 退出探索
@@ -175,7 +178,7 @@
     </view>
   </view>
 
-  <!-- 底部占位（防止内容被状态栏遮挡） -->
-  <view style="height: 80px;"></view>
+  <!-- 底部占位 -->
+  <view style="height: 100px;"></view>
 
 </view>
