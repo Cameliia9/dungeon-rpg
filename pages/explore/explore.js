@@ -15,7 +15,12 @@ Page({
     totalDefense: 0,
     totalMaxHp: 0,
     expToLevel: 0,
-    ROOMS_PER_FLOOR: ROOMS_PER_FLOOR
+    ROOMS_PER_FLOOR: ROOMS_PER_FLOOR,
+
+    // 卡片堆叠
+    roomCards: [],
+    remainingRooms: 0,
+    showStack: false
   },
 
   onLoad() {
@@ -75,6 +80,36 @@ Page({
     if (!player || player.isDead()) return
     const [left, right] = generateTwoRoomEvents(player)
     this.setData({ leftEvent: left, rightEvent: right, leftState: 'door', rightState: 'door' })
+    this._buildStack()
+  },
+
+  _buildStack() {
+    const player = app.getPlayer()
+    if (!player) return
+    const remaining = ROOMS_PER_FLOOR - (player.roomsExplored || 0)
+    const cards = []
+    for (let i = 0; i < remaining; i++) {
+      cards.push({ id: Date.now() + i, removing: false })
+    }
+    this.setData({
+      roomCards: cards,
+      remainingRooms: remaining,
+      showStack: remaining > 0
+    })
+  },
+
+  _removeTopCard() {
+    const cards = this.data.roomCards
+    if (cards.length === 0) return
+    // 标记最上面一张为 removing
+    const idx = cards.length - 1
+    cards[idx] = { ...cards[idx], removing: true }
+    this.setData({ roomCards: cards, remainingRooms: cards.length - 1 })
+    // 动画后移除
+    setTimeout(() => {
+      const cleaned = this.data.roomCards.filter(c => !c.removing)
+      this.setData({ roomCards: cleaned, showStack: cleaned.length > 0, remainingRooms: cleaned.length })
+    }, 550)
   },
 
   generateNewRight() {
@@ -185,6 +220,7 @@ Page({
 
     player.roomsExplored++
     app.saveGame()
+    this._removeTopCard()
 
     if (player.roomsExplored >= ROOMS_PER_FLOOR) {
       this.setData({

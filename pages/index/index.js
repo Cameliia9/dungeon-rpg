@@ -1,43 +1,48 @@
-const ROOMS_PER_FLOOR = 10
 const app = getApp()
 
 Page({
   data: {
+    // 界面状态: menu | difficulty | game
     screen: 'menu',
+    // 难度: easy | hard | nightmare
     difficulty: 'easy',
     hasSavedGame: false,
 
+    // 游戏界面数据
     player: null,
     hpPercent: 100,
     expPercent: 0,
     totalAttack: 0,
     totalDefense: 0,
     totalMaxHp: 0,
-    expToLevel: 0,
-
-    // 房间卡片堆叠
-    roomCards: [],
-    remainingRooms: 0,
-    showStack: false
+    expToLevel: 0
   },
 
   onShow() {
+    // 检查是否有旧存档
     try {
       const save = wx.getStorageSync('dungeon_save')
       this.setData({ hasSavedGame: !!save })
     } catch (e) {
       this.setData({ hasSavedGame: false })
     }
+
+    // 如果在游戏界面，刷新状态
     if (this.data.screen === 'game') {
       this.refreshGame()
       this.checkDead()
     }
+    // 如果在菜单，但已有 player 且继续过游戏，自动显示菜单即可
   },
 
   // ==================== 菜单 ====================
 
-  newGame() { this.setData({ screen: 'difficulty' }) },
+  // 新游戏 → 弹出难度选择
+  newGame() {
+    this.setData({ screen: 'difficulty' })
+  },
 
+  // 继续游戏
   continueGame() {
     if (!this.data.hasSavedGame) return
     const save = wx.getStorageSync('dungeon_save')
@@ -47,12 +52,23 @@ Page({
     this.refreshGame()
   },
 
-  openSettings() { wx.showToast({ title: '设置功能开发中', icon: 'none' }) },
+  // 设置（占位）
+  openSettings() {
+    wx.showToast({ title: '设置功能开发中', icon: 'none' })
+  },
 
+  // 退出（小程序不能真退出，返回提示）
   exitGame() {
     wx.showModal({
-      title: '退出', content: '确定要退出吗？', confirmText: '退出',
-      success: (res) => { if (res.confirm) this.setData({ screen: 'menu' }) }
+      title: '退出',
+      content: '确定要退出吗？',
+      confirmText: '退出',
+      success: (res) => {
+        if (res.confirm) {
+          // 微信小程序无法真退出，回到菜单
+          this.setData({ screen: 'menu' })
+        }
+      }
     })
   },
 
@@ -61,34 +77,50 @@ Page({
   selectDifficulty(e) {
     const difficulty = e.currentTarget.dataset.level
     const { Player } = require('../../utils/game-engine')
+
+    // 删除旧存档
     wx.removeStorageSync('dungeon_save')
+
+    // 根据难度创建角色
     const player = new Player('冒险者')
+
     switch (difficulty) {
-      case 'hard': player.maxHp = 80; player.hp = 80; player.baseAttack = 9; player.gold = 30; break
-      case 'nightmare': player.maxHp = 60; player.hp = 60; player.baseAttack = 7; player.gold = 15; break
+      case 'easy':
+        // 当前设定就是简单难度
+        break
+      case 'hard':
+        // 后续实现
+        player.maxHp = 80
+        player.hp = 80
+        player.baseAttack = 9
+        player.gold = 30
+        break
+      case 'nightmare':
+        // 后续实现
+        player.maxHp = 60
+        player.hp = 60
+        player.baseAttack = 7
+        player.gold = 15
+        break
     }
+
     app.globalData.player = player
     app.saveGame()
+
     this.setData({ screen: 'game', difficulty })
     this.refreshGame()
   },
 
-  backToMenu() { this.setData({ screen: 'menu' }) },
+  // 返回菜单
+  backToMenu() {
+    this.setData({ screen: 'menu' })
+  },
 
   // ==================== 游戏主页 ====================
 
   refreshGame() {
     const player = app.getPlayer()
     if (!player) return
-    const explored = player.roomsExplored || 0
-    const remaining = ROOMS_PER_FLOOR - explored
-    const prevRemaining = this.data.remainingRooms
-
-    // 生成房间卡片
-    if (remaining !== prevRemaining || this.data.roomCards.length === 0) {
-      this._buildCards(remaining, prevRemaining, explored)
-    }
-
     this.setData({
       player,
       totalAttack: player.totalAttack,
@@ -96,36 +128,8 @@ Page({
       totalMaxHp: player.totalMaxHp,
       expToLevel: player.expToLevel(),
       hpPercent: Math.max(0, Math.floor((player.hp / player.totalMaxHp) * 100)),
-      expPercent: Math.floor((player.exp / player.expToLevel()) * 100),
-      remainingRooms: remaining
+      expPercent: Math.floor((player.exp / player.expToLevel()) * 100)
     })
-  },
-
-  _buildCards(remaining, prevRemaining, explored) {
-    const currentLen = this.data.roomCards.length
-
-    // 首次进入 or 房间数增加（下楼重置）→ 重建全部
-    if (currentLen === 0 || remaining > currentLen) {
-      const cards = []
-      for (let i = 0; i < remaining; i++) {
-        cards.push({ id: Date.now() + i, removing: false })
-      }
-      this.setData({ roomCards: cards, showStack: remaining > 0 })
-      return
-    }
-
-    // 房间减少：标记多出的卡片为 removing，动画后移除
-    if (remaining < currentLen) {
-      const cards = this.data.roomCards.map((c, i) => {
-        if (i >= remaining) return { ...c, removing: true }
-        return c
-      })
-      this.setData({ roomCards: cards })
-      setTimeout(() => {
-        const cleaned = this.data.roomCards.filter(c => !c.removing)
-        this.setData({ roomCards: cleaned, showStack: cleaned.length > 0 })
-      }, 600)
-    }
   },
 
   checkDead() {
@@ -133,7 +137,7 @@ Page({
     if (player && player.isDead()) {
       wx.removeStorageSync('dungeon_save')
       app.globalData.player = null
-      this.setData({ screen: 'menu', hasSavedGame: false, roomCards: [], showStack: false })
+      this.setData({ screen: 'menu', hasSavedGame: false })
       wx.showToast({ title: '冒险结束，返回菜单', icon: 'none' })
     }
   },
@@ -144,12 +148,20 @@ Page({
     wx.navigateTo({ url: '/pages/explore/explore' })
   },
 
-  goInventory() { wx.navigateTo({ url: '/pages/inventory/inventory' }) },
-  goShop() { wx.navigateTo({ url: '/pages/shop/shop' }) },
+  goInventory() {
+    wx.navigateTo({ url: '/pages/inventory/inventory' })
+  },
+
+  goShop() {
+    wx.navigateTo({ url: '/pages/shop/shop' })
+  },
 
   restart() {
     wx.showModal({
-      title: '确认重新开始？', content: '当前角色和所有进度将被清除。', confirmText: '确认', cancelText: '取消',
+      title: '确认重新开始？',
+      content: '当前角色和所有进度将被清除。',
+      confirmText: '确认',
+      cancelText: '取消',
       success: (res) => {
         if (res.confirm) {
           wx.removeStorageSync('dungeon_save')
