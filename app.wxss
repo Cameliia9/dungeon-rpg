@@ -183,52 +183,6 @@ page {
   gap: 10px;
 }
 
-/* 房间卡片堆叠 */
-.stack-container {
-  margin-bottom: 16px;
-}
-
-.stack-wrapper {
-  position: relative;
-  min-height: 80px;
-}
-
-.stack-card {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #1a1a2e, #2a2a4a);
-  border: 2px solid #3a3a5a;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.5s ease-out;
-}
-
-.stack-card-out {
-  transform: translateX(-50%) translateY(-60px);
-  opacity: 0;
-}
-
-/* 幽灵卡片 - 3D浮空堆叠 */
-.ghost-card {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, #151525, #1a1a30);
-  border: 2px solid #3a3a5a;
-  border-radius: 12px;
-  transition: all 0.4s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
-/* 主卡片浮空阴影 */
-.main-float {
-  box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 0 12px rgba(120,100,200,0.15);
-}
-
 /* 主卡片右上方飞出 */
 .fly-out-right {
   animation: flyOut 0.5s ease-out forwards;

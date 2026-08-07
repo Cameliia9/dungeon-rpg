@@ -16,9 +16,6 @@ Page({
     expToLevel: 0,
     ROOMS_PER_FLOOR: ROOMS_PER_FLOOR,
 
-    // 卡片叠层深度
-    leftDepth: 4,
-    rightDepth: 4,
     leftOut: false,
     rightOut: false
   },
@@ -71,15 +68,8 @@ Page({
   },
 
   _animateCardOut(side) {
-    const outKey = side + 'Out'
-    const depthKey = side + 'Depth'
-    // 触发滑出动画
-    this.setData({ [outKey]: true })
-    // 动画结束后减深度并重置
-    setTimeout(() => {
-      const newDepth = Math.max(1, this.data[depthKey] - 1)
-      this.setData({ [outKey]: false, [depthKey]: newDepth })
-    }, 450)
+    this.setData({ [side + 'Out']: true })
+    setTimeout(() => { this.setData({ [side + 'Out']: false }) }, 450)
   },
 
   generateNewRight() {
