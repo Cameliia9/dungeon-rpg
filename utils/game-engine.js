@@ -196,19 +196,25 @@ const EVENT_TYPES = [
   'oldGear'    // 破旧装备
 ]
 
-// 生成两个不同事件（左/右探索）
+// 生成两个不同事件（怪物占60%权重）
 function generateTwoRoomEvents(player) {
   const floor = player.floor
-  const pool = [...EVENT_TYPES]
-  // 随机打乱后取前两个
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]]
+  const otherTypes = EVENT_TYPES.filter(t => t !== 'monster')
+
+  function pickOne() {
+    if (Math.random() < 0.85) {
+      return buildEvent('monster', player, floor)
+    }
+    const type = otherTypes[Math.floor(Math.random() * otherTypes.length)]
+    return buildEvent(type, player, floor)
   }
-  return [
-    buildEvent(pool[0], player, floor),
-    buildEvent(pool[1], player, floor)
-  ]
+
+  let left = pickOne()
+  let right = pickOne()
+  while (right.type === left.type) {
+    right = pickOne()
+  }
+  return [left, right]
 }
 
 // 根据事件类型构建事件数据
@@ -264,7 +270,7 @@ function buildEvent(type, player, floor) {
       }
 
     case 'altar':
-      return { type: 'altar', sacrifice: Math.max(1, Math.floor(player.hp * 0.1)) }
+      return { type: 'altar', cost: 30, maxCount: 3, altarCount: 0 }
 
     case 'deadend':
       return { type: 'deadend' }

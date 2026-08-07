@@ -1,25 +1,23 @@
 /**
  * 地牢冒险 - 游戏数据
- * 怪物、装备库
+ * 怪物、装备库（怪物掉落已整体降低）
  */
 
-// 怪物数据
 const monsters = [
-  { name: '史莱姆', hp: 30, attack: 8, defense: 1, exp: 25, gold: 5, level: 1, desc: '一团黏糊糊的绿色生物' },
-  { name: '大老鼠', hp: 40, attack: 10, defense: 2, exp: 35, gold: 8, level: 1, desc: '体型硕大的地牢老鼠' },
-  { name: '骷髅兵', hp: 55, attack: 14, defense: 4, exp: 55, gold: 12, level: 2, desc: '死去冒险者的遗骸' },
-  { name: '暗影蝙蝠', hp: 45, attack: 16, defense: 3, exp: 50, gold: 10, level: 2, desc: '在黑暗中飞行的吸血蝙蝠' },
-  { name: '哥布林战士', hp: 70, attack: 18, defense: 6, exp: 70, gold: 18, level: 3, desc: '手持生锈短剑的哥布林' },
-  { name: '腐尸', hp: 90, attack: 20, defense: 8, exp: 85, gold: 20, level: 3, desc: '散发着恶臭的不死生物' },
-  { name: '石像鬼', hp: 110, attack: 25, defense: 12, exp: 110, gold: 30, level: 4, desc: '会动的石像，爪牙锋利' },
-  { name: '暗影刺客', hp: 85, attack: 32, defense: 8, exp: 105, gold: 28, level: 5, desc: '来去无踪的暗杀者' },
-  { name: '食人魔', hp: 160, attack: 28, defense: 15, exp: 140, gold: 40, level: 5, desc: '体型庞大的丑陋巨人' },
-  { name: '死亡骑士', hp: 200, attack: 35, defense: 20, exp: 180, gold: 55, level: 7, desc: '堕落的骑士，身穿黑甲' },
-  { name: '炎魔', hp: 280, attack: 42, defense: 25, exp: 250, gold: 80, level: 9, desc: '来自深渊的火焰恶魔' },
-  { name: '远古巨龙', hp: 400, attack: 50, defense: 35, exp: 400, gold: 150, level: 12, desc: '地牢最深处的守护者' }
+  { name: '史莱姆', hp: 30, attack: 8, defense: 1, exp: 15, gold: 3, level: 1, desc: '一团黏糊糊的绿色生物' },
+  { name: '大老鼠', hp: 40, attack: 10, defense: 2, exp: 20, gold: 4, level: 1, desc: '体型硕大的地牢老鼠' },
+  { name: '骷髅兵', hp: 55, attack: 14, defense: 4, exp: 30, gold: 6, level: 2, desc: '死去冒险者的遗骸' },
+  { name: '暗影蝙蝠', hp: 45, attack: 16, defense: 3, exp: 28, gold: 5, level: 2, desc: '在黑暗中飞行的吸血蝙蝠' },
+  { name: '哥布林战士', hp: 70, attack: 18, defense: 6, exp: 40, gold: 9, level: 3, desc: '手持生锈短剑的哥布林' },
+  { name: '腐尸', hp: 90, attack: 20, defense: 8, exp: 50, gold: 10, level: 3, desc: '散发着恶臭的不死生物' },
+  { name: '石像鬼', hp: 110, attack: 25, defense: 12, exp: 65, gold: 15, level: 4, desc: '会动的石像，爪牙锋利' },
+  { name: '暗影刺客', hp: 85, attack: 32, defense: 8, exp: 60, gold: 14, level: 5, desc: '来去无踪的暗杀者' },
+  { name: '食人魔', hp: 160, attack: 28, defense: 15, exp: 80, gold: 20, level: 5, desc: '体型庞大的丑陋巨人' },
+  { name: '死亡骑士', hp: 200, attack: 35, defense: 20, exp: 100, gold: 28, level: 7, desc: '堕落的骑士，身穿黑甲' },
+  { name: '炎魔', hp: 280, attack: 42, defense: 25, exp: 140, gold: 40, level: 9, desc: '来自深渊的火焰恶魔' },
+  { name: '远古巨龙', hp: 400, attack: 50, defense: 35, exp: 220, gold: 75, level: 12, desc: '地牢最深处的守护者' }
 ]
 
-// 装备数据
 const equipment = {
   weapon: [
     { name: '木剑', attack: 5, price: 20, tier: 0, desc: '新手冒险者的第一把武器' },
@@ -50,17 +48,4 @@ const equipment = {
   ]
 }
 
-// 怪物名称池（用于显示）
-const monsterNames = {
-  floor1: ['史莱姆', '大老鼠', '骷髅兵'],
-  floor2: ['骷髅兵', '暗影蝙蝠', '哥布林战士'],
-  floor3: ['哥布林战士', '腐尸', '石像鬼'],
-  floor4: ['石像鬼', '暗影刺客', '食人魔'],
-  floor5: ['食人魔', '死亡骑士', '炎魔']
-}
-
-module.exports = {
-  monsters,
-  equipment,
-  monsterNames
-}
+module.exports = { monsters, equipment }

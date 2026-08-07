@@ -69,9 +69,9 @@
       <block wx:if="{{leftState === 'altar'}}">
         <text style="font-size: 36px; display: block;">🔮</text>
         <text class="title" style="font-size: 16px;">遗物祭坛</text>
-        <text class="subtitle" style="font-size: 11px;">献祭{{leftEvent.sacrifice}}血</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="altarLeft" data-type="attack">⚔️ +1攻击</button>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="altarLeft" data-type="defense">🛡️ +1防御</button>
+        <text class="subtitle" style="font-size: 11px;">献祭{{leftEvent.cost}}血 剩余{{leftEvent.maxCount - leftEvent.altarCount}}次</text>
+        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="altarLeft" data-type="attack" disabled="{{leftEvent.altarCount >= leftEvent.maxCount}}">⚔️ +1攻击</button>
+        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="altarLeft" data-type="defense" disabled="{{leftEvent.altarCount >= leftEvent.maxCount}}">🛡️ +1防御</button>
         <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishLeft">离开</button>
       </block>
 
@@ -154,9 +154,9 @@
       <block wx:if="{{rightState === 'altar'}}">
         <text style="font-size: 36px; display: block;">🔮</text>
         <text class="title" style="font-size: 16px;">遗物祭坛</text>
-        <text class="subtitle" style="font-size: 11px;">献祭{{rightEvent.sacrifice}}血</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="altarRight" data-type="attack">⚔️ +1攻击</button>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="altarRight" data-type="defense">🛡️ +1防御</button>
+        <text class="subtitle" style="font-size: 11px;">献祭{{rightEvent.cost}}血 剩余{{rightEvent.maxCount - rightEvent.altarCount}}次</text>
+        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="altarRight" data-type="attack" disabled="{{rightEvent.altarCount >= rightEvent.maxCount}}">⚔️ +1攻击</button>
+        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="altarRight" data-type="defense" disabled="{{rightEvent.altarCount >= rightEvent.maxCount}}">🛡️ +1防御</button>
         <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishRight">离开</button>
       </block>
 

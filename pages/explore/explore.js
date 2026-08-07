@@ -1,5 +1,6 @@
 const app = getApp()
 const { generateTwoRoomEvents } = require('../../utils/game-engine')
+const ROOMS_PER_FLOOR = 10
 
 Page({
   data: {
@@ -76,7 +77,10 @@ Page({
 
   // ==================== 左卡片操作 ====================
 
-  goLeft() { this.pickSide('left') },
+  goLeft() {
+    if (this.data.rightState !== 'door') { wx.showToast({ title: '先完成当前事件', icon: 'none' }); return }
+    this.pickSide('left')
+  },
   finishLeft() { this.finishSide('left') },
   goBattleLeft() { this.startBattle('left') },
   runAwayLeft() { this.runAway('left') },
@@ -88,7 +92,10 @@ Page({
 
   // ==================== 右卡片操作 ====================
 
-  goRight() { this.pickSide('right') },
+  goRight() {
+    if (this.data.leftState !== 'door') { wx.showToast({ title: '先完成当前事件', icon: 'none' }); return }
+    this.pickSide('right')
+  },
   finishRight() { this.finishSide('right') },
   goBattleRight() { this.startBattle('right') },
   runAwayRight() { this.runAway('right') },
@@ -167,7 +174,7 @@ Page({
 
     const rooms = this.data.roomsExplored + 1
 
-    if (rooms >= 3) {
+    if (rooms >= ROOMS_PER_FLOOR) {
       this.setData({
         canDescend: true,
         roomsExplored: rooms,
@@ -275,14 +282,27 @@ Page({
   altarSacrifice(side, e) {
     const sacType = e.currentTarget.dataset.type
     const player = app.getPlayer()
-    const cost = Math.max(1, Math.floor(player.hp * 0.1))
-    player.hp = Math.max(1, player.hp - cost)
-    if (sacType === 'attack') { player.baseAttack += 1; wx.showToast({ title: `献祭${cost}血！攻击+1`, icon: 'success' }) }
-    else { player.baseDefense += 1; wx.showToast({ title: `献祭${cost}血！防御+1`, icon: 'success' }) }
+    const evtKey = side + 'Event'
+    const event = this.data[evtKey]
+    if (!event || event.altarCount >= event.maxCount) return
+    if (player.hp <= event.cost) { wx.showToast({ title: '生命不足！', icon: 'error' }); return }
+
+    event.altarCount++
+    player.hp -= event.cost
+    if (sacType === 'attack') { player.baseAttack += 1; wx.showToast({ title: `献祭${event.cost}血！攻击+1 (${event.altarCount}/${event.maxCount})`, icon: 'success' }) }
+    else { player.baseDefense += 1; wx.showToast({ title: `献祭${event.cost}血！防御+1 (${event.altarCount}/${event.maxCount})`, icon: 'success' }) }
     app.saveGame()
     this.refreshPlayer()
-    if (player.isDead()) { this.checkDead(); return }
-    this.finishSide(side)
+
+    // 更新祭坛数据到页面
+    const upd = {}
+    upd[evtKey] = event
+    if (event.altarCount >= event.maxCount || player.hp <= event.cost) {
+      upd[side + 'State'] = 'door'
+      setTimeout(() => this.finishSide(side), 500)
+    }
+    this.setData(upd)
+    if (player.isDead()) this.checkDead()
   },
 
   // ==================== 破旧装备 ====================
