@@ -4,11 +4,11 @@ const { generateTwoRoomEvents } = require('../../utils/game-engine')
 Page({
   data: {
     player: null,
-    leftEvent: null,       // 左路事件
-    rightEvent: null,      // 右路事件
-    activeEvent: null,     // 当前激活的事件
-    currentChoice: null,   // 'left' | 'right' | null (未选)
-    trapResult: null,      // 陷阱结果
+    leftEvent: null,
+    rightEvent: null,
+    activeEvent: null,
+    activeSide: null,        // 'left' | 'right' | null
+    trapResult: null,
     canDescend: false,
     roomsExplored: 0,
     totalAttack: 0,
@@ -25,10 +25,8 @@ Page({
 
   onShow() {
     this.refreshPlayer()
-    // 兜底清理
-    if (this.data.activeEvent && this.data.activeEvent.type === 'monster' && !app.globalData.currentMonsterData) {
-      this.setData({ activeEvent: null, currentChoice: null })
-      this.generateEvents()
+    if (this.data.activeEvent && (this.data.activeEvent.type === 'monster' || this.data.activeEvent.type === 'camp_ambush') && !app.globalData.currentMonsterData) {
+      this.finishEvent(this.data.activeSide || 'left')
     }
     this.checkDead()
   },
@@ -50,7 +48,7 @@ Page({
     if (player && player.isDead()) {
       wx.removeStorageSync('dungeon_save')
       app.globalData.player = null
-      this.setData({ activeEvent: null, currentChoice: null })
+      this.setData({ activeEvent: null, activeSide: null })
       wx.showModal({
         title: '你死在了地牢中...',
         content: '冒险到此结束，返回主菜单。',
@@ -68,16 +66,29 @@ Page({
     const player = app.getPlayer()
     if (!player || player.isDead()) return
     const [left, right] = generateTwoRoomEvents(player)
-    this.setData({ leftEvent: left, rightEvent: right, currentChoice: null, activeEvent: null })
+    this.setData({ leftEvent: left, rightEvent: right, activeEvent: null, activeSide: null })
+  },
+
+  // 生成一个新事件（和左门不同）
+  generateNewRight() {
+    const player = app.getPlayer()
+    if (!player) return
+    const [a, b] = generateTwoRoomEvents(player)
+    // 确保和左门不同
+    const leftType = this.data.leftEvent && this.data.leftEvent.type
+    const newRight = (a.type !== leftType) ? a : b
+    this.setData({ rightEvent: newRight })
   },
 
   // ==================== 方向选择 ====================
 
   goLeft() {
+    if (this.data.activeEvent) return // 正在处理事件中
     this.pickEvent('left')
   },
 
   goRight() {
+    if (this.data.activeEvent) return
     this.pickEvent('right')
   },
 
@@ -86,19 +97,20 @@ Page({
     if (!event) return
 
     const player = app.getPlayer()
-    let handled = false
 
     // 自动类事件：立即生效
     switch (event.type) {
       case 'treasure':
         player.gold += event.gold
-        handled = true
-        break
+        app.saveGame()
+        this.setActiveAndFinish(event, side)
+        return
       case 'spring':
         player.heal(event.heal)
-        handled = true
-        break
-      case 'trap':
+        app.saveGame()
+        this.setActiveAndFinish(event, side)
+        return
+      case 'trap': {
         const dodged = Math.random() < event.dodgeChance
         let dmg = 0
         if (!dodged) {
@@ -106,65 +118,85 @@ Page({
           player.hp = Math.max(0, player.hp - dmg)
         }
         app.saveGame()
-        this.setData({
-          activeEvent: event,
-          currentChoice: side,
-          trapResult: { dodged, damage: dmg }
-        })
+        this.setData({ activeEvent: event, activeSide: side, trapResult: { dodged, damage: dmg } })
         this.refreshPlayer()
+        if (player.isDead()) { this.checkDead(); return }
         return
+      }
       case 'deadend':
-        handled = true
-        break
+        app.saveGame()
+        this.setActiveAndFinish(event, side)
+        return
       case 'coins':
         player.gold += event.gold
-        handled = true
-        break
+        app.saveGame()
+        this.setActiveAndFinish(event, side)
+        return
       case 'buffStone':
         player.tempAttackBuff = (player.tempAttackBuff || 0) + event.attackBonus
-        handled = true
-        break
+        app.saveGame()
+        this.setActiveAndFinish(event, side)
+        return
     }
 
-    app.saveGame()
-
-    if (handled) {
-      this.setData({ activeEvent: event, currentChoice: side })
-      this.refreshPlayer()
-      this.advanceRoom()
-    } else {
-      // 交互类事件：设 activeEvent，等待用户操作
-      this.setData({ activeEvent: event, currentChoice: side })
-    }
-
-    // 检查死亡
-    if (player.isDead()) {
-      this.refreshPlayer()
-      this.checkDead()
-    }
+    // 交互类：设 activeEvent，等待用户操作
+    this.setData({ activeEvent: event, activeSide: side })
+    if (player.isDead()) { this.refreshPlayer(); this.checkDead() }
   },
 
-  // ==================== 房间推进 ====================
-
-  advanceRoom() {
-    const rooms = this.data.roomsExplored + 1
-    if (rooms >= 3) {
-      this.setData({ canDescend: true, roomsExplored: rooms })
-    } else {
-      this.setData({ roomsExplored: rooms })
-    }
+  // 显示自动事件结果，1.5秒后自动推进
+  setActiveAndFinish(event, side) {
+    this.setData({ activeEvent: event, activeSide: side })
+    this.refreshPlayer()
+    setTimeout(() => {
+      this.finishEvent(side)
+    }, 1500)
   },
 
-  nextRound() {
+  // ==================== 事件完成 → 推门 ====================
+
+  finishEvent(side) {
     if (this.data.canDescend) return
     const player = app.getPlayer()
-    if (!player || player.isDead()) {
-      this.checkDead()
+    if (!player || player.isDead()) { this.checkDead(); return }
+
+    const rooms = this.data.roomsExplored + 1
+
+    if (rooms >= 3) {
+      // 3个房间后出楼梯
+      this.setData({
+        canDescend: true,
+        roomsExplored: rooms,
+        activeEvent: null,
+        activeSide: null
+      })
       return
     }
-    this.setData({ activeEvent: null, currentChoice: null })
-    this.generateEvents()
+
+    // 滑动逻辑：选左→右变左+生新右；选右→生新右
+    if (side === 'left') {
+      this.setData({
+        leftEvent: this.data.rightEvent,
+        activeEvent: null,
+        activeSide: null,
+        roomsExplored: rooms
+      })
+      this.generateNewRight()
+    } else {
+      this.setData({
+        activeEvent: null,
+        activeSide: null,
+        roomsExplored: rooms
+      })
+      this.generateNewRight()
+    }
+
     this.refreshPlayer()
+  },
+
+  // WXML 按钮绑定用
+  nextRound() {
+    this.finishEvent(this.data.activeSide || 'left')
   },
 
   // ==================== 怪物交互 ====================
@@ -181,16 +213,12 @@ Page({
       desc: m.desc, level: m.level
     }
 
+    const side = this.data.activeSide
     wx.navigateTo({
       url: '/pages/battle/battle',
       events: {
         battleResolved: () => {
-          if (this.data.activeEvent && this.data.activeEvent.type === 'monster') {
-            this.nextRound()
-          }
-          if (this.data.activeEvent && this.data.activeEvent.type === 'camp_ambush') {
-            this.nextRound()
-          }
+          this.finishEvent(side)
         }
       }
     })
@@ -199,7 +227,7 @@ Page({
   runAway() {
     if (Math.random() < 0.5) {
       wx.showToast({ title: '逃跑成功！', icon: 'success' })
-      this.nextRound()
+      this.finishEvent(this.data.activeSide)
     } else {
       wx.showToast({ title: '逃跑失败！准备战斗', icon: 'error' })
       this.goBattle()
@@ -219,7 +247,6 @@ Page({
     }
 
     player.gold -= item.price
-
     if (item.type === 'potion') {
       const healAmount = Math.floor(player.totalMaxHp * item.healPercent)
       player.heal(healAmount)
@@ -228,7 +255,6 @@ Page({
       player.inventory.push(item)
       wx.showToast({ title: `购买了 ${item.name}！已放入背包`, icon: 'success' })
     }
-
     app.saveGame()
     this.refreshPlayer()
   },
@@ -237,21 +263,18 @@ Page({
 
   doRest() {
     const player = app.getPlayer()
-    player.heal(player.totalMaxHp) // 回满
+    player.heal(player.totalMaxHp)
     app.saveGame()
     this.refreshPlayer()
 
     if (Math.random() < this.data.activeEvent.ambushChance) {
       wx.showToast({ title: '休息时遭遇怪物袭击！', icon: 'error' })
       this.setData({
-        activeEvent: {
-          type: 'camp_ambush',
-          monster: this.data.activeEvent.ambushMonster
-        }
+        activeEvent: { type: 'camp_ambush', monster: this.data.activeEvent.ambushMonster }
       })
     } else {
       wx.showToast({ title: '安全休息，生命回满！', icon: 'success' })
-      this.nextRound()
+      this.finishEvent(this.data.activeSide)
     }
   },
 
@@ -261,8 +284,7 @@ Page({
     const sacType = e.currentTarget.dataset.type
     const player = app.getPlayer()
     const cost = Math.max(1, Math.floor(player.hp * 0.1))
-
-    player.hp = Math.max(1, player.hp - cost) // 至少剩1血
+    player.hp = Math.max(1, player.hp - cost)
 
     if (sacType === 'attack') {
       player.baseAttack += 1
@@ -271,15 +293,10 @@ Page({
       player.baseDefense += 1
       wx.showToast({ title: `献祭${cost}生命！防御力 +1`, icon: 'success' })
     }
-
     app.saveGame()
     this.refreshPlayer()
-
-    if (player.isDead()) {
-      this.checkDead()
-      return
-    }
-    this.nextRound()
+    if (player.isDead()) { this.checkDead(); return }
+    this.finishEvent(this.data.activeSide)
   },
 
   // ==================== 破旧装备交互 ====================
@@ -290,7 +307,7 @@ Page({
     wx.showToast({ title: `穿上破旧装备，防御 +${this.data.activeEvent.defense}！`, icon: 'success' })
     app.saveGame()
     this.refreshPlayer()
-    this.nextRound()
+    this.finishEvent(this.data.activeSide)
   },
 
   scrapOldGear() {
@@ -299,7 +316,7 @@ Page({
     wx.showToast({ title: `拆解获得 ${this.data.activeEvent.gold} 金币！`, icon: 'success' })
     app.saveGame()
     this.refreshPlayer()
-    this.nextRound()
+    this.finishEvent(this.data.activeSide)
   },
 
   // ==================== 下楼 ====================
@@ -307,17 +324,12 @@ Page({
   descend() {
     const player = app.getPlayer()
     player.floor++
-    player.tempAttackBuff = 0     // 清临时buff
-    player.tempDefenseBuff = 0    // 清临时buff
+    player.tempAttackBuff = 0
+    player.tempDefenseBuff = 0
     player.heal(Math.floor(player.totalMaxHp * 0.3))
     app.saveGame()
     this.refreshPlayer()
-    this.setData({
-      activeEvent: null,
-      currentChoice: null,
-      canDescend: false,
-      roomsExplored: 0
-    })
+    this.setData({ activeEvent: null, activeSide: null, canDescend: false, roomsExplored: 0 })
     this.generateEvents()
     wx.showToast({ title: `进入第 ${player.floor} 层！`, icon: 'success' })
   },

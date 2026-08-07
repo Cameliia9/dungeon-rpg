@@ -7,34 +7,36 @@
     <text class="subtitle">小心前进...</text>
   </view>
 
-  <!-- ========== 中间主交互区 ========== -->
-
-  <!-- 状态一：双岔路口，选择方向 -->
-  <view wx:if="{{!currentChoice}}" class="card" style="text-align: center;">
-    <text style="font-size: 40px; display: block; margin: 10px 0;">🚪</text>
-    <text style="color: #8a8a9a; display: block; margin-bottom: 20px;">前方出现岔路口，选择一条路...</text>
+  <!-- ========== 两个门（始终显示，activeEvent时变灰） ========== -->
+  <view class="card" style="text-align: center;">
+    <text style="color: #8a8a9a; margin-bottom: 14px; display: block;">选择一扇门...</text>
     <view style="display: flex; justify-content: space-around;">
-      <button class="btn btn-primary" style="width: 36%;" bindtap="goLeft">
-        ⬅️ 向左探索
+      <button class="btn btn-primary" style="width: 38%;" bindtap="goLeft" disabled="{{!!activeEvent}}">
+        🚪 左门
       </button>
-      <button class="btn btn-primary" style="width: 36%;" bindtap="goRight">
-        ➡️ 向右探索
+      <button class="btn btn-primary" style="width: 38%;" bindtap="goRight" disabled="{{!!activeEvent}}">
+        🚪 右门
       </button>
+    </view>
+    <!-- 门后提示 -->
+    <view style="display: flex; justify-content: space-around; margin-top: 10px;">
+      <text style="width: 38%; font-size: 12px; color: #6a6a7a;">{{leftEvent.type === 'monster' ? '👹 怪物' : leftEvent.type === 'treasure' ? '📦 宝箱' : leftEvent.type === 'spring' ? '💧 泉水' : leftEvent.type === 'merchant' ? '🧙 商人' : leftEvent.type === 'trap' ? '⚠️ 陷阱' : leftEvent.type === 'camp' ? '🏕️ 营地' : leftEvent.type === 'altar' ? '🔮 祭坛' : leftEvent.type === 'deadend' ? '🚧 死路' : leftEvent.type === 'coins' ? '🪙 金币' : leftEvent.type === 'buffStone' ? '🗿 石碑' : leftEvent.type === 'oldGear' ? '🦺 装备' : '❓ 未知'}}</text>
+      <text style="width: 38%; font-size: 12px; color: #6a6a7a;">{{rightEvent.type === 'monster' ? '👹 怪物' : rightEvent.type === 'treasure' ? '📦 宝箱' : rightEvent.type === 'spring' ? '💧 泉水' : rightEvent.type === 'merchant' ? '🧙 商人' : rightEvent.type === 'trap' ? '⚠️ 陷阱' : rightEvent.type === 'camp' ? '🏕️ 营地' : rightEvent.type === 'altar' ? '🔮 祭坛' : rightEvent.type === 'deadend' ? '🚧 死路' : rightEvent.type === 'coins' ? '🪙 金币' : rightEvent.type === 'buffStone' ? '🗿 石碑' : rightEvent.type === 'oldGear' ? '🦺 装备' : '❓ 未知'}}</text>
     </view>
   </view>
 
-  <!-- 状态二：已选方向，显示事件（自动类） -->
-  <view wx:if="{{currentChoice && !currentInteraction}}" class="card">
+  <!-- ========== 事件处理区（处理事件时显示，自动事件1.5s后消失） ========== -->
+  <view wx:if="{{activeEvent}}" class="card">
 
     <!-- 怪物 -->
     <block wx:if="{{activeEvent.type === 'monster'}}">
       <text style="font-size: 36px; display: block; text-align: center;">👹</text>
       <text class="title">{{activeEvent.monster.name}} 出现了！</text>
       <text class="subtitle">{{activeEvent.monster.desc}}</text>
-      <view class="stat-row"><text class="stat-label">怪物血量</text><text class="stat-value">{{activeEvent.monster.hp}}</text></view>
-      <view class="stat-row"><text class="stat-label">怪物攻击</text><text class="stat-value">{{activeEvent.monster.attack}}</text></view>
+      <view class="stat-row"><text class="stat-label">血量</text><text class="stat-value">{{activeEvent.monster.hp}}</text></view>
+      <view class="stat-row"><text class="stat-label">攻击</text><text class="stat-value">{{activeEvent.monster.attack}}</text></view>
       <button class="btn btn-primary" bindtap="goBattle">⚔️ 战斗！</button>
-      <button class="btn btn-secondary" bindtap="runAway">🏃 逃跑（50%成功率）</button>
+      <button class="btn btn-secondary" bindtap="runAway">🏃 逃跑（50%）</button>
     </block>
 
     <!-- 宝箱 -->
@@ -42,56 +44,50 @@
       <text style="font-size: 36px; display: block; text-align: center;">📦</text>
       <text class="title">发现了宝箱！</text>
       <text class="subtitle" style="color: #f0c040;">获得 {{activeEvent.gold}} 金币</text>
-      <button class="btn btn-primary" bindtap="nextRound">➡️ 继续前进</button>
     </block>
 
     <!-- 生命泉水 -->
     <block wx:if="{{activeEvent.type === 'spring'}}">
       <text style="font-size: 36px; display: block; text-align: center;">💧</text>
       <text class="title">生命泉水</text>
-      <text class="subtitle" style="color: #2ecc71;">饮用泉水，恢复了 {{activeEvent.heal}} 点生命</text>
-      <button class="btn btn-primary" bindtap="nextRound">➡️ 继续前进</button>
+      <text class="subtitle" style="color: #2ecc71;">恢复了 {{activeEvent.heal}} 点生命</text>
     </block>
 
     <!-- 陷阱机关 -->
     <block wx:if="{{activeEvent.type === 'trap'}}">
       <text style="font-size: 36px; display: block; text-align: center;">⚠️</text>
       <text class="title">{{trapResult.dodged ? '闪避成功！' : '触发陷阱！'}}</text>
-      <text class="subtitle" wx:if="{{!trapResult.dodged}}" style="color: #e74c3c;">尖刺陷阱造成了 {{trapResult.damage}} 点伤害</text>
-      <text class="subtitle" wx:if="{{trapResult.dodged}}" style="color: #2ecc71;">你敏捷地躲开了陷阱，毫发无伤！</text>
-      <button class="btn btn-primary" bindtap="nextRound">➡️ 继续前进</button>
+      <text class="subtitle" wx:if="{{!trapResult.dodged}}" style="color: #e74c3c;">尖刺造成了 {{trapResult.damage}} 点伤害</text>
+      <text class="subtitle" wx:if="{{trapResult.dodged}}" style="color: #2ecc71;">你敏捷地躲开了！</text>
     </block>
 
     <!-- 迷途岔路 -->
     <block wx:if="{{activeEvent.type === 'deadend'}}">
       <text style="font-size: 36px; display: block; text-align: center;">🚧</text>
       <text class="title">迷途岔路</text>
-      <text class="subtitle" style="color: #8a8a9a;">这是一条死胡同，你安全返回了岔路口</text>
-      <button class="btn btn-primary" bindtap="nextRound">➡️ 继续前进</button>
+      <text class="subtitle" style="color: #8a8a9a;">死胡同，安全返回</text>
     </block>
 
     <!-- 散落金币 -->
     <block wx:if="{{activeEvent.type === 'coins'}}">
       <text style="font-size: 36px; display: block; text-align: center;">🪙</text>
       <text class="title">散落金币</text>
-      <text class="subtitle" style="color: #f0c040;">你发现了 {{activeEvent.gold}} 枚金币！</text>
-      <button class="btn btn-primary" bindtap="nextRound">➡️ 继续前进</button>
+      <text class="subtitle" style="color: #f0c040;">捡到 {{activeEvent.gold}} 枚金币！</text>
     </block>
 
     <!-- 增益石碑 -->
     <block wx:if="{{activeEvent.type === 'buffStone'}}">
       <text style="font-size: 36px; display: block; text-align: center;">🗿</text>
       <text class="title">增益石碑</text>
-      <text class="subtitle" style="color: #e0c080;">石碑的力量涌入体内，攻击力 +{{activeEvent.attackBonus}}！（本次探索有效）</text>
-      <button class="btn btn-primary" bindtap="nextRound">➡️ 继续前进</button>
+      <text class="subtitle" style="color: #e0c080;">攻击力 +{{activeEvent.attackBonus}}！（本次探索有效）</text>
     </block>
 
     <!-- 神秘商人 -->
     <block wx:if="{{activeEvent.type === 'merchant'}}">
       <text style="font-size: 36px; display: block; text-align: center;">🧙</text>
       <text class="title">神秘商人</text>
-      <text class="subtitle">"冒险者，看看我的货物吧！"</text>
-      <view wx:for="{{activeEvent.items}}" wx:key="name" style="margin: 10px 0; padding: 10px; background: #1a1a2e; border-radius: 8px;">
+      <text class="subtitle">"冒险者，看看我的货物！"</text>
+      <view wx:for="{{activeEvent.items}}" wx:key="name" style="margin: 8px 0; padding: 8px; background: #1a1a2e; border-radius: 8px;">
         <view class="flex-between">
           <view>
             <text style="color: #e0c080;">{{item.name}}</text>
@@ -99,7 +95,7 @@
           </view>
           <view style="text-align: right;">
             <text style="color: #f0c040;">💰{{item.price}}</text>
-            <button class="btn btn-gold" style="padding: 6px 14px; font-size: 12px; margin-top: 4px;" bindtap="buyItem" data-index="{{index}}">购买</button>
+            <button class="btn btn-gold" style="padding: 4px 12px; font-size: 12px; margin-top: 2px;" bindtap="buyItem" data-index="{{index}}">购买</button>
           </view>
         </view>
       </view>
@@ -110,29 +106,29 @@
     <block wx:if="{{activeEvent.type === 'camp'}}">
       <text style="font-size: 36px; display: block; text-align: center;">🏕️</text>
       <text class="title">休息营地</text>
-      <text class="subtitle">发现了一个废弃营地，可以在此休息</text>
-      <text style="color: #e74c3c; display: block; text-align: center; margin: 8px 0;">⚠️ 休息有30%概率遭遇巡逻怪物</text>
+      <text class="subtitle">可以在此休息恢复生命</text>
+      <text style="color: #e74c3c; display: block; text-align: center; margin: 6px 0;">⚠️ 30%概率遭遇巡逻怪物</text>
       <button class="btn btn-primary" bindtap="doRest">🛌 休息（回满生命）</button>
-      <button class="btn btn-secondary" bindtap="nextRound">🚶 离开营地</button>
+      <button class="btn btn-secondary" bindtap="nextRound">🚶 离开</button>
     </block>
 
     <!-- 遗物祭坛 -->
     <block wx:if="{{activeEvent.type === 'altar'}}">
       <text style="font-size: 36px; display: block; text-align: center;">🔮</text>
       <text class="title">遗物祭坛</text>
-      <text class="subtitle">献祭 {{activeEvent.sacrifice}} 点生命值，换取永久力量</text>
-      <button class="btn btn-primary" bindtap="altarSacrifice" data-type="attack">⚔️ 换取 +1 攻击力</button>
-      <button class="btn btn-primary" bindtap="altarSacrifice" data-type="defense">🛡️ 换取 +1 防御力</button>
-      <button class="btn btn-secondary" bindtap="nextRound">🚶 离开祭坛</button>
+      <text class="subtitle">献祭 {{activeEvent.sacrifice}} 点生命，换取力量</text>
+      <button class="btn btn-primary" bindtap="altarSacrifice" data-type="attack">⚔️ +1 攻击力</button>
+      <button class="btn btn-primary" bindtap="altarSacrifice" data-type="defense">🛡️ +1 防御力</button>
+      <button class="btn btn-secondary" bindtap="nextRound">🚶 离开</button>
     </block>
 
     <!-- 破旧装备 -->
     <block wx:if="{{activeEvent.type === 'oldGear'}}">
       <text style="font-size: 36px; display: block; text-align: center;">🦺</text>
       <text class="title">破旧装备</text>
-      <text class="subtitle">翻到了一件还能用的旧装备</text>
-      <button class="btn btn-primary" bindtap="wearOldGear">👔 穿上（临时 +{{activeEvent.defense}} 防御）</button>
-      <button class="btn btn-primary" bindtap="scrapOldGear">🔧 拆解换 {{activeEvent.gold}} 金币</button>
+      <text class="subtitle">翻到一件还能用的旧装备</text>
+      <button class="btn btn-primary" bindtap="wearOldGear">👔 穿上（+{{activeEvent.defense}}防）</button>
+      <button class="btn btn-primary" bindtap="scrapOldGear">🔧 拆解（+{{activeEvent.gold}}金）</button>
       <button class="btn btn-secondary" bindtap="nextRound">🚶 不理会</button>
     </block>
 
@@ -141,10 +137,10 @@
       <text style="font-size: 36px; display: block; text-align: center;">👹</text>
       <text class="title">{{activeEvent.monster.name}} 突袭了营地！</text>
       <text class="subtitle">{{activeEvent.monster.desc}}</text>
-      <view class="stat-row"><text class="stat-label">怪物血量</text><text class="stat-value">{{activeEvent.monster.hp}}</text></view>
-      <view class="stat-row"><text class="stat-label">怪物攻击</text><text class="stat-value">{{activeEvent.monster.attack}}</text></view>
+      <view class="stat-row"><text class="stat-label">血量</text><text class="stat-value">{{activeEvent.monster.hp}}</text></view>
+      <view class="stat-row"><text class="stat-label">攻击</text><text class="stat-value">{{activeEvent.monster.attack}}</text></view>
       <button class="btn btn-primary" bindtap="goBattle">⚔️ 战斗！</button>
-      <button class="btn btn-secondary" bindtap="runAway">🏃 逃跑（50%成功率）</button>
+      <button class="btn btn-secondary" bindtap="runAway">🏃 逃跑（50%）</button>
     </block>
 
   </view>
@@ -181,7 +177,6 @@
     </view>
   </view>
 
-  <!-- 底部占位 -->
   <view style="height: 100px;"></view>
 
 </view>
