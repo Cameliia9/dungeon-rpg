@@ -11,21 +11,32 @@ Page({
     rightState: 'door',
     trapResult: null,
     canDescend: false,
-    roomsExplored: 0,
     totalAttack: 0,
     totalDefense: 0,
     totalMaxHp: 0,
-    expToLevel: 0
+    expToLevel: 0,
+    ROOMS_PER_FLOOR: ROOMS_PER_FLOOR
   },
 
   onLoad() {
     this.refreshPlayer()
-    this.generateEvents()
+    // 恢复存档进度
+    const player = app.getPlayer()
+    if (player && player.roomsExplored >= ROOMS_PER_FLOOR) {
+      this.setData({ canDescend: true })
+    } else {
+      this.generateEvents()
+    }
     this.checkDead()
   },
 
   onShow() {
     this.refreshPlayer()
+    // 如果已到楼梯但尚未下楼，保持楼梯状态
+    const player = app.getPlayer()
+    if (player && player.roomsExplored >= ROOMS_PER_FLOOR && !this.data.canDescend) {
+      this.setData({ canDescend: true, leftState: 'door', rightState: 'door' })
+    }
     this.checkDead()
   },
 
@@ -172,12 +183,12 @@ Page({
     const player = app.getPlayer()
     if (!player || player.isDead()) { this.checkDead(); return }
 
-    const rooms = this.data.roomsExplored + 1
+    player.roomsExplored++
+    app.saveGame()
 
-    if (rooms >= ROOMS_PER_FLOOR) {
+    if (player.roomsExplored >= ROOMS_PER_FLOOR) {
       this.setData({
         canDescend: true,
-        roomsExplored: rooms,
         leftState: 'door',
         rightState: 'door'
       })
@@ -187,15 +198,11 @@ Page({
     if (side === 'left') {
       this.setData({
         leftEvent: this.data.rightEvent,
-        leftState: 'door',
-        roomsExplored: rooms
+        leftState: 'door'
       })
       this.generateNewRight()
     } else {
-      this.setData({
-        rightState: 'door',
-        roomsExplored: rooms
-      })
+      this.setData({ rightState: 'door' })
       this.generateNewRight()
     }
 
@@ -332,12 +339,13 @@ Page({
   descend() {
     const player = app.getPlayer()
     player.floor++
+    player.roomsExplored = 0
     player.tempAttackBuff = 0
     player.tempDefenseBuff = 0
     player.heal(Math.floor(player.totalMaxHp * 0.3))
     app.saveGame()
     this.refreshPlayer()
-    this.setData({ canDescend: false, roomsExplored: 0 })
+    this.setData({ canDescend: false })
     this.generateEvents()
     wx.showToast({ title: `进入第 ${player.floor} 层！`, icon: 'success' })
   },

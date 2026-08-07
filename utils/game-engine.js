@@ -22,6 +22,7 @@ class Player {
     this.inventory = []
     this.floor = 1
     this.kills = 0
+    this.roomsExplored = 0 // 当前层已探索房间数
     this.tempAttackBuff = 0  // 增益石碑临时攻击加成
     this.tempDefenseBuff = 0 // 破旧装备临时防御加成
   }
@@ -344,6 +345,7 @@ function savePlayer(player) {
     inventory: player.inventory,
     floor: player.floor,
     kills: player.kills,
+    roomsExplored: player.roomsExplored,
     tempAttackBuff: player.tempAttackBuff,
     tempDefenseBuff: player.tempDefenseBuff
   }
@@ -364,6 +366,7 @@ function loadPlayer(data) {
   p.inventory = data.inventory || []
   p.floor = data.floor
   p.kills = data.kills
+  p.roomsExplored = data.roomsExplored || 0
   p.tempAttackBuff = data.tempAttackBuff || 0
   p.tempDefenseBuff = data.tempDefenseBuff || 0
   return p
