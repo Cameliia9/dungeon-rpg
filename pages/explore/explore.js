@@ -194,6 +194,20 @@ Page({
     app.saveGame()
     this._animateCardOut(side)
 
+    // 第10间探索完 → 该卡片直接变楼梯
+    if (player.roomsExplored >= ROOMS_PER_FLOOR) {
+      const evtKey = side + 'Event'
+      const otherSide = side === 'left' ? 'right' : 'left'
+      this.setData({
+        [evtKey]: { type: 'stairs' },
+        [side + 'State']: 'door',
+        [otherSide + 'State']: 'door',
+        [otherSide + 'Event']: null
+      })
+      this.refreshPlayer()
+      return
+    }
+
     if (side === 'left') {
       this.setData({
         leftEvent: this.data.rightEvent,

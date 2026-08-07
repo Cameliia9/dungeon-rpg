@@ -200,7 +200,6 @@ const EVENT_TYPES = [
 // 生成两个不同事件（怪物占60%权重）
 function generateTwoRoomEvents(player) {
   const floor = player.floor
-  const atStairs = (player.roomsExplored || 0) >= 10
   const otherTypes = EVENT_TYPES.filter(t => t !== 'monster')
 
   function pickOne() {
@@ -212,16 +211,9 @@ function generateTwoRoomEvents(player) {
   }
 
   let left = pickOne()
-  let right
-
-  if (atStairs) {
-    // 满10间后必有一扇是楼梯
-    right = { type: 'stairs' }
-  } else {
+  let right = pickOne()
+  while (right.type === left.type) {
     right = pickOne()
-    while (right.type === left.type) {
-      right = pickOne()
-    }
   }
   return [left, right]
 }
