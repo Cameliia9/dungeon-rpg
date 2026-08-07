@@ -31,7 +31,7 @@
       <!-- 门状态 -->
       <block wx:if="{{leftState === 'door'}}">
         <text style="font-size: 48px; display: block;">🚪</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 14px;" bindtap="goLeft">前进探索</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 14px;" bindtap="goLeft">前进探索</button>
       </block>
 
       <!-- 自动事件结果 -->
@@ -41,7 +41,7 @@
         <text class="subtitle" style="font-size: 12px; color: {{leftEvent.type === 'trap' && !trapResult.dodged ? '#e74c3c' : leftEvent.type === 'spring' ? '#2ecc71' : '#f0c040'}};">
           {{leftEvent.type === 'treasure' ? '获得' + leftEvent.gold + '金币' : leftEvent.type === 'spring' ? '恢复' + leftEvent.heal + '生命' : leftEvent.type === 'trap' ? (trapResult.dodged ? '毫发无伤' : '受到' + trapResult.damage + '伤害') : leftEvent.type === 'deadend' ? '死胡同，安全返回' : leftEvent.type === 'coins' ? '捡到' + leftEvent.gold + '金币' : leftEvent.type === 'buffStone' ? '攻击+' + leftEvent.attackBonus : ''}}
         </text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 10px;" bindtap="finishLeft">好的</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 10px;" bindtap="finishLeft">好的</button>
       </block>
 
       <!-- 怪物 -->
@@ -51,8 +51,8 @@
         <text class="subtitle" style="font-size: 11px;">{{leftEvent.monster.desc}}</text>
         <view class="stat-row"><text class="stat-label">血量 {{leftEvent.monster.hp}}</text></view>
         <view class="stat-row"><text class="stat-label">攻击 {{leftEvent.monster.attack}}</text></view>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 6px;" bindtap="goBattleLeft">⚔️ 战斗</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 4px;" bindtap="runAwayLeft">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 6px;" bindtap="goBattleLeft">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 4px;" bindtap="runAwayLeft">🏃 逃跑</button>
       </block>
 
       <!-- 商人 -->
@@ -64,11 +64,11 @@
             <text style="color: #e0c080; font-size: 12px;">{{item.name}}</text>
             <view>
               <text style="color: #f0c040; font-size: 11px;">💰{{item.price}}</text>
-              <button class="btn btn-gold" style="padding: 2px 8px; font-size: 11px; margin-left: 4px;" bindtap="buyItemLeft" data-index="{{index}}">买</button>
+              <button class="btn-sm btn-sm-gold" style="padding: 2px 8px; font-size: 11px; margin-left: 4px;" bindtap="buyItemLeft" data-index="{{index}}">买</button>
             </view>
           </view>
         </view>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishLeft">离开</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishLeft">离开</button>
       </block>
 
       <!-- 营地 -->
@@ -76,8 +76,8 @@
         <text style="font-size: 36px; display: block;">🏕️</text>
         <text class="title" style="font-size: 16px;">休息营地</text>
         <text class="subtitle" style="font-size: 11px;">30%概率遇怪</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 6px;" bindtap="doRestLeft">🛌 休息</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 4px;" bindtap="finishLeft">离开</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 6px;" bindtap="doRestLeft">🛌 休息</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 4px;" bindtap="finishLeft">离开</button>
       </block>
 
       <!-- 祭坛 -->
@@ -85,18 +85,18 @@
         <text style="font-size: 36px; display: block;">🔮</text>
         <text class="title" style="font-size: 16px;">遗物祭坛</text>
         <text class="subtitle" style="font-size: 11px;">献祭{{leftEvent.cost}}血（{{leftEvent.altarCount}}/{{leftEvent.maxCount}}次）</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="altarLeft" data-type="attack" disabled="{{leftEvent.altarCount >= leftEvent.maxCount || player.hp <= leftEvent.cost}}">⚔️ +1攻击</button>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="altarLeft" data-type="defense" disabled="{{leftEvent.altarCount >= leftEvent.maxCount || player.hp <= leftEvent.cost}}">🛡️ +1防御</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishLeft">离开</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="altarLeft" data-type="attack" disabled="{{leftEvent.altarCount >= leftEvent.maxCount || player.hp <= leftEvent.cost}}">⚔️ +1攻击</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 2px;" bindtap="altarLeft" data-type="defense" disabled="{{leftEvent.altarCount >= leftEvent.maxCount || player.hp <= leftEvent.cost}}">🛡️ +1防御</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishLeft">离开</button>
       </block>
 
       <!-- 破旧装备 -->
       <block wx:if="{{leftState === 'oldGear'}}">
         <text style="font-size: 36px; display: block;">🦺</text>
         <text class="title" style="font-size: 16px;">破旧装备</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="wearLeft">👔 穿上 +{{leftEvent.defense}}防</button>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="scrapLeft">🔧 拆解 +{{leftEvent.gold}}金</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishLeft">不理会</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="wearLeft">👔 穿上 +{{leftEvent.defense}}防</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 2px;" bindtap="scrapLeft">🔧 拆解 +{{leftEvent.gold}}金</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishLeft">不理会</button>
       </block>
 
       <!-- 营地遇怪 -->
@@ -104,8 +104,8 @@
         <text style="font-size: 36px; display: block;">👹</text>
         <text class="title" style="font-size: 16px;">{{leftEvent.monster.name}}突袭！</text>
         <view class="stat-row"><text class="stat-label">血量 {{leftEvent.monster.hp}}</text></view>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="goBattleLeft">⚔️ 战斗</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="runAwayLeft">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="goBattleLeft">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="runAwayLeft">🏃 逃跑</button>
       </block>
 
     </view>
@@ -132,7 +132,7 @@
       <!-- 门状态 -->
       <block wx:if="{{rightState === 'door'}}">
         <text style="font-size: 48px; display: block;">🚪</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 14px;" bindtap="goRight">前进探索</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 14px;" bindtap="goRight">前进探索</button>
       </block>
 
       <!-- 自动事件结果 -->
@@ -142,7 +142,7 @@
         <text class="subtitle" style="font-size: 12px; color: {{rightEvent.type === 'trap' && !trapResult.dodged ? '#e74c3c' : rightEvent.type === 'spring' ? '#2ecc71' : '#f0c040'}};">
           {{rightEvent.type === 'treasure' ? '获得' + rightEvent.gold + '金币' : rightEvent.type === 'spring' ? '恢复' + rightEvent.heal + '生命' : rightEvent.type === 'trap' ? (trapResult.dodged ? '毫发无伤' : '受到' + trapResult.damage + '伤害') : rightEvent.type === 'deadend' ? '死胡同' : rightEvent.type === 'coins' ? '捡到' + rightEvent.gold + '金币' : rightEvent.type === 'buffStone' ? '攻击+' + rightEvent.attackBonus : ''}}
         </text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 10px;" bindtap="finishRight">好的</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 10px;" bindtap="finishRight">好的</button>
       </block>
 
       <!-- 怪物 -->
@@ -152,8 +152,8 @@
         <text class="subtitle" style="font-size: 11px;">{{rightEvent.monster.desc}}</text>
         <view class="stat-row"><text class="stat-label">血量 {{rightEvent.monster.hp}}</text></view>
         <view class="stat-row"><text class="stat-label">攻击 {{rightEvent.monster.attack}}</text></view>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 6px;" bindtap="goBattleRight">⚔️ 战斗</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 4px;" bindtap="runAwayRight">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 6px;" bindtap="goBattleRight">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 4px;" bindtap="runAwayRight">🏃 逃跑</button>
       </block>
 
       <!-- 商人 -->
@@ -165,11 +165,11 @@
             <text style="color: #e0c080; font-size: 12px;">{{item.name}}</text>
             <view>
               <text style="color: #f0c040; font-size: 11px;">💰{{item.price}}</text>
-              <button class="btn btn-gold" style="padding: 2px 8px; font-size: 11px; margin-left: 4px;" bindtap="buyItemRight" data-index="{{index}}">买</button>
+              <button class="btn-sm btn-sm-gold" style="padding: 2px 8px; font-size: 11px; margin-left: 4px;" bindtap="buyItemRight" data-index="{{index}}">买</button>
             </view>
           </view>
         </view>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishRight">离开</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishRight">离开</button>
       </block>
 
       <!-- 营地 -->
@@ -177,8 +177,8 @@
         <text style="font-size: 36px; display: block;">🏕️</text>
         <text class="title" style="font-size: 16px;">休息营地</text>
         <text class="subtitle" style="font-size: 11px;">30%概率遇怪</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 6px;" bindtap="doRestRight">🛌 休息</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 4px;" bindtap="finishRight">离开</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 6px;" bindtap="doRestRight">🛌 休息</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 4px;" bindtap="finishRight">离开</button>
       </block>
 
       <!-- 祭坛 -->
@@ -186,18 +186,18 @@
         <text style="font-size: 36px; display: block;">🔮</text>
         <text class="title" style="font-size: 16px;">遗物祭坛</text>
         <text class="subtitle" style="font-size: 11px;">献祭{{rightEvent.cost}}血（{{rightEvent.altarCount}}/{{rightEvent.maxCount}}次）</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="altarRight" data-type="attack" disabled="{{rightEvent.altarCount >= rightEvent.maxCount || player.hp <= rightEvent.cost}}">⚔️ +1攻击</button>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="altarRight" data-type="defense" disabled="{{rightEvent.altarCount >= rightEvent.maxCount || player.hp <= rightEvent.cost}}">🛡️ +1防御</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishRight">离开</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="altarRight" data-type="attack" disabled="{{rightEvent.altarCount >= rightEvent.maxCount || player.hp <= rightEvent.cost}}">⚔️ +1攻击</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 2px;" bindtap="altarRight" data-type="defense" disabled="{{rightEvent.altarCount >= rightEvent.maxCount || player.hp <= rightEvent.cost}}">🛡️ +1防御</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishRight">离开</button>
       </block>
 
       <!-- 破旧装备 -->
       <block wx:if="{{rightState === 'oldGear'}}">
         <text style="font-size: 36px; display: block;">🦺</text>
         <text class="title" style="font-size: 16px;">破旧装备</text>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="wearRight">👔 穿上 +{{rightEvent.defense}}防</button>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 2px;" bindtap="scrapRight">🔧 拆解 +{{rightEvent.gold}}金</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishRight">不理会</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="wearRight">👔 穿上 +{{rightEvent.defense}}防</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 2px;" bindtap="scrapRight">🔧 拆解 +{{rightEvent.gold}}金</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="finishRight">不理会</button>
       </block>
 
       <!-- 营地遇怪 -->
@@ -205,8 +205,8 @@
         <text style="font-size: 36px; display: block;">👹</text>
         <text class="title" style="font-size: 16px;">{{rightEvent.monster.name}}突袭！</text>
         <view class="stat-row"><text class="stat-label">血量 {{rightEvent.monster.hp}}</text></view>
-        <button class="btn btn-primary" style="width: 80%; margin-top: 4px;" bindtap="goBattleRight">⚔️ 战斗</button>
-        <button class="btn btn-secondary" style="width: 80%; margin-top: 2px;" bindtap="runAwayRight">🏃 逃跑</button>
+        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="goBattleRight">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="runAwayRight">🏃 逃跑</button>
       </block>
 
     </view>
@@ -218,7 +218,7 @@
   <view wx:if="{{canDescend}}" class="card" style="text-align: center;">
     <text style="font-size: 40px; display: block;">🪜</text>
     <text class="title">发现通往下层的楼梯！</text>
-    <button class="btn btn-gold" bindtap="descend">⬇️ 前往第 {{player.floor + 1}} 层</button>
+    <button class="btn-sm btn-sm-gold" bindtap="descend">⬇️ 前往第 {{player.floor + 1}} 层</button>
   </view>
 
   <!-- ========== 底部状态栏 ========== -->
@@ -230,7 +230,7 @@
         <view class="stat-row"><text class="stat-label">⚔️ {{totalAttack}}攻  🛡️ {{totalDefense}}防</text></view>
         <view class="stat-row" style="margin-top: 2px;"><text class="stat-label">💰 {{player.gold}}金币  ⭐ {{player.exp}} / {{expToLevel}}经验</text></view>
       </view>
-      <button class="btn btn-secondary" style="width: auto; padding: 8px 18px; margin: 0; font-size: 14px;" bindtap="exitExplore">🚪 退出</button>
+      <button class="btn-sm btn-sm-secondary" style="width: auto; padding: 8px 18px; margin: 0; font-size: 14px;" bindtap="exitExplore">🚪 退出</button>
     </view>
   </view>
 

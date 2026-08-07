@@ -238,3 +238,20 @@ page {
   from { transform: translate(0, 0) rotate(0deg); opacity: 1; }
   to   { transform: translate(32px, -50px) rotate(12deg); opacity: 0; }
 }
+
+/* 小按钮（探索卡片内用） */
+.btn-sm {
+  display: block;
+  width: 68%;
+  padding: 7px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: bold;
+  margin: 3px auto;
+  border: none;
+}
+.btn-sm:active { transform: scale(0.97); opacity: 0.9; }
+.btn-sm-primary { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; }
+.btn-sm-secondary { background: linear-gradient(135deg, #2c3e50, #34495e); color: #ccc; }
+.btn-sm-gold { background: linear-gradient(135deg, #d4a017, #f0c040); color: #1a1a2e; }
