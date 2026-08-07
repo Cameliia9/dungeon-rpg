@@ -13,6 +13,27 @@ const DIFFICULTY_MULT = {
   nightmare: { atk: 1.5, hp: 1.2 }
 }
 
+// ==================== 词缀系统 ====================
+// 怪物随机附加词缀，改变属性与名字
+const AFFIXES = [
+  { name: '强壮', hpMul: 1.4, atkMul: 1.2, desc: '血厚攻高' },
+  { name: '迅捷', dodgeAdd: 0.15, desc: '闪避+15%' },
+  { name: '暴虐', critAdd: 0.15, desc: '暴击+15%' },
+  { name: '铁壁', defMul: 1.5, desc: '防御+50%' },
+  { name: '剧毒', poison: true, atkMul: 1.1, desc: '攻击附加中毒' },
+  { name: '精英', hpMul: 1.3, atkMul: 1.3, defMul: 1.3, expMul: 2, goldMul: 2, desc: '全属性提升，奖励翻倍' }
+]
+
+// 根据层数与难度决定是否附加词缀（越深越容易遇到）
+function rollAffix(floor, difficulty) {
+  const base = 0.08 + floor * 0.012
+  const diffBonus = difficulty === 'nightmare' ? 0.1 : difficulty === 'hard' ? 0.05 : 0
+  if (Math.random() < base + diffBonus) {
+    return AFFIXES[Math.floor(Math.random() * AFFIXES.length)]
+  }
+  return null
+}
+
 // ==================== 玩家类 ====================
 class Player {
   constructor(name, difficulty) {
@@ -36,7 +57,9 @@ class Player {
     this.roomsExplored = 0 // 当前层已探索房间数
     this.tempAttackBuff = 0  // 增益石碑临时攻击加成
     this.tempDefenseBuff = 0 // 破旧装备临时防御加成
+    this.tempDodgeBuff = 0   // 主题药水临时闪避加成
     this.fleeFails = 0       // 本次遭遇逃跑失败次数（每失败+10%成功率）
+    this.poisonTurns = 0     // 中毒剩余回合
   }
 
   get totalAttack() {
@@ -66,12 +89,13 @@ class Player {
     return Math.min(0.6, c)
   }
 
-  // 总闪避率 = 基础 + 装备
+  // 总闪避率 = 基础 + 装备 + 临时增益
   get totalDodge() {
     let d = this.baseDodge
     if (this.weapon) d += this.weapon.dodgeChance || 0
     if (this.armor) d += this.armor.dodgeChance || 0
     if (this.accessory) d += this.accessory.dodgeChance || 0
+    if (this.tempDodgeBuff) d += this.tempDodgeBuff
     return Math.min(0.5, d)
   }
 
@@ -179,6 +203,27 @@ class Monster {
     this.isBoss = !!template.isBoss
     this.skills = template.skills || []
     this.loot = template.loot || null
+    // 词缀
+    this.affix = template.affix || null
+    this.poison = !!template.poison // 攻击附带中毒
+    this.expMul = template.expMul || 1
+    this.goldMul = template.goldMul || 1
+    // 应用词缀
+    if (this.affix) this._applyAffix(this.affix)
+  }
+
+  _applyAffix(affix) {
+    if (affix.hpMul) { this.hp = Math.floor(this.hp * affix.hpMul); this.maxHp = this.hp }
+    if (affix.atkMul) this.attack = Math.floor(this.attack * affix.atkMul)
+    if (affix.defMul) this.defense = Math.floor(this.defense * affix.defMul)
+    if (affix.critAdd) { this.critChance = Math.min(0.6, this.critChance + affix.critAdd); this.critPercent = Math.round(this.critChance * 100) }
+    if (affix.dodgeAdd) { this.dodgeChance = Math.min(0.5, this.dodgeChance + affix.dodgeAdd); this.dodgePercent = Math.round(this.dodgeChance * 100) }
+    if (affix.poison) this.poison = true
+    if (affix.expMul) this.expMul = affix.expMul
+    if (affix.goldMul) this.goldMul = affix.goldMul
+    // 名字加前缀
+    this.name = affix.name + this.name
+    this.desc = `${affix.desc}。${this.desc}`
   }
 
   takeDamage(rawDamage) {
@@ -204,6 +249,21 @@ class Battle {
     this.monster = monster
     this.logs = []
     this.turn = 0
+    // 玩家中毒状态：poisonTurns > 0 时每回合扣血
+    if (!this.player.poisonTurns) this.player.poisonTurns = 0
+  }
+
+  // 玩家中毒结算：每回合开始扣血（剧毒词缀怪造成）
+  tickPoison() {
+    const p = this.player
+    if (p.poisonTurns > 0) {
+      const poisonDmg = Math.max(1, Math.floor(p.totalMaxHp * 0.03))
+      p.hp = Math.max(0, p.hp - poisonDmg)
+      p.poisonTurns--
+      this.log(`中毒发作！你损失了 ${poisonDmg} 点生命（剩余 ${p.poisonTurns} 回合）`, 'poison')
+      return poisonDmg
+    }
+    return 0
   }
 
   // 玩家攻击: 先判怪物闪避，再判玩家暴击
@@ -236,7 +296,7 @@ class Battle {
     return 'continue'
   }
 
-  // 怪物攻击: 先判玩家闪避，再判怪物暴击
+  // 怪物攻击: 先判玩家闪避，再判怪物暴击，剧毒怪附加中毒
   monsterAttack() {
     const p = this.player
 
@@ -258,6 +318,13 @@ class Battle {
     this.log(isCrit
       ? `${this.monster.name} 对你造成暴击 ${dmg} 点伤害！`
       : `${this.monster.name} 对你造成了 ${dmg} 点伤害`, isCrit ? 'crit' : 'damage')
+
+    // 剧毒词缀怪：攻击附加中毒（持续3回合）
+    if (this.monster.poison) {
+      p.poisonTurns = 3
+      this.log(`${this.monster.name} 的剧毒侵蚀了你！接下来 3 回合将持续掉血`, 'poison')
+    }
+
     this.turn++
     if (p.isDead()) {
       this.log('你被打倒了...', 'info')
@@ -361,27 +428,15 @@ function buildEvent(type, player, floor) {
     }
 
     case 'merchant': {
-      // 随机生成1-3件商品
-      const items = []
-      const count = 1 + Math.floor(Math.random() * 3)
-      for (let i = 0; i < count; i++) {
-        if (Math.random() < 0.5) {
-          // 回血药水
-          items.push({
-            name: '治疗药水',
-            desc: '恢复30%生命值',
-            price: Math.floor(15 + floor * 3),
-            type: 'potion',
-            healPercent: 0.3
-          })
-        } else {
-          // 随机装备
-          const eq = getRandomEquipment(floor)
-          eq.price = Math.floor(eq.price * 0.7) // 商人打折
-          items.push(eq)
-        }
+      // 神秘商人：卖该层主题的专属商品（商店买不到）
+      const theme = GameData.getThemeForFloor(floor)
+      const goods = GameData.themeMerchantGoods[theme.id]
+      const items = goods ? goods.items.map(g => ({ ...g })) : []
+      // 按层数调整价格
+      for (const it of items) {
+        it.price = Math.floor(it.price * (1 + (floor - 1) * 0.02))
       }
-      return { type: 'merchant', items }
+      return { type: 'merchant', items, themeName: theme.name, merchantName: theme.merchantName || '神秘商人', merchantIcon: theme.merchantIcon || '🧙' }
     }
 
     case 'trap': {
@@ -427,12 +482,13 @@ function generateRoomEvent(player) {
   return buildEvent(EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)], player, player.floor)
 }
 
-// 根据层数获取随机怪物（按难度缩放）
+// 根据层数获取随机怪物（按主题过滤 + 词缀 + 难度缩放）
 function getRandomMonster(floor, difficulty) {
   const d = DIFFICULTY_MULT[difficulty] || DIFFICULTY_MULT.easy
-  const available = GameData.monsters.filter(m => m.level <= floor + 1 && m.level >= floor - 1)
-  if (available.length === 0) return new Monster(GameData.monsters[GameData.monsters.length - 1])
-  const template = available[Math.floor(Math.random() * available.length)]
+  // 按主题取怪物池
+  const theme = GameData.getThemeForFloor(floor)
+  const pool = GameData.monsters[theme.id] || GameData.monsters.slime
+  const template = pool[Math.floor(Math.random() * pool.length)]
   const scaled = { ...template }
   if (floor > template.level) {
     const scale = 1 + (floor - template.level) * 0.3
@@ -450,10 +506,13 @@ function getRandomMonster(floor, difficulty) {
     scaled.exp = Math.floor(scaled.exp * d.atk)
     scaled.gold = Math.floor(scaled.gold * d.atk)
   }
+  // 词缀
+  const affix = rollAffix(floor, difficulty)
+  if (affix) scaled.affix = affix
   return new Monster(scaled)
 }
 
-// 获取当前层对应的 Boss（每5层一个，超过25层后强化远古邪龙，按难度缩放）
+// 获取当前层对应的 Boss（每5层一个，超过25层后强化最后一个Boss，按难度缩放）
 function getBossForFloor(floor, difficulty) {
   const d = DIFFICULTY_MULT[difficulty] || DIFFICULTY_MULT.easy
   const index = Math.floor((floor - 1) / 5)
@@ -486,12 +545,13 @@ function getRoomsPerFloor(floor) {
   return 15 + bossesDefeated * 3
 }
 
-// 获取随机装备
+// 获取随机装备（按当前层 tier，只出当前主题能获得的最好装备）
 function getRandomEquipment(floor) {
   const types = ['weapon', 'armor', 'accessory']
   const type = types[Math.floor(Math.random() * types.length)]
-  const tier = Math.min(Math.floor((floor - 1) / 3), 3)
-  const pool = GameData.equipment[type].filter(e => e.tier <= tier + 1)
+  // tier 与层数绑定：1-5层=tier1, 6-10=tier2, ... 21-25=tier5
+  const tier = Math.min(Math.ceil(floor / 5), 5)
+  const pool = GameData.equipment[type].filter(e => e.tier === tier)
   if (pool.length === 0) return { ...GameData.equipment[type][0], type }
   const template = pool[Math.floor(Math.random() * pool.length)]
   return { ...template, type }
@@ -518,7 +578,9 @@ function savePlayer(player) {
     roomsExplored: player.roomsExplored,
     tempAttackBuff: player.tempAttackBuff,
     tempDefenseBuff: player.tempDefenseBuff,
-    fleeFails: player.fleeFails
+    tempDodgeBuff: player.tempDodgeBuff || 0,
+    fleeFails: player.fleeFails,
+    poisonTurns: player.poisonTurns || 0
   }
 }
 
@@ -540,7 +602,9 @@ function loadPlayer(data) {
   p.roomsExplored = data.roomsExplored || 0
   p.tempAttackBuff = data.tempAttackBuff || 0
   p.tempDefenseBuff = data.tempDefenseBuff || 0
+  p.tempDodgeBuff = data.tempDodgeBuff || 0
   p.fleeFails = data.fleeFails || 0
+  p.poisonTurns = data.poisonTurns || 0
   return p
 }
 

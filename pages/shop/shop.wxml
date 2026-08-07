@@ -3,6 +3,7 @@
   <view class="card" style="text-align: center;">
     <text class="title">🏪 冒险者商店</text>
     <text class="subtitle">金币：{{player.gold}} 💰</text>
+    <text style="display: block; font-size: 12px; color: #6a6a7a; margin-top: 4px;">当前区域：{{themeName}} · 第 {{shopTier}} 阶装备</text>
   </view>
 
   <!-- 商品列表 -->
@@ -14,6 +15,8 @@
       <view>
         <text style="font-weight: bold;">{{item.name}}</text>
         <view style="font-size: 12px; color: #e74c3c;">攻击 +{{item.attack}}</view>
+        <view wx:if="{{item.critChance}}" style="font-size: 11px; color: #ffaa00;">⚡暴击 +{{item.critChance * 100}}%</view>
+        <view wx:if="{{item.dodgeChance}}" style="font-size: 11px; color: #3498db;">💨闪避 +{{item.dodgeChance * 100}}%</view>
         <view style="font-size: 12px; color: #666;">{{item.desc}}</view>
       </view>
       <button class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
@@ -31,6 +34,8 @@
       <view>
         <text style="font-weight: bold;">{{item.name}}</text>
         <view style="font-size: 12px; color: #3498db;">防御 +{{item.defense}}</view>
+        <view wx:if="{{item.critChance}}" style="font-size: 11px; color: #ffaa00;">⚡暴击 +{{item.critChance * 100}}%</view>
+        <view wx:if="{{item.dodgeChance}}" style="font-size: 11px; color: #3498db;">💨闪避 +{{item.dodgeChance * 100}}%</view>
         <view style="font-size: 12px; color: #666;">{{item.desc}}</view>
       </view>
       <button class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"
@@ -48,6 +53,8 @@
       <view>
         <text style="font-weight: bold;">{{item.name}}</text>
         <view style="font-size: 12px; color: #2ecc71;">生命上限 +{{item.hp}}</view>
+        <view wx:if="{{item.critChance}}" style="font-size: 11px; color: #ffaa00;">⚡暴击 +{{item.critChance * 100}}%</view>
+        <view wx:if="{{item.dodgeChance}}" style="font-size: 11px; color: #3498db;">💨闪避 +{{item.dodgeChance * 100}}%</view>
         <view style="font-size: 12px; color: #666;">{{item.desc}}</view>
       </view>
       <button class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;"

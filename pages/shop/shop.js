@@ -1,16 +1,34 @@
 const app = getApp()
-const { equipment } = require('../../utils/data')
+const { equipment, getThemeForFloor } = require('../../utils/data')
 
 Page({
   data: {
     player: null,
-    weapons: equipment.weapon,
-    armors: equipment.armor,
-    accessories: equipment.accessory
+    weapons: [],
+    armors: [],
+    accessories: [],
+    shopTier: 1,
+    themeName: ''
   },
 
   onShow() {
-    this.setData({ player: app.getPlayer() })
+    this.refreshShop()
+  },
+
+  // 根据玩家当前层数刷新商店（只显示当前 tier 的装备）
+  refreshShop() {
+    const player = app.getPlayer()
+    if (!player) return
+    const tier = Math.min(Math.ceil(player.floor / 5), 5)
+    const theme = getThemeForFloor(player.floor)
+    this.setData({
+      player,
+      shopTier: tier,
+      themeName: theme.name,
+      weapons: equipment.weapon.filter(e => e.tier === tier),
+      armors: equipment.armor.filter(e => e.tier === tier),
+      accessories: equipment.accessory.filter(e => e.tier === tier)
+    })
   },
 
   // 购买武器
@@ -36,11 +54,15 @@ Page({
       return
     }
 
-    // 检查是否已有更好的装备
+    // 检查是否已有更好的装备（同类型同槽位比较主属性）
     const currentEquip = player[type]
-    if (currentEquip && currentEquip.price >= item.price) {
-      wx.showToast({ title: '你已有更好的装备', icon: 'none' })
-      return
+    if (currentEquip) {
+      const currentVal = currentEquip.attack || currentEquip.defense || currentEquip.hp || 0
+      const itemVal = item.attack || item.defense || item.hp || 0
+      if (currentVal >= itemVal) {
+        wx.showToast({ title: '你已有更好的装备', icon: 'none' })
+        return
+      }
     }
 
     player.gold -= item.price

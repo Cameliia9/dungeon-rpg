@@ -43,6 +43,17 @@ Page({
   attack() {
     if (this.data.result !== 'fighting') return
 
+    // 先结算中毒（剧毒词缀怪造成）
+    const poisonDmg = this.battle.tickPoison()
+    if (poisonDmg > 0) {
+      this.refreshUI()
+      this.setData({ logs: [...this.battle.logs].reverse() })
+      if (this.battle.player.isDead()) {
+        this.onDefeat()
+        return
+      }
+    }
+
     const r1 = this.battle.playerAttack()
     this.refreshUI()
 
@@ -135,8 +146,13 @@ Page({
     const monster = this.battle.monster
 
     player.kills++
-    player.gold += monster.gold
-    const leveled = player.addExp(monster.exp)
+    // 词缀奖励倍率（精英怪双倍）
+    const goldGain = Math.floor(monster.gold * (monster.goldMul || 1))
+    const expGain = Math.floor(monster.exp * (monster.expMul || 1))
+    player.gold += goldGain
+    const leveled = player.addExp(expGain)
+    // 战斗结束清除中毒
+    player.poisonTurns = 0
 
     // Boss 掉落专属装备
     let bossLoot = null
@@ -151,7 +167,7 @@ Page({
 
     this.setData({
       result: 'victory',
-      battleReward: { gold: monster.gold, exp: monster.exp, leveled, bossLoot },
+      battleReward: { gold: goldGain, exp: expGain, leveled, bossLoot },
       player,
       totalMaxHp: player.totalMaxHp,
       monsterHpPercent: 0,

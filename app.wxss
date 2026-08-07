@@ -158,6 +158,10 @@ page {
   color: #3498db;
 }
 
+.log-poison {
+  color: #9b59b6;
+}
+
 .log-heal {
   color: #2ecc71;
 }

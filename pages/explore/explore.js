@@ -1,5 +1,6 @@
 const app = getApp()
 const { generateTwoRoomEvents, getBossForFloor, getRoomsPerFloor } = require('../../utils/game-engine')
+const { getThemeForFloor } = require('../../utils/data')
 
 Page({
   data: {
@@ -46,7 +47,11 @@ Page({
       fleePercent: Math.round(Math.min(0.9, 0.4 + player.fleeFails * 0.1) * 100),
       totalMaxHp: player.totalMaxHp,
       expToLevel: player.expToLevel(),
-      roomsPerFloor: getRoomsPerFloor(player.floor)
+      roomsPerFloor: getRoomsPerFloor(player.floor),
+      // 主题信息
+      themeName: getThemeForFloor(player.floor).name,
+      themeIcon: getThemeForFloor(player.floor).icon,
+      themeDesc: getThemeForFloor(player.floor).desc
     })
   },
 
@@ -385,7 +390,11 @@ Page({
     if (player.gold < item.price) { wx.showToast({ title: '金币不足！', icon: 'error' }); return }
     player.gold -= item.price
     if (item.type === 'potion') {
-      player.heal(Math.floor(player.totalMaxHp * item.healPercent))
+      // 主题药水：治疗 + 可能附带清毒/临时增益
+      player.heal(Math.floor(player.totalMaxHp * (item.healPercent || 0.3)))
+      if (item.curePoison) player.poisonTurns = 0
+      if (item.dodgeBuff) player.tempDodgeBuff = (player.tempDodgeBuff || 0) + item.dodgeBuff
+      if (item.attackBuff) player.tempAttackBuff = (player.tempAttackBuff || 0) + item.attackBuff
       wx.showToast({ title: `使用${item.name}！`, icon: 'success' })
     } else {
       player.inventory.push(item)
@@ -487,6 +496,11 @@ Page({
   },
 
   // ==================== 退出 ====================
+
+  // 游戏中随时打开商店
+  openShop() {
+    wx.navigateTo({ url: '/pages/shop/shop' })
+  },
 
   exitExplore() {
     const player = app.getPlayer()
