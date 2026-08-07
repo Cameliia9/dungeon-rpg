@@ -1,6 +1,6 @@
 /**
  * 地牢冒险 - 游戏核心引擎
- * 角色、战斗、装备系统
+ * 角色、战斗、装备系统 + 扩展事件池
  */
 
 const GameData = require('./data')
@@ -16,41 +16,38 @@ class Player {
     this.baseAttack = 12
     this.baseDefense = 5
     this.gold = 50
-    this.weapon = null   // {name, attack, price, desc}
-    this.armor = null    // {name, defense, price, desc}
-    this.accessory = null // {name, hp, price, desc}
-    this.inventory = []  // 背包中的装备
-    this.floor = 1       // 当前层数
-    this.kills = 0       // 击杀数
+    this.weapon = null
+    this.armor = null
+    this.accessory = null
+    this.inventory = []
+    this.floor = 1
+    this.kills = 0
+    this.tempAttackBuff = 0  // 增益石碑临时攻击加成
+    this.tempDefenseBuff = 0 // 破旧装备临时防御加成
   }
 
-  // 计算总攻击力
   get totalAttack() {
-    let a = this.baseAttack + this.level * 3
+    let a = this.baseAttack + this.level * 3 + this.tempAttackBuff
     if (this.weapon) a += this.weapon.attack
     return a
   }
 
-  // 计算总防御力
   get totalDefense() {
-    let d = this.baseDefense + Math.floor(this.level * 1.5)
+    let d = this.baseDefense + Math.floor(this.level * 1.5) + this.tempDefenseBuff
     if (this.armor) d += this.armor.defense
     return d
   }
 
-  // 计算总血量上限
   get totalMaxHp() {
     let h = this.maxHp + this.level * 25
     if (this.accessory) h += this.accessory.hp
     return h
   }
 
-  // 当前等级所需经验
   expToLevel() {
     return this.level * 80 + 20
   }
 
-  // 增加经验，检查升级
   addExp(amount) {
     this.exp += amount
     let leveled = false
@@ -62,36 +59,31 @@ class Player {
     return leveled
   }
 
-  // 升级
   levelUp() {
     this.level++
     this.baseAttack += 3
     this.baseDefense += 1
     this.maxHp += 20
-    this.hp = this.totalMaxHp  // 升级回满血
+    this.hp = this.totalMaxHp
   }
 
-  // 受到伤害
   takeDamage(rawDamage) {
     const reduced = Math.max(1, rawDamage - this.totalDefense)
-    const actual = Math.floor(reduced * (0.9 + Math.random() * 0.2)) // ±10%
+    const actual = Math.floor(reduced * (0.9 + Math.random() * 0.2))
     this.hp = Math.max(0, this.hp - actual)
     return actual
   }
 
-  // 恢复生命
   heal(amount) {
     const oldHp = this.hp
     this.hp = Math.min(this.totalMaxHp, this.hp + amount)
     return this.hp - oldHp
   }
 
-  // 是否死亡
   isDead() {
     return this.hp <= 0
   }
 
-  // 装备物品
   equip(item) {
     switch (item.type) {
       case 'weapon':
@@ -107,12 +99,10 @@ class Player {
         this.accessory = item
         break
     }
-    // 从背包移除
     const idx = this.inventory.findIndex(i => i === item)
     if (idx >= 0) this.inventory.splice(idx, 1)
   }
 
-  // 卸下装备
   unequip(slot) {
     const item = this[slot]
     if (item) {
@@ -148,7 +138,6 @@ class Monster {
     return this.hp <= 0
   }
 
-  // 怪物攻击（返回原始伤害值，不直接修改 player）
   dealDamage(targetDefense) {
     const raw = this.attack * (0.8 + Math.random() * 0.4)
     return Math.max(1, Math.floor(raw - targetDefense * 0.5))
@@ -164,12 +153,10 @@ class Battle {
     this.turn = 0
   }
 
-  // 玩家攻击 — 只负责伤害计算和日志，奖励由页面层统一处理
   playerAttack() {
     const dmg = this.monster.takeDamage(this.player.totalAttack)
     this.log(`你对 ${this.monster.name} 造成了 ${dmg} 点伤害`, 'damage')
     this.turn++
-
     if (this.monster.isDead()) {
       this.log(`你击败了 ${this.monster.name}！`, 'loot')
       return 'victory'
@@ -177,12 +164,10 @@ class Battle {
     return 'continue'
   }
 
-  // 怪物攻击
   monsterAttack() {
     const dmg = this.player.takeDamage(this.monster.dealDamage(this.player.totalDefense))
     this.log(`${this.monster.name} 对你造成了 ${dmg} 点伤害`, 'damage')
     this.turn++
-
     if (this.player.isDead()) {
       this.log('你被打倒了...', 'info')
       return 'defeat'
@@ -195,38 +180,124 @@ class Battle {
   }
 }
 
-// ==================== 地牢事件 ====================
-function generateRoomEvent(player) {
-  const roll = Math.random()
-  const floor = player.floor
+// ==================== 事件池 ====================
+// 所有事件类型
+const EVENT_TYPES = [
+  'monster',   // 怪物
+  'treasure',  // 宝箱
+  'spring',    // 生命泉水
+  'merchant',  // 神秘商人
+  'trap',      // 陷阱机关
+  'camp',      // 休息营地
+  'altar',     // 遗物祭坛
+  'deadend',   // 迷途岔路
+  'coins',     // 散落金币
+  'buffStone', // 增益石碑
+  'oldGear'    // 破旧装备
+]
 
-  // 根据层数决定事件概率
-  if (roll < 0.45) {
-    // 遭遇怪物 - 根据层数选择难度
-    return { type: 'monster', monster: getRandomMonster(floor) }
-  } else if (roll < 0.65) {
-    // 发现宝箱
-    return { type: 'treasure', gold: Math.floor(10 + floor * 5 + Math.random() * floor * 10) }
-  } else if (roll < 0.75) {
-    // 休息点
-    return { type: 'rest', heal: Math.floor(player.totalMaxHp * (0.2 + Math.random() * 0.3)) }
-  } else if (roll < 0.85) {
-    // 装备掉落
-    const item = getRandomEquipment(floor)
-    return { type: 'equipment', item }
-  } else {
-    // 陷阱
-    const dmg = Math.floor(10 + floor * 3 + Math.random() * floor * 5)
-    return { type: 'trap', damage: dmg }
+// 生成两个不同事件（左/右探索）
+function generateTwoRoomEvents(player) {
+  const floor = player.floor
+  const pool = [...EVENT_TYPES]
+  // 随机打乱后取前两个
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]]
   }
+  return [
+    buildEvent(pool[0], player, floor),
+    buildEvent(pool[1], player, floor)
+  ]
+}
+
+// 根据事件类型构建事件数据
+function buildEvent(type, player, floor) {
+  switch (type) {
+    case 'monster':
+      return { type: 'monster', monster: getRandomMonster(floor) }
+
+    case 'treasure':
+      return { type: 'treasure', gold: Math.floor(15 + floor * 8 + Math.random() * floor * 15) }
+
+    case 'spring': {
+      const lost = player.totalMaxHp - player.hp
+      const heal = Math.floor(lost * 0.3)
+      return { type: 'spring', heal: Math.max(1, heal) }
+    }
+
+    case 'merchant': {
+      // 随机生成1-3件商品
+      const items = []
+      const count = 1 + Math.floor(Math.random() * 3)
+      for (let i = 0; i < count; i++) {
+        if (Math.random() < 0.5) {
+          // 回血药水
+          items.push({
+            name: '治疗药水',
+            desc: '恢复30%生命值',
+            price: Math.floor(15 + floor * 3),
+            type: 'potion',
+            healPercent: 0.3
+          })
+        } else {
+          // 随机装备
+          const eq = getRandomEquipment(floor)
+          eq.price = Math.floor(eq.price * 0.7) // 商人打折
+          items.push(eq)
+        }
+      }
+      return { type: 'merchant', items }
+    }
+
+    case 'trap': {
+      const dmg = Math.floor(player.hp * 0.15)
+      const dodgeChance = 0.15
+      return { type: 'trap', damage: Math.max(1, dmg), dodgeChance }
+    }
+
+    case 'camp':
+      return {
+        type: 'camp',
+        ambushChance: 0.3,
+        ambushMonster: getRandomMonster(floor)
+      }
+
+    case 'altar':
+      return { type: 'altar', sacrifice: Math.max(1, Math.floor(player.hp * 0.1)) }
+
+    case 'deadend':
+      return { type: 'deadend' }
+
+    case 'coins': {
+      const gold = Math.floor(10 + floor * 3 + Math.random() * floor * 8)
+      return { type: 'coins', gold }
+    }
+
+    case 'buffStone':
+      return { type: 'buffStone', attackBonus: 2 }
+
+    case 'oldGear': {
+      const def = 2
+      const gold = Math.floor(5 + floor * 2)
+      return { type: 'oldGear', defense: def, gold }
+    }
+
+    default:
+      return { type: 'deadend' }
+  }
+}
+
+// 保留旧的 generateRoomEvent 兼容老代码
+function generateRoomEvent(player) {
+  return buildEvent(EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)], player, player.floor)
 }
 
 // 根据层数获取随机怪物
 function getRandomMonster(floor) {
   const available = GameData.monsters.filter(m => m.level <= floor + 2 && m.level >= floor - 1)
-  if (available.length === 0) return GameData.monsters[GameData.monsters.length - 1]
+  if (available.length === 0) return new Monster(GameData.monsters[GameData.monsters.length - 1])
   const template = available[Math.floor(Math.random() * available.length)]
-  // 高层怪物有属性加成
   const scaled = { ...template }
   if (floor > template.level) {
     const scale = 1 + (floor - template.level) * 0.3
@@ -243,9 +314,9 @@ function getRandomMonster(floor) {
 function getRandomEquipment(floor) {
   const types = ['weapon', 'armor', 'accessory']
   const type = types[Math.floor(Math.random() * types.length)]
-  const tier = Math.min(Math.floor((floor - 1) / 3), 3) // 0-3档
+  const tier = Math.min(Math.floor((floor - 1) / 3), 3)
   const pool = GameData.equipment[type].filter(e => e.tier <= tier + 1)
-  if (pool.length === 0) return GameData.equipment[type][0]
+  if (pool.length === 0) return { ...GameData.equipment[type][0], type }
   const template = pool[Math.floor(Math.random() * pool.length)]
   return { ...template, type }
 }
@@ -266,7 +337,9 @@ function savePlayer(player) {
     accessory: player.accessory,
     inventory: player.inventory,
     floor: player.floor,
-    kills: player.kills
+    kills: player.kills,
+    tempAttackBuff: player.tempAttackBuff,
+    tempDefenseBuff: player.tempDefenseBuff
   }
 }
 
@@ -285,6 +358,8 @@ function loadPlayer(data) {
   p.inventory = data.inventory || []
   p.floor = data.floor
   p.kills = data.kills
+  p.tempAttackBuff = data.tempAttackBuff || 0
+  p.tempDefenseBuff = data.tempDefenseBuff || 0
   return p
 }
 
@@ -293,6 +368,7 @@ module.exports = {
   Monster,
   Battle,
   generateRoomEvent,
+  generateTwoRoomEvents,
   getRandomMonster,
   getRandomEquipment,
   savePlayer,
