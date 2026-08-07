@@ -10,7 +10,6 @@ Page({
     leftState: 'door',     // door | result | monster | merchant | camp | altar | oldGear | camp_ambush
     rightState: 'door',
     trapResult: null,
-    canDescend: false,
     totalAttack: 0,
     totalDefense: 0,
     totalMaxHp: 0,
@@ -29,7 +28,7 @@ Page({
     // 恢复存档进度
     const player = app.getPlayer()
     if (player && player.roomsExplored >= ROOMS_PER_FLOOR) {
-      this.setData({ canDescend: true })
+      this.setData({ leftState: 'stairs', rightState: 'door', rightEvent: null })
     } else {
       this.generateEvents()
     }
@@ -40,8 +39,8 @@ Page({
     this.refreshPlayer()
     // 如果已到楼梯但尚未下楼，保持楼梯状态
     const player = app.getPlayer()
-    if (player && player.roomsExplored >= ROOMS_PER_FLOOR && !this.data.canDescend) {
-      this.setData({ canDescend: true, leftState: 'door', rightState: 'door' })
+    if (player && player.roomsExplored >= ROOMS_PER_FLOOR && this.data.leftState !== 'stairs') {
+      this.setData({ leftState: 'stairs', rightState: 'door', rightEvent: null })
     }
     this.checkDead()
   },
@@ -76,7 +75,6 @@ Page({
   // ==================== 事件生成 ====================
 
   generateEvents() {
-    if (this.data.canDescend) return
     const player = app.getPlayer()
     if (!player || player.isDead()) return
     const [left, right] = generateTwoRoomEvents(player)
@@ -197,7 +195,6 @@ Page({
   // ==================== 完成事件 → 推门 ====================
 
   finishSide(side) {
-    if (this.data.canDescend) return
     const player = app.getPlayer()
     if (!player || player.isDead()) { this.checkDead(); return }
 
@@ -207,9 +204,9 @@ Page({
 
     if (player.roomsExplored >= ROOMS_PER_FLOOR) {
       this.setData({
-        canDescend: true,
-        leftState: 'door',
-        rightState: 'door'
+        leftState: 'stairs',
+        rightState: 'door',
+        rightEvent: null
       })
       return
     }
@@ -364,7 +361,7 @@ Page({
     player.heal(Math.floor(player.totalMaxHp * 0.3))
     app.saveGame()
     this.refreshPlayer()
-    this.setData({ canDescend: false })
+    this.setData({ leftState: 'door', rightState: 'door' })
     this.generateEvents()
     wx.showToast({ title: `进入第 ${player.floor} 层！`, icon: 'success' })
   },
