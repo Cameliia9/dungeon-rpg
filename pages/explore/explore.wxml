@@ -17,16 +17,16 @@
       <!-- 叠层幽灵卡片（门状态时显示） -->
       <block wx:if="{{leftState === 'door'}}">
         <view wx:if="{{leftDepth >= 4}}" class="ghost-card"
-          style="transform: translateY(15px) scale(0.91); z-index: 1;"></view>
+          style="transform: translate(-11px, 11px) scale(0.91); z-index: 1; opacity: 0.5;"></view>
         <view wx:if="{{leftDepth >= 3}}" class="ghost-card"
-          style="transform: translateY(10px) scale(0.94); z-index: 2;"></view>
+          style="transform: translate(-7px, 7px) scale(0.94); z-index: 2; opacity: 0.65;"></view>
         <view wx:if="{{leftDepth >= 2}}" class="ghost-card"
-          style="transform: translateY(5px) scale(0.97); z-index: 3;"></view>
+          style="transform: translate(-3px, 3px) scale(0.97); z-index: 3; opacity: 0.8;"></view>
       </block>
 
       <!-- 主卡片（交互层） -->
-      <view class="card {{leftOut ? 'fly-out-right' : ''}}"
-        style="position: relative; z-index: 10; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px;">
+      <view class="card main-float {{leftOut ? 'fly-out-right' : ''}}"
+        style="position: relative; z-index: 10; height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: hidden;">
 
       <!-- 门状态 -->
       <block wx:if="{{leftState === 'door'}}">
@@ -118,16 +118,16 @@
       <!-- 叠层幽灵卡片（门状态时显示） -->
       <block wx:if="{{rightState === 'door'}}">
         <view wx:if="{{rightDepth >= 4}}" class="ghost-card"
-          style="transform: translateY(15px) scale(0.91); z-index: 1;"></view>
+          style="transform: translate(-11px, 11px) scale(0.91); z-index: 1; opacity: 0.5;"></view>
         <view wx:if="{{rightDepth >= 3}}" class="ghost-card"
-          style="transform: translateY(10px) scale(0.94); z-index: 2;"></view>
+          style="transform: translate(-7px, 7px) scale(0.94); z-index: 2; opacity: 0.65;"></view>
         <view wx:if="{{rightDepth >= 2}}" class="ghost-card"
-          style="transform: translateY(5px) scale(0.97); z-index: 3;"></view>
+          style="transform: translate(-3px, 3px) scale(0.97); z-index: 3; opacity: 0.8;"></view>
       </block>
 
       <!-- 主卡片（交互层） -->
-      <view class="card {{rightOut ? 'fly-out-right' : ''}}"
-        style="position: relative; z-index: 10; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px;">
+      <view class="card main-float {{rightOut ? 'fly-out-right' : ''}}"
+        style="position: relative; z-index: 10; height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: hidden;">
 
       <!-- 门状态 -->
       <block wx:if="{{rightState === 'door'}}">

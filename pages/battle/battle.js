@@ -161,10 +161,10 @@ Page({
     wx.navigateBack()
   },
 
-  // ★ 系统手势返回/物理返回键也发送通知
+  // 系统返回键/手势：不触发战斗结算，保留怪物状态
   onUnload() {
-    this._emitBattleResolved()
-    app.globalData.currentMonsterData = null
+    // 不emit battleResolved，不清除 currentMonsterData
+    // 用户通过返回键退出时，explore页保留怪物事件
   },
 
   // 重新开始（从失败页面 → 清栈回菜单）
