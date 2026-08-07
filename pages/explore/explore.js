@@ -103,13 +103,11 @@ Page({
       case 'treasure':
         player.gold += event.gold
         app.saveGame()
-        this.setActiveAndFinish(event, side)
-        return
+        break
       case 'spring':
         player.heal(event.heal)
         app.saveGame()
-        this.setActiveAndFinish(event, side)
-        return
+        break
       case 'trap': {
         const dodged = Math.random() < event.dodgeChance
         let dmg = 0
@@ -125,32 +123,21 @@ Page({
       }
       case 'deadend':
         app.saveGame()
-        this.setActiveAndFinish(event, side)
-        return
+        break
       case 'coins':
         player.gold += event.gold
         app.saveGame()
-        this.setActiveAndFinish(event, side)
-        return
+        break
       case 'buffStone':
         player.tempAttackBuff = (player.tempAttackBuff || 0) + event.attackBonus
         app.saveGame()
-        this.setActiveAndFinish(event, side)
-        return
+        break
     }
 
-    // 交互类：设 activeEvent，等待用户操作
-    this.setData({ activeEvent: event, activeSide: side })
-    if (player.isDead()) { this.refreshPlayer(); this.checkDead() }
-  },
-
-  // 显示自动事件结果，1.5秒后自动推进
-  setActiveAndFinish(event, side) {
+    // 自动类事件：立即生效，显示结果等用户点"好的"
     this.setData({ activeEvent: event, activeSide: side })
     this.refreshPlayer()
-    setTimeout(() => {
-      this.finishEvent(side)
-    }, 1500)
+    if (player.isDead()) { this.checkDead(); return }
   },
 
   // ==================== 事件完成 → 推门 ====================
