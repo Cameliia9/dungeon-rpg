@@ -304,7 +304,7 @@ Page({
     // 更新祭坛数据到页面
     const upd = {}
     upd[evtKey] = event
-    if (event.altarCount >= event.maxCount || player.hp <= event.cost) {
+    if (event.altarCount >= event.maxCount) {
       upd[side + 'State'] = 'door'
       setTimeout(() => this.finishSide(side), 500)
     }
