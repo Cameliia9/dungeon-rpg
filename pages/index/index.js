@@ -80,6 +80,7 @@ Page({
 
     // 删除旧存档
     wx.removeStorageSync('dungeon_save')
+    wx.removeStorageSync('explore_state')
 
     // 根据难度创建角色
     const player = new Player('冒险者', difficulty)
@@ -138,6 +139,7 @@ Page({
     const player = app.getPlayer()
     if (player && player.isDead()) {
       wx.removeStorageSync('dungeon_save')
+      wx.removeStorageSync('explore_state')
       app.globalData.player = null
       this.setData({ screen: 'menu', hasSavedGame: false })
       wx.showToast({ title: '冒险结束，返回菜单', icon: 'none' })
@@ -167,6 +169,7 @@ Page({
       success: (res) => {
         if (res.confirm) {
           wx.removeStorageSync('dungeon_save')
+          wx.removeStorageSync('explore_state')
           app.globalData.player = new (require('../../utils/game-engine').Player)('冒险者')
           app.saveGame()
           this.refreshGame()

@@ -164,6 +164,7 @@ Page({
   onDefeat() {
     const monster = this.battle.monster
     wx.removeStorageSync('dungeon_save')
+    wx.removeStorageSync('explore_state')
     app.globalData.player = null
     app.globalData.currentMonsterData = null
 

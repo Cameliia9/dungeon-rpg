@@ -21,7 +21,10 @@ Page({
 
   onLoad() {
     this.refreshPlayer()
-    this.generateEvents()
+    // 恢复上次的探索状态（防止退出重进刷门逃课）
+    if (!this._restoreExploreState()) {
+      this.generateEvents()
+    }
     this.checkDead()
   },
 
@@ -51,6 +54,7 @@ Page({
     const player = app.getPlayer()
     if (player && player.isDead()) {
       wx.removeStorageSync('dungeon_save')
+      wx.removeStorageSync('explore_state')
       app.globalData.player = null
       wx.showModal({
         title: '你死在了地牢中...',
@@ -62,6 +66,53 @@ Page({
     }
   },
 
+  // ==================== 探索状态持久化 ====================
+
+  // 保存当前两扇门的内容与状态（防退出重进刷门）
+  _saveExploreState() {
+    const player = app.getPlayer()
+    if (!player) return
+    try {
+      wx.setStorageSync('explore_state', {
+        floor: player.floor,
+        leftEvent: this.data.leftEvent,
+        rightEvent: this.data.rightEvent,
+        leftState: this.data.leftState,
+        rightState: this.data.rightState,
+        trapResult: this.data.trapResult || null
+      })
+    } catch (e) {}
+  },
+
+  // 恢复探索状态；层数不匹配（已下楼）则返回 false 重新生成
+  _restoreExploreState() {
+    const player = app.getPlayer()
+    if (!player) return false
+    try {
+      const st = wx.getStorageSync('explore_state')
+      if (st && st.floor === player.floor) {
+        // 楼梯/Boss 场景：本层已完成，另一侧 Event 为 null（等下楼）
+        // 只要任意一侧还有有效事件就恢复，防止楼梯被刷掉
+        const hasEvent = !!(st.leftEvent || st.rightEvent)
+        if (hasEvent) {
+          this.setData({
+            leftEvent: st.leftEvent || null,
+            rightEvent: st.rightEvent || null,
+            leftState: st.leftState || 'door',
+            rightState: st.rightState || 'door',
+            trapResult: st.trapResult || null
+          })
+          return true
+        }
+      }
+    } catch (e) {}
+    return false
+  },
+
+  _clearExploreState() {
+    try { wx.removeStorageSync('explore_state') } catch (e) {}
+  },
+
   // ==================== 事件生成 ====================
 
   generateEvents() {
@@ -69,6 +120,7 @@ Page({
     if (!player || player.isDead()) return
     const [left, right] = generateTwoRoomEvents(player)
     this.setData({ leftEvent: left, rightEvent: right, leftState: 'door', rightState: 'door' })
+    this._saveExploreState()
   },
 
   _animateCardOut(side) {
@@ -83,6 +135,7 @@ Page({
     const leftType = this.data.leftEvent && this.data.leftEvent.type
     const newRight = (a.type !== leftType) ? a : b
     this.setData({ rightEvent: newRight, rightState: 'door' })
+    this._saveExploreState()
   },
 
   // ==================== 左卡片操作 ====================
@@ -190,6 +243,7 @@ Page({
     }
 
     this.refreshPlayer()
+    this._saveExploreState()
     if (player.isDead()) this.checkDead()
   },
 
@@ -198,6 +252,7 @@ Page({
   // 封锁死路一侧（该侧不可再点击）
   blockSide(side) {
     this.setData({ [side + 'State']: 'blocked' })
+    this._saveExploreState()
   },
 
   // ==================== 完成事件 → 推门 ====================
@@ -221,6 +276,7 @@ Page({
         [otherSide + 'State']: 'door',
         [otherSide + 'Event']: null
       })
+      this._saveExploreState()
       this.refreshPlayer()
       return
     }
@@ -236,6 +292,7 @@ Page({
         leftState: 'door',
         rightState: 'door'
       })
+      this._saveExploreState()
       this.refreshPlayer()
       return
     }
@@ -251,6 +308,7 @@ Page({
       this.generateNewRight()
     }
 
+    this._saveExploreState()
     this.refreshPlayer()
   },
 
@@ -290,6 +348,7 @@ Page({
               [otherSide + 'Event']: null
             })
             app.globalData.bossDefeated = false
+            this._saveExploreState()
             this.refreshPlayer()
             return
           }
@@ -334,6 +393,7 @@ Page({
     }
     app.saveGame()
     this.refreshPlayer()
+    this._saveExploreState()
   },
 
   // ==================== 营地 ====================
@@ -350,6 +410,7 @@ Page({
     if (Math.random() < event.ambushChance) {
       wx.showToast({ title: '遭遇怪物袭击！', icon: 'error' })
       this.setData({ [stateKey]: 'camp_ambush', [side + 'Event']: { type: 'camp_ambush', monster: event.ambushMonster } })
+      this._saveExploreState()
     } else {
       wx.showToast({ title: '安全休息！', icon: 'success' })
       this.finishSide(side)
@@ -381,6 +442,7 @@ Page({
       setTimeout(() => this.finishSide(side), 500)
     }
     this.setData(upd)
+    this._saveExploreState()
     if (player.isDead()) this.checkDead()
   },
 
@@ -416,6 +478,8 @@ Page({
     player.tempDefenseBuff = 0
     player.heal(Math.floor(player.totalMaxHp * 0.3))
     app.saveGame()
+    // 下楼后旧探索状态作废，清掉并生成新层事件
+    this._clearExploreState()
     this.refreshPlayer()
     this.setData({ leftState: 'door', rightState: 'door' })
     this.generateEvents()
