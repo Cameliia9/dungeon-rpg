@@ -26,7 +26,7 @@
 
       <!-- 主卡片（交互层） -->
       <view class="card main-float {{leftOut ? 'fly-out-right' : ''}}"
-        style="position: relative; z-index: 10; height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: hidden;">
+        style="position: relative; z-index: 10; height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: hidden;">
 
       <!-- 门状态 -->
       <block wx:if="{{leftState === 'door'}}">
@@ -46,13 +46,12 @@
 
       <!-- 怪物 -->
       <block wx:if="{{leftState === 'monster'}}">
-        <text style="font-size: 36px; display: block;">👹</text>
-        <text class="title" style="font-size: 16px;">{{leftEvent.monster.name}}</text>
-        <text class="subtitle" style="font-size: 11px;">{{leftEvent.monster.desc}}</text>
-        <view class="stat-row"><text class="stat-label">血量 {{leftEvent.monster.hp}}</text></view>
-        <view class="stat-row"><text class="stat-label">攻击 {{leftEvent.monster.attack}}</text></view>
-        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 6px;" bindtap="goBattleLeft">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 4px;" bindtap="runAwayLeft">🏃 逃跑</button>
+        <text style="font-size: 30px; display: block;">👹</text>
+        <text style="font-size: 15px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{leftEvent.monster.name}}</text>
+        <text style="font-size: 11px; color: #8a8a9a; margin: 1px 0;">{{leftEvent.monster.desc}}</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}  ⚔️{{leftEvent.monster.attack}}</text>
+        <button class="btn-sm btn-sm-primary" bindtap="goBattleLeft">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayLeft">🏃 逃跑</button>
       </block>
 
       <!-- 商人 -->
@@ -101,11 +100,11 @@
 
       <!-- 营地遇怪 -->
       <block wx:if="{{leftState === 'camp_ambush'}}">
-        <text style="font-size: 36px; display: block;">👹</text>
-        <text class="title" style="font-size: 16px;">{{leftEvent.monster.name}}突袭！</text>
-        <view class="stat-row"><text class="stat-label">血量 {{leftEvent.monster.hp}}</text></view>
-        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="goBattleLeft">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="runAwayLeft">🏃 逃跑</button>
+        <text style="font-size: 30px; display: block;">👹</text>
+        <text style="font-size: 14px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{leftEvent.monster.name}}突袭！</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}</text>
+        <button class="btn-sm btn-sm-primary" bindtap="goBattleLeft">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayLeft">🏃 逃跑</button>
       </block>
 
     </view>
@@ -127,7 +126,7 @@
 
       <!-- 主卡片（交互层） -->
       <view class="card main-float {{rightOut ? 'fly-out-right' : ''}}"
-        style="position: relative; z-index: 10; height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: hidden;">
+        style="position: relative; z-index: 10; height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: hidden;">
 
       <!-- 门状态 -->
       <block wx:if="{{rightState === 'door'}}">
@@ -147,13 +146,12 @@
 
       <!-- 怪物 -->
       <block wx:if="{{rightState === 'monster'}}">
-        <text style="font-size: 36px; display: block;">👹</text>
-        <text class="title" style="font-size: 16px;">{{rightEvent.monster.name}}</text>
-        <text class="subtitle" style="font-size: 11px;">{{rightEvent.monster.desc}}</text>
-        <view class="stat-row"><text class="stat-label">血量 {{rightEvent.monster.hp}}</text></view>
-        <view class="stat-row"><text class="stat-label">攻击 {{rightEvent.monster.attack}}</text></view>
-        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 6px;" bindtap="goBattleRight">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 4px;" bindtap="runAwayRight">🏃 逃跑</button>
+        <text style="font-size: 30px; display: block;">👹</text>
+        <text style="font-size: 15px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{rightEvent.monster.name}}</text>
+        <text style="font-size: 11px; color: #8a8a9a; margin: 1px 0;">{{rightEvent.monster.desc}}</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}  ⚔️{{rightEvent.monster.attack}}</text>
+        <button class="btn-sm btn-sm-primary" bindtap="goBattleRight">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayRight">🏃 逃跑</button>
       </block>
 
       <!-- 商人 -->
@@ -202,11 +200,11 @@
 
       <!-- 营地遇怪 -->
       <block wx:if="{{rightState === 'camp_ambush'}}">
-        <text style="font-size: 36px; display: block;">👹</text>
-        <text class="title" style="font-size: 16px;">{{rightEvent.monster.name}}突袭！</text>
-        <view class="stat-row"><text class="stat-label">血量 {{rightEvent.monster.hp}}</text></view>
-        <button class="btn-sm btn-sm-primary" style="width: 80%; margin-top: 4px;" bindtap="goBattleRight">⚔️ 战斗</button>
-        <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 2px;" bindtap="runAwayRight">🏃 逃跑</button>
+        <text style="font-size: 30px; display: block;">👹</text>
+        <text style="font-size: 14px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{rightEvent.monster.name}}突袭！</text>
+        <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}</text>
+        <button class="btn-sm btn-sm-primary" bindtap="goBattleRight">⚔️ 战斗</button>
+        <button class="btn-sm btn-sm-secondary" bindtap="runAwayRight">🏃 逃跑</button>
       </block>
 
     </view>
