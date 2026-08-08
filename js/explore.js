@@ -99,7 +99,7 @@ function touch(x, y) {
     }
   }
 
-  // 卡片区：根据状态分发
+  // 卡片区：根据状态分发（坐标与绘制一致）
   const cardTop = 92
   const cardH = S.LH - 150 - 100
   if (y > cardTop && y < cardTop + cardH) {
@@ -107,42 +107,48 @@ function touch(x, y) {
     const side = isLeft ? 'left' : 'right'
     const state = side === 'left' ? leftState : rightState
     const evt = side === 'left' ? leftEvent : rightEvent
-    const cx = isLeft ? leftX() + cardW() / 2 : rightX() + cardW() / 2
+    const w = cardW()
+    const cx = isLeft ? leftX() + w / 2 : rightX() + w / 2
     const cy = cardTop + cardH / 2
 
     if (state === 'door') {
-      if (evt && evt.type === 'stairs') descend()
-      else if (evt && evt.type === 'boss') startBattle(side, true)
-      else pickSide(side)
+      if (evt && evt.type === 'stairs') {
+        if (y > cy + 23 && y < cy + 57) descend()
+      } else if (evt && evt.type === 'boss') {
+        if (y > cy + 25 && y < cy + 59) startBattle(side, true)
+      } else {
+        if (y > cy + 13 && y < cy + 47) pickSide(side)
+      }
     } else if (state === 'monster') {
-      // 战斗/逃跑按钮
-      if (y > cy + 58 && y < cy + 88) {
-        if (x > cx - 70 && x < cx - 10) startBattle(side, false)
-        else if (x > cx + 10 && x < cx + 70) fleeMonster(side)
+      // 战斗/逃跑按钮(并排, cy+52)
+      if (y > cy + 52 && y < cy + 84) {
+        if (x > cx - w * 0.36 - 4 && x < cx - 4) startBattle(side, false)
+        else if (x > cx + 4 && x < cx + w * 0.36 + 4) fleeMonster(side)
       }
     } else if (state === 'result') {
-      // 继续按钮
-      if (y > cy + 50 && y < cy + 84) finishSide(side)
+      // 好的按钮(红色80%, cy+34)
+      if (y > cy + 34 && y < cy + 68) finishSide(side)
     } else if (state === 'deadend') {
-      finishSide(side)
+      // 返回按钮(cy+42)
+      if (y > cy + 42 && y < cy + 76) blockSide(side)
     } else if (state === 'merchant') {
-      // 买/离开
-      let yy = cy - 12
+      // 商品行(46px高) + 离开按钮
+      let yy = cy - 8
       for (let i = 0; i < evt.items.length; i++) {
-        if (y > yy - 10 && y < yy + 10 && x > cx + 40 && x < cx + 80) { buyMerchant(side, i); return }
-        yy += 28
+        if (y > yy && y < yy + 46) {
+          const iw = w * 0.9, ix = cx - iw / 2
+          if (x > ix + iw - 60 && x < ix + iw - 10 && y > yy + 20 && y < yy + 40) { buyMerchant(side, i); return }
+        }
+        yy += 50
       }
-      if (y > cy + 70 && y < cy + 98) finishSide(side)
+      if (y > yy + 8 && y < yy + 40) finishSide(side)
     } else if (state === 'altar') {
-      if (y > cy + 40 && y < cy + 70 && evt.altarCount < evt.maxCount) {
-        const p = S.player
-        if (p.hp <= evt.cost) { wx.showToast({ title: '生命不足！', icon: 'none' }); return }
-        p.hp -= evt.cost
-        p.baseAttack += 1
-        evt.altarCount++
-        S.savePlayer()
-        if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
-      } else if (y > cy + 80 && y < cy + 106) finishSide(side)
+      const bw = w * 0.8
+      if (y > cy + 4 && y < cy + 34) altarOffer(side, 'attack', evt)
+      else if (y > cy + 40 && y < cy + 70) altarOffer(side, 'defense', evt)
+      else if (y > cy + 76 && y < cy + 106) finishSide(side)
+    } else if (state === 'blocked') {
+      // 封锁不可点击
     }
   }
 }
@@ -216,6 +222,13 @@ function pickSide(side) {
       setState(side, 'altar')
       break
   }
+}
+
+// 封锁死路一侧（该侧不可再点击）
+function blockSide(side) {
+  setState(side, 'blocked')
+  activeSide = null
+  S.savePlayer()
 }
 
 function finishSide(side) {
@@ -301,13 +314,21 @@ function draw() {
   S.ctx.fillStyle = g
   S.ctx.fillRect(0, 0, S.LW, S.LH)
 
-  // 顶部: 楼层 + 主题 (入场动画 0s)
+  // 顶部: 楼层标题卡 (对齐原版: 🏰地牢第X层 + 主题名右侧金色粗体13px + 描述 + 进度)
   const theme = Data.getThemeForFloor(p.floor)
-  const dur = 600, dist = 30
-  const ph = ui.animProgress(enterTime, 0, dur)
-  text(ctx, '🏰 地牢第 ' + p.floor + ' 层', S.LW / 2, 28 + (1 - ph) * dist, 20, COLORS.gold, 'center', true, ph)
-  text(ctx, theme.icon + ' ' + theme.name, S.LW / 2, 52 + (1 - ph) * dist, 12, COLORS.textDim, 'center', false, ph)
-  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor, S.LW / 2, 72 + (1 - ph) * dist, 11, COLORS.textDark, 'center', false, ph)
+  // 标题卡背景
+  roundRect(ctx, 8, 10, S.LW - 16, 72, 12, ui.cardFill(ctx, 8, 10, S.LW - 16, 72), COLORS.cardBorder, 1.5)
+  const titleStr = '🏰 地牢第 ' + p.floor + ' 层'
+  const themeStr = theme.icon + ' ' + theme.name
+  const tW = ui.textWidth(ctx, titleStr, 18)
+  const thW = ui.textWidth(ctx, themeStr, 13)
+  // 标题居中(整体含主题名), 主题名金色粗体
+  const totalW = tW + 10 + thW
+  let tx = (S.LW - totalW) / 2
+  text(ctx, titleStr, tx + tW / 2, 28, 18, COLORS.gold, 'center', true)
+  text(ctx, themeStr, tx + tW + 10 + thW / 2, 28, 13, '#e0c080', 'center', true)
+  text(ctx, theme.desc || '', S.LW / 2, 48, 11, COLORS.textDim)
+  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, 66, 11, COLORS.textDark)
 
   // 双门卡片 (左 0.1s 右 0.2s 滑入)
   const cardTop = 92
@@ -336,79 +357,88 @@ function drawCard(x, y, w, h, side, slideIn) {
   const cx = x + w / 2, cy = y + h / 2 + (slideIn || 0)
 
   // 卡片渐变背景(对齐原版 .card)
-  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 14, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), activeSide === side ? COLORS.goldBright : COLORS.cardBorder, activeSide === side ? 2 : 1.5)
+  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), activeSide === side ? COLORS.goldBright : COLORS.cardBorder, activeSide === side ? 2 : 1.5)
 
   if (state === 'door') {
     if (evt && evt.type === 'stairs') {
-      text(ctx, '🪜', cx, cy - 20, 40)
-      text(ctx, '发现楼梯！', cx, cy + 20, 15, COLORS.goldBright, 'center', true)
-      text(ctx, '⬇️ 下到 ' + (p.floor + 1) + ' 层', cx, cy + 45, 12, COLORS.textDim)
+      // 楼梯卡: 🪜 + 发现楼梯！(金色粗体) + 金色按钮
+      text(ctx, '🪜', cx, cy - 58, 44)
+      text(ctx, '发现楼梯！', cx, cy - 6, 16, '#f0c040', 'center', true)
+      drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 40, w * 0.68, 34, '⬇️ 下到 ' + (p.floor + 1) + ' 层', () => descend(), ui.BTN.gold))
     } else if (evt && evt.type === 'boss') {
-      text(ctx, '👑', cx, cy - 20, 40)
-      text(ctx, '⚠️ Boss 拦路！', cx, cy + 20, 15, COLORS.red, 'center', true)
-      text(ctx, '⚔️ 挑战 Boss', cx, cy + 45, 12, COLORS.textDim)
+      // Boss卡: 👑 + ⚠️ Boss拦路！(红粗) + 描述 + 红色按钮
+      text(ctx, '👑', cx, cy - 62, 44)
+      text(ctx, '⚠️ Boss 拦路！', cx, cy - 8, 16, '#ff5555', 'center', true)
+      text(ctx, '击败它才能继续前进', cx, cy + 16, 11, COLORS.textDim)
+      drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 42, w * 0.68, 34, '⚔️ 挑战 Boss', () => startBattle(side, true), ui.BTN.danger))
     } else {
-      text(ctx, '🚪', cx, cy - 15, 44)
-      text(ctx, '前进探索', cx, cy + 30, 13, COLORS.textDim)
+      // 普通门: 🚪 48px + 红色前进按钮(80%)
+      text(ctx, '🚪', cx, cy - 44, 48)
+      drawBtn(ctx, makeBtn(cx - w * 0.4, cy + 30, w * 0.8, 34, '前进探索', () => pickSide(side), ui.BTN.primary))
     }
   } else if (state === 'deadend') {
-    text(ctx, '🚧', cx, cy - 20, 36)
-    text(ctx, '死路', cx, cy + 20, 15, COLORS.textDim)
+    // 死路: 🚧 + 死路 + 描述 + 灰色返回按钮
+    text(ctx, '🚧', cx, cy - 56, 36)
+    text(ctx, '死路', cx, cy - 8, 16, COLORS.gold, 'center', true)
+    text(ctx, '前方没有路了，只能从另一边前进', cx, cy + 16, 11, COLORS.textDim)
+    drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 42, w * 0.68, 34, '💨 返回', () => blockSide(side), ui.BTN.secondary))
+  } else if (state === 'blocked') {
+    // 封锁: 🔒 + 此路不通
+    text(ctx, '🔒', cx, cy - 30, 36)
+    text(ctx, '此路不通', cx, cy + 20, 13, '#555565')
   } else if (state === 'result') {
-    drawResultCard(cx, cy, evt)
+    drawResultCard(cx, cy, evt, w)
   } else if (state === 'monster') {
-    drawMonsterCard(cx, cy, evt.monster)
+    drawMonsterCard(cx, cy, evt.monster, w)
   } else if (state === 'merchant') {
-    drawMerchantCard(cx, cy, evt, side)
+    drawMerchantCard(cx, cy, evt, side, w)
   } else if (state === 'altar') {
-    drawAltarCard(cx, cy, evt, side)
+    drawAltarCard(cx, cy, evt, side, w)
   }
 }
 
-function drawResultCard(cx, cy, evt) {
+function drawResultCard(cx, cy, evt, w) {
   const ctx = S.ctx
   if (!evt) return
+  let icon = '❓', title = '', desc = '', descColor = COLORS.textDim
   switch (evt.type) {
-    case 'treasure': case 'coins':
-      text(ctx, '🪙', cx, cy - 20, 36)
-      text(ctx, '获得 ' + evt.gold + ' 金币！', cx, cy + 20, 15, COLORS.goldBright, 'center', true)
-      break
-    case 'spring':
-      text(ctx, '💧', cx, cy - 20, 36)
-      text(ctx, '生命泉水 +' + evt.heal, cx, cy + 20, 15, COLORS.green, 'center', true)
-      break
+    case 'treasure': icon = '📦'; title = '宝箱'; desc = '获得' + evt.gold + '金币'; descColor = '#f0c040'; break
+    case 'coins': icon = '🪙'; title = '散落金币'; desc = '捡到' + evt.gold + '金币'; descColor = '#f0c040'; break
+    case 'spring': icon = '💧'; title = '生命泉水'; desc = '恢复' + evt.heal + '生命'; descColor = '#2ecc71'; break
     case 'trap':
-      text(ctx, '⚠️', cx, cy - 20, 36)
-      if (trapResult && trapResult.dodged) text(ctx, '闪避成功！', cx, cy + 20, 15, COLORS.green, 'center', true)
-      else text(ctx, '触发陷阱 -' + (trapResult ? trapResult.damage : 0), cx, cy + 20, 15, COLORS.red, 'center', true)
+      icon = '⚠️'; title = trapResult && trapResult.dodged ? '闪避成功' : '触发陷阱'
+      desc = trapResult && trapResult.dodged ? '毫发无伤' : '受到' + (trapResult ? trapResult.damage : 0) + '伤害'
+      descColor = trapResult && trapResult.dodged ? '#2ecc71' : '#e74c3c'
       break
-    case 'buffStone':
-      text(ctx, '🗿', cx, cy - 20, 36)
-      text(ctx, '攻击 +' + evt.attackBonus + '！', cx, cy + 20, 15, COLORS.goldBright, 'center', true)
-      break
-    case 'oldGear':
-      text(ctx, '🛡️', cx, cy - 20, 36)
-      text(ctx, '防御 +' + evt.defense + '！', cx, cy + 20, 15, COLORS.blue, 'center', true)
-      break
-    case 'camp':
-      text(ctx, '⛺', cx, cy - 20, 36)
-      text(ctx, '安全休息，生命回满！', cx, cy + 20, 15, COLORS.green, 'center', true)
-      break
+    case 'buffStone': icon = '🗿'; title = '增益石碑'; desc = '攻击+' + evt.attackBonus; descColor = '#f0c040'; break
+    case 'oldGear': icon = '🦺'; title = '破旧装备'; desc = '防御+' + evt.defense; descColor = COLORS.blue; break
+    case 'camp': icon = '🏕️'; title = '休息营地'; desc = '安全休息，生命回满'; descColor = '#2ecc71'; break
   }
-  // 继续按钮
-  drawBtn(ctx, makeBtn(cx - 60, cy + 50, 120, 34, '继续', () => finishSide(activeSide === 'left' ? 'left' : 'right'), ui.BTN.gold))
+  // 对齐原版: 图标36px + 标题16px金色粗体 + 描述12px彩色 + 好的按钮(红色80%)
+  text(ctx, icon, cx, cy - 64, 36)
+  text(ctx, title, cx, cy - 16, 16, COLORS.gold, 'center', true)
+  text(ctx, desc, cx, cy + 10, 12, descColor)
+  const side = activeSide || 'left'
+  drawBtn(ctx, makeBtn(cx - w * 0.4, cy + 34, w * 0.8, 34, '好的', () => finishSide(side), ui.BTN.primary))
 }
 
-function drawMonsterCard(cx, cy, m) {
+function drawMonsterCard(cx, cy, m, w) {
   const ctx = S.ctx
-  text(ctx, m.icon, cx, cy - 30, 36)
-  text(ctx, m.name + '  Lv.' + m.level, cx, cy, 15, COLORS.gold, 'center', true)
-  text(ctx, '❤' + m.hp + '  ⚔' + m.attack + '  🛡' + m.defense, cx, cy + 22, 12, COLORS.textDim)
-  text(ctx, '⚡' + m.critPercent + '%暴  💨' + m.dodgePercent + '%闪', cx, cy + 40, 11, COLORS.textDark)
-  const side = activeSide
-  // 战斗/逃跑按钮
-  drawBtn(ctx, makeBtn(cx - 70, cy + 58, 60, 30, '⚔️战斗', () => startBattle(side, false), ui.BTN.primary))
-  drawBtn(ctx, makeBtn(cx + 10, cy + 58, 60, 30, '🏃逃跑', () => fleeMonster(side), ui.BTN.secondary))
+  // 对齐原版怪物卡
+  text(ctx, m.icon, cx, cy - 78, 30)
+  // 名字 + Lv(橙色小字)
+  text(ctx, m.name, cx, cy - 36, 15, COLORS.gold, 'center', true)
+  text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 15) / 2 + 14, cy - 36, 12, '#ffaa00')
+  // 描述
+  text(ctx, m.desc || '', cx, cy - 12, 11, COLORS.textDim)
+  // 属性
+  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy + 12, 12, COLORS.textDim)
+  text(ctx, '⚡' + m.critPercent + '%暴  💨' + m.dodgePercent + '%闪', cx, cy + 30, 11, '#7a7a8a')
+  // 战斗/逃跑按钮（并排）
+  const bw = w * 0.36
+  const side = activeSide || 'left'
+  drawBtn(ctx, makeBtn(cx - bw - 4, cy + 52, bw, 32, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx + 4, cy + 52, bw, 32, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
 }
 
 function fleeMonster(side) {
@@ -425,19 +455,26 @@ function fleeMonster(side) {
   }
 }
 
-function drawMerchantCard(cx, cy, evt, side) {
+function drawMerchantCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
-  text(ctx, evt.merchantIcon || '🧙', cx, cy - 70, 30)
-  text(ctx, evt.themeName + ' 商人', cx, cy - 40, 13, COLORS.gold, 'center', true)
-  // 商品列表
-  let yy = cy - 12
+  // 对齐原版商人卡
+  text(ctx, evt.merchantIcon || '🧙', cx, cy - 96, 36)
+  text(ctx, evt.merchantName || '神秘商人', cx, cy - 52, 16, COLORS.gold, 'center', true)
+  text(ctx, '来自【' + (evt.themeName || '') + '】的游商', cx, cy - 30, 11, COLORS.textDim)
+
+  // 商品列表（每项: 名称金色13px+desc灰10px / 💰价格+金色购买按钮）
+  let yy = cy - 8
   for (let i = 0; i < evt.items.length; i++) {
     const it = evt.items[i]
-    text(ctx, it.name + '  💰' + it.price, cx, yy, 11, COLORS.textDim)
-    drawBtn(ctx, makeBtn(cx + 40, yy - 10, 40, 20, '买', () => buyMerchant(side, i), ui.BTN.gold))
-    yy += 28
+    const iw = w * 0.9, ix = cx - iw / 2
+    roundRect(ctx, ix, yy - 2, iw, 46, 6, '#1a1a2e', '#2a2a4a', 1)
+    text(ctx, it.name, ix + 8, yy + 10, 13, COLORS.gold, 'left', true)
+    text(ctx, it.desc || '', ix + 8, yy + 26, 10, COLORS.textDim, 'left')
+    text(ctx, '💰 ' + it.price, ix + iw - 56, yy + 10, 13, '#f0c040', 'left', true)
+    drawBtn(ctx, makeBtn(ix + iw - 60, yy + 20, 50, 20, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 10 }))
+    yy += 50
   }
-  drawBtn(ctx, makeBtn(cx - 40, cy + 70, 80, 28, '离开', () => finishSide(side), ui.BTN.secondary))
+  drawBtn(ctx, makeBtn(cx - w * 0.34, yy + 8, w * 0.68, 32, '离开', () => finishSide(side), ui.BTN.secondary))
 }
 
 function buyMerchant(side, idx) {
@@ -457,25 +494,33 @@ function buyMerchant(side, idx) {
   wx.showToast({ title: '购买成功！', icon: 'success' })
 }
 
-function drawAltarCard(cx, cy, evt, side) {
+function drawAltarCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
   const p = S.player
-  text(ctx, '🕯️', cx, cy - 50, 30)
-  text(ctx, '遗物祭坛', cx, cy - 20, 14, COLORS.gold, 'center', true)
-  text(ctx, '献祭 30 生命: 攻击+1', cx, cy + 8, 11, COLORS.textDim)
-  text(ctx, '(' + evt.altarCount + '/' + evt.maxCount + ')', cx, cy + 24, 11, COLORS.textDark)
-  if (evt.altarCount < evt.maxCount) {
-    drawBtn(ctx, makeBtn(cx - 45, cy + 40, 90, 30, '献祭', () => {
-      const p = S.player
-      if (p.hp <= evt.cost) { wx.showToast({ title: '生命不足！', icon: 'none' }); return }
-      p.hp -= evt.cost
-      p.baseAttack += 1
-      evt.altarCount++
-      S.savePlayer()
-      if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
-    }, ui.BTN.danger))
+  // 对齐原版祭坛卡
+  text(ctx, '🔮', cx, cy - 84, 36)
+  text(ctx, '遗物祭坛', cx, cy - 36, 16, COLORS.gold, 'center', true)
+  text(ctx, '献祭' + evt.cost + '血（' + evt.altarCount + '/' + evt.maxCount + '次）', cx, cy - 12, 11, COLORS.textDim)
+  const bw = w * 0.8
+  const disabled = evt.altarCount >= evt.maxCount || p.hp <= evt.cost
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 4, bw, 30, '⚔️ +1攻击', () => altarOffer(side, 'attack', evt), disabled ? { ...ui.BTN.secondary, size: 12 } : { ...ui.BTN.primary, size: 12 }))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 40, bw, 30, '🛡️ +1防御', () => altarOffer(side, 'defense', evt), disabled ? { ...ui.BTN.secondary, size: 12 } : { ...ui.BTN.primary, size: 12 }))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '离开', () => finishSide(side), ui.BTN.secondary))
+}
+
+function altarOffer(side, type, evt) {
+  const p = S.player
+  if (evt.altarCount >= evt.maxCount || p.hp <= evt.cost) {
+    wx.showToast({ title: '无法献祭', icon: 'none' })
+    return
   }
-  drawBtn(ctx, makeBtn(cx - 40, cy + 80, 80, 26, '离开', () => finishSide(side), ui.BTN.secondary))
+  p.hp -= evt.cost
+  if (type === 'attack') p.baseAttack += 1
+  else p.baseDefense = (p.baseDefense || 0) + 1
+  evt.altarCount++
+  S.savePlayer()
+  wx.showToast({ title: '献祭成功！', icon: 'success' })
+  if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
 }
 
 function drawFooter() {

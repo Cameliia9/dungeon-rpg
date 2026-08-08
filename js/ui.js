@@ -21,6 +21,12 @@ const COLORS = {
   dodge: '#3498db'
 }
 
+/** 文本宽度 */
+function textWidth(ctx, str, size) {
+  ctx.font = size + 'px sans-serif'
+  return ctx.measureText ? ctx.measureText(str).width : str.length * size * 0.6
+}
+
 /** 卡片渐变背景(对齐原版 .card: linear-gradient 135deg #1a1a2e→#16213e) */
 function cardFill(ctx, x, y, w, h) {
   const g = ctx.createLinearGradient(x, y, x + w, y + h)
@@ -137,4 +143,4 @@ const BTN = {
   forge: { bg1: '#b34700', bg2: '#ff8c1a', border: 'rgba(255,255,255,0.2)', fg: '#ffffff' }
 }
 
-module.exports = { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn, BTN, cardFill, easeOut, animProgress }
+module.exports = { COLORS, roundRect, text, textWidth, hpBar, makeBtn, drawBtn, hitBtn, BTN, cardFill, easeOut, animProgress }
