@@ -69,9 +69,11 @@ function buildMenu() {
   const bw = Math.min(220, LW * 0.7), bh = 48, cx = LW / 2
   let y = LH * 0.48
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🆕 新游戏', () => switchScene('difficulty'), ui.BTN.primary)); y += bh + 16
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, savedGame ? '▶️ 继续游戏' : '▶️ 继续游戏（无存档）', () => {
+  const contBtn = makeBtn(cx - bw / 2, y, bw, bh, savedGame ? '▶️ 继续游戏' : '▶️ 继续游戏（无存档）', () => {
     if (savedGame) { loadGame(); switchScene('game') }
-  }, savedGame ? ui.BTN.primary : ui.BTN.disabled)); y += bh + 16
+  }, savedGame ? ui.BTN.primary : ui.BTN.disabled)
+  if (!savedGame) contBtn.disabled = true  // 无存档彻底禁用
+  btns.push(contBtn); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '⚙️ 设置', () => wx.showToast({ title: '暂无设置项', icon: 'none' }), ui.BTN.secondary)); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🚪 退出', () => wx.exitMiniProgram(), ui.BTN.secondary))
 }
@@ -284,7 +286,7 @@ wx.onTouchStart((e) => {
   }
   if (scene === 'menu' || scene === 'difficulty' || scene === 'game') {
     const b = hitBtn(btns, x, y)
-    if (b) b.cb()
+    if (b && !b.disabled) b.cb()
   } else if (scene === 'explore' && explore) {
     explore.touch(x, y)
   } else if (scene === 'battle' && battle) {
