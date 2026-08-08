@@ -9,17 +9,14 @@ const GE = require('./utils/game-engine')
 const Data = require('./utils/data')
 
 // ==================== 画布 ====================
-// 微信官方标准: 显式设置 canvas 物理尺寸 = 逻辑尺寸 × DPR，再 scale(DPR)
-// 不显式设置时主 canvas 默认 750x1334(物理), 若 DPR=1 则逻辑区域 750x1334,
-// 按 375x667 绘制只占左上角 → 看起来空白
+// 主 canvas 自动全屏(物理像素=逻辑×DPR)，只做 scale，不手动设置尺寸
+// 触摸事件坐标是逻辑像素(clientX/clientY)，与 windowWidth 同坐标系
 const sysInfo = wx.getSystemInfoSync()
 const DPR = sysInfo.pixelRatio || 2
 const LW = sysInfo.windowWidth    // 逻辑宽(如375)
 const LH = sysInfo.windowHeight   // 逻辑高(如667)
 
 const canvas = wx.createCanvas()
-canvas.width = LW * DPR
-canvas.height = LH * DPR
 const ctx = canvas.getContext('2d')
 ctx.scale(DPR, DPR)
 
@@ -92,7 +89,8 @@ function drawMenu() {
   const delays = [160, 240, 320, 400]
   for (let i = 0; i < btns.length; i++) {
     const p = ui.animProgress(sceneEnterTime, delays[i], dur)
-    drawBtn(ctx, btns[i], null, p, (1 - p) * dist)
+    // 只做淡入，不做位移（位移会导致点击区域与显示位置不一致）
+    drawBtn(ctx, btns[i], null, p)
   }
 }
 
@@ -136,7 +134,8 @@ function drawDifficulty() {
   const delays = [120, 180, 240, 300]
   for (let i = 0; i < btns.length; i++) {
     const p = ui.animProgress(sceneEnterTime, delays[i], dur)
-    drawBtn(ctx, btns[i], null, p, (1 - p) * dist)
+    // 只做淡入，不做位移
+    drawBtn(ctx, btns[i], null, p)
   }
 }
 
@@ -170,7 +169,17 @@ wx.onTouchStart((e) => {
   const t = e.touches[0]
   if (!t) return
   // 小游戏触摸坐标 = 逻辑像素(与 windowWidth 同坐标系)
-  const x = t.clientX, y = t.clientY
+  // 兜底: 若坐标明显超出逻辑宽(物理像素模式), 按比例换算
+  let x = t.clientX, y = t.clientY
+  if (x > LW * 1.5 && t.x) { x = t.x }
+  if (y > LH * 1.5 && t.y) { y = t.y }
+  if (x > LW || y > LH) {
+    // 尝试用 canvas 物理尺寸换算
+    const cw = canvas.width || LW
+    const ch = canvas.height || LH
+    if (cw > 0) x = x * LW / cw
+    if (ch > 0) y = y * LH / ch
+  }
 
   // 面板层优先
   if (panels) {
