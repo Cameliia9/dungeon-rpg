@@ -22,16 +22,16 @@ let cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
 // 各事件类型的选中横向放大比例(宽度倍数, 神秘商人最长)
 function expandScale(type) {
   switch (type) {
-    case 'merchant': return 1.14
-    case 'monster': return 1.06
-    case 'altar': return 1.08
-    case 'result': return 1.05
-    case 'deadend': return 1.0
-    default: return 1.05
+    case 'merchant': return 1.25
+    case 'altar': return 1.15
+    case 'monster': return 1.12
+    case 'result': return 1.08
+    case 'deadend': return 1.05
+    default: return 1.08
   }
 }
 // 未选中侧宽度收缩比例(高度不变, 内容随宽度变窄)
-const SHRINK_SCALE_X = 0.82
+const SHRINK_SCALE_X = 0.8
 
 function init(shared) {
   S = shared
