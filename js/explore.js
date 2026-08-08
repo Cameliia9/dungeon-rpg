@@ -355,7 +355,7 @@ function draw() {
 
   // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
   const theme = Data.getThemeForFloor(p.floor)
-  const infoY = 118, infoH = 118
+  const infoY = 118, infoH = 100
   roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
   // 第一行(整体居中): 🏰紧贴字 + 金色「地牢第X层」 + 主题图案紧贴名称
   const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
@@ -635,9 +635,19 @@ function drawFooter() {
   const ratio = Math.max(0, Math.min(1, p.hp / p.totalMaxHp))
   if (ratio > 0) roundRect(ctx, barX, y + 64, barW * ratio, 12, 6, '#e74c3c')
 
-  // 属性两行(始终显示, 原版组合格式, 整行左对齐)
-  text(ctx, '⚔️ ' + p.totalAttack + '攻  🛡️ ' + p.totalDefense + '防', 18, y + 96, 12, '#ffffff', 'left')
-  text(ctx, '⚡ ' + Math.round(p.totalCrit * 100) + '%暴  💨 ' + Math.round(p.totalDodge * 100) + '%闪', 18, y + 120, 12, '#ffffff', 'left')
+  // 属性两行(始终显示): 图案x18/数值x34 与血条金币对齐
+  text(ctx, '⚔️', 18, y + 96, 12)
+  text(ctx, '' + p.totalAttack, 34, y + 96, 12, '#ffffff', 'left', true)
+  text(ctx, '攻', 56, y + 96, 10, '#8a8a9a', 'left')
+  text(ctx, '🛡️', 120, y + 96, 12)
+  text(ctx, '' + p.totalDefense, 136, y + 96, 12, '#ffffff', 'left', true)
+  text(ctx, '防', 158, y + 96, 10, '#8a8a9a', 'left')
+  text(ctx, '⚡', 18, y + 120, 12)
+  text(ctx, '' + Math.round(p.totalCrit * 100) + '%', 34, y + 120, 12, '#ffffff', 'left', true)
+  text(ctx, '暴', 66, y + 120, 10, '#8a8a9a', 'left')
+  text(ctx, '💨', 120, y + 120, 12)
+  text(ctx, '' + Math.round(p.totalDodge * 100) + '%', 136, y + 120, 12, '#ffffff', 'left', true)
+  text(ctx, '闪', 158, y + 120, 10, '#8a8a9a', 'left')
 
   // 资源行: 金币金色 + 经验黄色 (始终显示)
   text(ctx, '💰', 18, y + 144, 12)
