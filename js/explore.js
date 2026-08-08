@@ -14,9 +14,11 @@ let activeSide = null
 let footerExpanded = true
 let trapResult = null
 let roomsPerFloor = 15
+let enterTime = Date.now()   // 探索页入场时间(动画)
 
 function init(shared) {
   S = shared
+  enterTime = Date.now()
   if (!skipRegen) generateEvents()
   else skipRegen = false
 }
@@ -161,6 +163,11 @@ function exitExplore() {
 }
 
 // ==================== 事件处理 ====================
+function setState(side, val) {
+  if (side === 'left') leftState = val
+  else rightState = val
+}
+
 function pickSide(side) {
   const evt = side === 'left' ? leftEvent : rightEvent
   if (!evt) return
@@ -170,43 +177,43 @@ function pickSide(side) {
 
   switch (evt.type) {
     case 'treasure':
-      p.gold += evt.gold; this['' + key] = 'result'; S.savePlayer(); break
+      p.gold += evt.gold; setState(side, 'result'); S.savePlayer(); break
     case 'coins':
-      p.gold += evt.gold; this['' + key] = 'result'; S.savePlayer(); break
+      p.gold += evt.gold; setState(side, 'result'); S.savePlayer(); break
     case 'spring':
-      p.heal(evt.heal); this['' + key] = 'result'; S.savePlayer(); break
+      p.heal(evt.heal); setState(side, 'result'); S.savePlayer(); break
     case 'trap': {
       const dodged = Math.random() < evt.dodgeChance
       let dmg = 0
       if (!dodged) { dmg = evt.damage; p.hp = Math.max(0, p.hp - dmg) }
       trapResult = { dodged, damage: dmg }
-      this['' + key] = 'result'
+      setState(side, 'result')
       S.savePlayer()
       if (p.isDead()) { S.switchScene('menu'); return }
       break
     }
     case 'deadend':
       p.roomsExplored++
-      this['' + key] = 'deadend'
+      setState(side, 'deadend')
       S.savePlayer()
       break
     case 'monster':
     case 'merchant':
-      this['' + key] = evt.type
+      setState(side, evt.type)
       break
     case 'buffStone':
       p.tempAttackBuff = (p.tempAttackBuff || 0) + evt.attackBonus
-      this['' + key] = 'result'; S.savePlayer(); break
+      setState(side, 'result'); S.savePlayer(); break
     case 'oldGear':
       p.tempDefenseBuff = (p.tempDefenseBuff || 0) + evt.defense
-      this['' + key] = 'result'; S.savePlayer(); break
+      setState(side, 'result'); S.savePlayer(); break
     case 'camp':
-      this['' + key] = 'result'
+      setState(side, 'result')
       p.heal(p.totalMaxHp)
       S.savePlayer()
       break
     case 'altar':
-      this['' + key] = 'altar'
+      setState(side, 'altar')
       break
   }
 }
@@ -294,35 +301,39 @@ function draw() {
   S.ctx.fillStyle = g
   S.ctx.fillRect(0, 0, S.LW, S.LH)
 
-  // 顶部: 楼层 + 主题
+  // 顶部: 楼层 + 主题 (入场动画 0s)
   const theme = Data.getThemeForFloor(p.floor)
-  text(ctx, '🏰 地牢第 ' + p.floor + ' 层', S.LW / 2, 28, 20, COLORS.gold, 'center', true)
-  text(ctx, theme.icon + ' ' + theme.name, S.LW / 2, 52, 12, COLORS.textDim)
-  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor, S.LW / 2, 72, 11, COLORS.textDark)
+  const dur = 600, dist = 30
+  const ph = ui.animProgress(enterTime, 0, dur)
+  text(ctx, '🏰 地牢第 ' + p.floor + ' 层', S.LW / 2, 28 + (1 - ph) * dist, 20, COLORS.gold, 'center', true, ph)
+  text(ctx, theme.icon + ' ' + theme.name, S.LW / 2, 52 + (1 - ph) * dist, 12, COLORS.textDim, 'center', false, ph)
+  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor, S.LW / 2, 72 + (1 - ph) * dist, 11, COLORS.textDark, 'center', false, ph)
 
-  // 双门卡片
+  // 双门卡片 (左 0.1s 右 0.2s 滑入)
   const cardTop = 92
   const cardH = S.LH - 150 - 100
   const cardW = S.LW * 0.46
   const gap = S.LW * 0.04
-  drawCard(leftX(), cardTop, cardW, cardH, 'left')
-  drawCard(rightX(), cardTop, cardW, cardH, 'right')
+  const pL = ui.animProgress(enterTime, 100, 600)
+  const pR = ui.animProgress(enterTime, 200, 600)
+  drawCard(leftX(), cardTop, cardW, cardH, 'left', (1 - pL) * 36)
+  drawCard(rightX(), cardTop, cardW, cardH, 'right', (1 - pR) * 36)
 
-  // 底部状态栏
+  // 底部状态栏 (0.3s 上滑)
   drawFooter()
 }
 
 function leftX() { return S.LW * 0.04 }
 function rightX() { return S.LW - S.LW * 0.04 - S.LW * 0.46 }
 
-function drawCard(x, y, w, h, side) {
+function drawCard(x, y, w, h, side, slideIn) {
   const ctx = S.ctx
   const p = S.player
   const evt = side === 'left' ? leftEvent : rightEvent
   const state = side === 'left' ? leftState : rightState
   const scale = activeSide === side ? 1.05 : activeSide ? 0.92 : 1
   const cw = w * scale, ch = h * scale
-  const cx = x + w / 2, cy = y + h / 2
+  const cx = x + w / 2, cy = y + h / 2 + (slideIn || 0)
 
   // 卡片渐变背景(对齐原版 .card)
   roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 14, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), activeSide === side ? COLORS.goldBright : COLORS.cardBorder, activeSide === side ? 2 : 1.5)
@@ -470,7 +481,8 @@ function drawAltarCard(cx, cy, evt, side) {
 function drawFooter() {
   const ctx = S.ctx
   const p = S.player
-  const y = S.LH - 150
+  const slideIn = (1 - ui.animProgress(enterTime, 300, 600)) * 40
+  const y = S.LH - 150 + slideIn
   // 状态栏卡片渐变背景
   roundRect(ctx, 0, y, S.LW, 150, 14, ui.cardFill(ctx, 0, y, S.LW, 150), '#2a2a4a', 1.5)
 

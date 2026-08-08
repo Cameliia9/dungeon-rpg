@@ -46,13 +46,15 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke, lineW) {
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineW || 2; ctx.stroke() }
 }
 
-/** 文本（居中/左对齐） */
-function text(ctx, str, x, y, size, color, align, bold) {
+/** 文本（居中/左对齐）；可选动画：alpha 透明度, offsetY 上滑偏移 */
+function text(ctx, str, x, y, size, color, align, bold, alpha, offsetY) {
+  ctx.globalAlpha = alpha === undefined ? 1 : alpha
   ctx.fillStyle = color || COLORS.text
   ctx.font = (bold ? 'bold ' : '') + size + 'px sans-serif'
   ctx.textAlign = align || 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(str, x, y)
+  ctx.fillText(str, x, y + (offsetY || 0))
+  ctx.globalAlpha = 1
 }
 
 /** 血条 */
@@ -69,21 +71,23 @@ function makeBtn(x, y, w, h, label, cb, style) {
   return { x, y, w, h, label, cb, style: style || {} }
 }
 
-/** 绘制按钮（渐变背景，对齐小程序原版） */
-function drawBtn(ctx, b, theme) {
+/** 绘制按钮（渐变背景，对齐小程序原版）；可选动画：alpha, offsetY */
+function drawBtn(ctx, b, theme, alpha, offsetY) {
   const s = b.style
   const bg1 = s.bg1 || s.bg || COLORS.card
   const bg2 = s.bg2 || bg1
   const border = s.border || COLORS.cardBorder
   const fg = s.fg || COLORS.text
+  const oy = offsetY || 0
+  ctx.globalAlpha = alpha === undefined ? 1 : alpha
   // 渐变背景
-  const g = ctx.createLinearGradient(b.x, b.y, b.x + b.w, b.y + b.h)
+  const g = ctx.createLinearGradient(b.x, b.y + oy, b.x + b.w, b.y + oy + b.h)
   g.addColorStop(0, bg1)
   g.addColorStop(1, bg2)
   ctx.fillStyle = g
   ctx.beginPath()
   const r = s.r || 8
-  const x = b.x, y = b.y, w = b.w, h = b.h
+  const x = b.x, y = b.y + oy, w = b.w, h = b.h
   ctx.moveTo(x + r, y)
   ctx.lineTo(x + w - r, y)
   ctx.quadraticCurveTo(x + w, y, x + w, y + r)
@@ -96,7 +100,8 @@ function drawBtn(ctx, b, theme) {
   ctx.closePath()
   ctx.fill()
   if (border) { ctx.strokeStyle = border; ctx.lineWidth = 1.5; ctx.stroke() }
-  text(ctx, b.label, b.x + b.w / 2, b.y + b.h / 2, s.size || 15, fg, 'center', s.bold)
+  text(ctx, b.label, b.x + b.w / 2, b.y + oy + b.h / 2, s.size || 15, fg, 'center', s.bold)
+  ctx.globalAlpha = 1
 }
 
 /** 检测点击是否命中按钮 */
@@ -109,6 +114,20 @@ function hitBtn(btns, x, y) {
   return null
 }
 
+/** easeOut 缓动 */
+function easeOut(t) {
+  return 1 - Math.pow(1 - t, 3)
+}
+
+/** 入场动画进度: 0~1（含 delay 交错），超出返回 1 */
+function animProgress(startTime, delay, duration) {
+  const now = Date.now()
+  const t = (now - startTime - delay) / duration
+  if (t <= 0) return 0
+  if (t >= 1) return 1
+  return easeOut(t)
+}
+
 /** 按钮配色（对齐小程序原版渐变） */
 const BTN = {
   primary: { bg1: '#c0392b', bg2: '#e74c3c', border: 'rgba(255,255,255,0.15)', fg: '#ffffff' },
@@ -118,4 +137,4 @@ const BTN = {
   forge: { bg1: '#b34700', bg2: '#ff8c1a', border: 'rgba(255,255,255,0.2)', fg: '#ffffff' }
 }
 
-module.exports = { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn, BTN, cardFill }
+module.exports = { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn, BTN, cardFill, easeOut, animProgress }

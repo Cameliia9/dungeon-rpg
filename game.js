@@ -45,10 +45,13 @@ function loadGame() {
 }
 
 // ==================== 场景切换 ====================
+let sceneEnterTime = Date.now()   // 场景进入时间(用于入场动画)
+
 function switchScene(name) {
   scene = name
   panels = null
   btns = []
+  sceneEnterTime = Date.now()
   if (name === 'menu') buildMenu()
   else if (name === 'difficulty') buildDifficulty()
   else if (name === 'explore') buildExplore()
@@ -58,15 +61,16 @@ function switchScene(name) {
 }
 
 // ==================== 主菜单 ====================
+// 对齐小程序原版: 居中, ⚔️48px 标题28px, 按钮220px 交错动画 0/0.08/0.16/0.24/0.32/0.4s
 function buildMenu() {
   btns = []
-  const bw = 200, bh = 48, cx = LW / 2
-  let y = LH * 0.52
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🆕 新游戏', () => switchScene('difficulty'), ui.BTN.primary)); y += bh + 14
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, savedGame ? '▶️ 继续游戏' : '▶️ 继续游戏(无存档)', () => {
+  const bw = Math.min(220, LW * 0.7), bh = 48, cx = LW / 2
+  let y = LH * 0.42
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🆕 新游戏', () => switchScene('difficulty'), ui.BTN.primary)); y += bh + 16
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, savedGame ? '▶️ 继续游戏' : '▶️ 继续游戏（无存档）', () => {
     if (savedGame) { loadGame(); switchScene('explore') }
-  }, ui.BTN.primary)); y += bh + 14
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '⚙️ 设置', () => wx.showToast({ title: '暂无设置项', icon: 'none' }), ui.BTN.secondary)); y += bh + 14
+  }, ui.BTN.primary)); y += bh + 16
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '⚙️ 设置', () => wx.showToast({ title: '暂无设置项', icon: 'none' }), ui.BTN.secondary)); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🚪 退出', () => wx.exitMiniProgram(), ui.BTN.secondary))
 }
 
@@ -78,21 +82,29 @@ function drawMenu() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, LW, LH)
 
-  text(ctx, '⚔️', LW / 2, LH * 0.18, 56, COLORS.gold)
-  text(ctx, '地牢冒险', LW / 2, LH * 0.30, 30, COLORS.gold, 'center', true)
-  text(ctx, '深入 25 层地牢，挑战远古邪龙', LW / 2, LH * 0.38, 13, COLORS.textDim)
+  // 入场动画: 交错 fadeSlideUp (对齐原版 delay)
+  const dur = 450, dist = 28
+  const p1 = ui.animProgress(sceneEnterTime, 0, dur)
+  const p2 = ui.animProgress(sceneEnterTime, 80, dur)
+  text(ctx, '⚔️', LW / 2, LH * 0.16 + (1 - p1) * dist, 48, COLORS.gold, 'center', false, p1)
+  text(ctx, '地牢冒险', LW / 2, LH * 0.24 + (1 - p2) * dist, 28, COLORS.gold, 'center', true, p2)
 
-  for (const b of btns) drawBtn(ctx, b)
+  const delays = [160, 240, 320, 400]
+  for (let i = 0; i < btns.length; i++) {
+    const p = ui.animProgress(sceneEnterTime, delays[i], dur)
+    drawBtn(ctx, btns[i], null, p, (1 - p) * dist)
+  }
 }
 
 // ==================== 难度选择 ====================
+// 对齐原版: 标题32 说明14 按钮220 交错 0/0.06/0.12/0.18/0.24/0.3s
 function buildDifficulty() {
   btns = []
-  const bw = 220, bh = 56, cx = LW / 2
-  let y = LH * 0.22
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟢 简单  HP100 · 敌人×1.0', () => startNew('easy'), { ...ui.BTN.primary, size: 14 })); y += bh + 12
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟡 困难  HP95 · 敌人×1.25', () => startNew('hard'), { ...ui.BTN.secondary, size: 14 })); y += bh + 12
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🔴 噩梦  HP90 · 敌人×1.5', () => startNew('nightmare'), { ...ui.BTN.danger, size: 14 })); y += bh + 24
+  const bw = Math.min(220, LW * 0.7), bh = 56, cx = LW / 2
+  let y = LH * 0.28
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟢 简单', () => startNew('easy'), { ...ui.BTN.primary, size: 15 })); y += bh + 12
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟡 困难', () => startNew('hard'), { ...ui.BTN.secondary, size: 15 })); y += bh + 12
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🔴 噩梦', () => startNew('nightmare'), { ...ui.BTN.danger, size: 15 })); y += bh + 24
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '↩️ 返回', () => switchScene('menu'), ui.BTN.secondary))
 }
 
@@ -115,9 +127,17 @@ function drawDifficulty() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, LW, LH)
 
-  text(ctx, '选择难度', LW / 2, LH * 0.12, 26, COLORS.gold, 'center', true)
-  text(ctx, '难度越高，敌人越强', LW / 2, LH * 0.17, 12, COLORS.textDim)
-  for (const b of btns) drawBtn(ctx, b)
+  const dur = 450, dist = 28
+  const p1 = ui.animProgress(sceneEnterTime, 0, dur)
+  const p2 = ui.animProgress(sceneEnterTime, 60, dur)
+  text(ctx, '选择难度', LW / 2, LH * 0.10 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
+  text(ctx, '难度越高，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）', LW / 2, LH * 0.16 + (1 - p2) * dist, 12, COLORS.textDim, 'center', false, p2)
+
+  const delays = [120, 180, 240, 300]
+  for (let i = 0; i < btns.length; i++) {
+    const p = ui.animProgress(sceneEnterTime, delays[i], dur)
+    drawBtn(ctx, btns[i], null, p, (1 - p) * dist)
+  }
 }
 
 // ==================== 探索场景(由 explore.js 提供) ====================

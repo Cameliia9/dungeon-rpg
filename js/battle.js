@@ -12,6 +12,7 @@ let isBoss = false
 let logs = []
 let onDone = null
 let result = 'fighting' // fighting | victory | defeat | fled
+let enterTime = Date.now()
 
 function start(shared, m, boss, done) {
   S = shared
@@ -20,6 +21,7 @@ function start(shared, m, boss, done) {
   onDone = done
   result = 'fighting'
   logs = []
+  enterTime = Date.now()
   battle = new GE.Battle(S.player, m)
   logs.push(isBoss ? '👑 ' + m.name + ' 拦住了去路！' : m.icon + ' ' + m.name + ' 出现了！')
 }
@@ -137,9 +139,11 @@ function draw() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, S.LW, S.LH)
 
-  // 怪物卡
+  // 怪物卡 (入场 0s 下滑)
   const mw = S.LW * 0.8, mh = 130
   const mx = (S.LW - mw) / 2, my = 24
+  const pM = ui.animProgress(enterTime, 0, 450)
+  const mOff = (1 - pM) * 36
   roundRect(ctx, mx, my, mw, mh, 12, ui.cardFill(ctx, mx, my, mw, mh), isBoss ? COLORS.red : COLORS.cardBorder, 2)
   text(ctx, monster.icon, mx + 50, my + mh / 2, 44)
   text(ctx, monster.name + '  Lv.' + monster.level, mx + 130, my + 30, 16, isBoss ? COLORS.red : COLORS.gold, 'left', true)
@@ -148,8 +152,10 @@ function draw() {
   text(ctx, monster.hp + ' / ' + monster.maxHp, mx + 130 + (mw - 150) / 2, my + 80, 11, COLORS.textDim)
   text(ctx, '⚔' + monster.attack + '  🛡' + monster.defense + '  ⚡' + monster.critPercent + '%暴  💨' + monster.dodgePercent + '%闪', mx + 130, my + 100, 10, COLORS.textDark, 'left')
 
-  // 玩家卡
+  // 玩家卡 (入场 0.1s 上滑)
   const py = my + mh + 16
+  const pP = ui.animProgress(enterTime, 100, 450)
+  const pOff = (1 - pP) * 36
   roundRect(ctx, mx, py, mw, 100, 12, ui.cardFill(ctx, mx, py, mw, 100), COLORS.cardBorder, 2)
   text(ctx, '🧝 ' + p.name, mx + 50, py + 25, 14, COLORS.text, 'left', true)
   hpBar(ctx, mx + 100, py + 14, mw - 120, 10, p.hp / p.totalMaxHp)
