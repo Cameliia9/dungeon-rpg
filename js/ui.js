@@ -104,11 +104,15 @@ function drawBtn(ctx, b, theme, alpha, offsetY) {
   const oy = offsetY || 0
   const prevAlpha = ctx.globalAlpha
   ctx.globalAlpha = (alpha === undefined ? 1 : alpha) * prevAlpha
-  // 渐变背景
-  const g = ctx.createLinearGradient(b.x, b.y + oy, b.x + b.w, b.y + oy + b.h)
-  g.addColorStop(0, bg1)
-  g.addColorStop(1, bg2)
-  ctx.fillStyle = g
+  // 渐变背景(缓存: 按钮位置+样式固定, 复用渐变对象)
+  const gkey = b.x + ',' + (b.y + oy) + ',' + b.w + ',' + b.h + ',' + bg1 + ',' + bg2
+  if (!_gradCache[gkey]) {
+    const gg = ctx.createLinearGradient(b.x, b.y + oy, b.x + b.w, b.y + oy + b.h)
+    gg.addColorStop(0, bg1)
+    gg.addColorStop(1, bg2)
+    _gradCache[gkey] = gg
+  }
+  ctx.fillStyle = _gradCache[gkey]
   ctx.beginPath()
   const r = s.r || 8
   const x = b.x, y = b.y + oy, w = b.w, h = b.h
