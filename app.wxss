@@ -265,22 +265,22 @@ page {
 
 /* 探索页：顶部标题下滑入 */
 .anim-header {
-  animation: fadeSlideDown 0.4s ease both;
+  animation: fadeSlideDown 0.6s ease both;
 }
 
 /* 探索页：左门左滑入 */
 .anim-left {
-  animation: slideInLeft 0.45s ease both;
+  animation: slideInLeft 0.7s ease both;
 }
 
 /* 探索页：右门右滑入 */
 .anim-right {
-  animation: slideInRight 0.45s ease both;
+  animation: slideInRight 0.7s ease both;
 }
 
 /* 探索页：底部状态栏上滑入 */
 .anim-footer {
-  animation: fadeSlideUp 0.5s ease both;
+  animation: fadeSlideUp 0.7s ease both;
 }
 
 /* 淡入（通用） */

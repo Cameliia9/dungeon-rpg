@@ -65,13 +65,13 @@
   <view wx:if="{{screen === 'game'}}">
 
     <!-- 标题 -->
-    <view class="card" style="text-align: center;">
+    <view class="card anim-card" style="animation-delay: 0s; text-align: center;">
       <text class="title">⚔️ 地牢冒险 ⚔️</text>
       <text class="subtitle">第 {{player.floor}} 层 · Lv.{{player.level}}</text>
     </view>
 
     <!-- 角色状态 -->
-    <view class="card">
+    <view class="card anim-card" style="animation-delay: 0.1s;">
       <view class="stat-row">
         <text class="stat-label">❤️ 生命值</text>
         <text class="stat-value">{{player.hp}} / {{totalMaxHp}}</text>
@@ -122,17 +122,17 @@
     </view>
 
     <!-- 操作按钮 -->
-    <button class="btn btn-primary" bindtap="goExplore">
+    <button class="btn btn-primary anim-card" style="animation-delay: 0.2s;" bindtap="goExplore">
       🏰 探索地牢
     </button>
-    <button class="btn btn-secondary" bindtap="goInventory">
+    <button class="btn btn-secondary anim-card" style="animation-delay: 0.26s;" bindtap="goInventory">
       🎒 背包 ({{player.inventory.length}}件)
     </button>
-    <button class="btn btn-gold" bindtap="goShop">
+    <button class="btn btn-gold anim-card" style="animation-delay: 0.32s;" bindtap="goShop">
       🏪 商店
     </button>
 
-    <button class="btn btn-secondary" bindtap="backToMenu" style="margin-top: 12px;">
+    <button class="btn btn-secondary anim-card" style="animation-delay: 0.38s; margin-top: 12px;" bindtap="backToMenu">
       ↩️ 返回菜单
     </button>
   </view>
