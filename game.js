@@ -264,13 +264,15 @@ wx.onTouchStart((e) => {
 // 触摸滑动(战斗日志/探索日志滚动)
 wx.onTouchMove((e) => {
   const t = e.touches[0]
-  if (!t || panels) return
+  if (!t) return
   const { x, y } = normTouch(t)
+  if (panels) { if (panels.touchMove) panels.touchMove(x, y); return }
   if (scene === 'battle' && battle && battle.touchMove) battle.touchMove(x, y)
   else if (scene === 'explore' && explore && explore.touchMove) explore.touchMove(x, y)
 })
 
 wx.onTouchEnd(() => {
+  if (panels) { if (panels.touchEnd) panels.touchEnd(); return }
   if (scene === 'battle' && battle && battle.touchEnd) battle.touchEnd()
   else if (scene === 'explore' && explore && explore.touchEnd) explore.touchEnd()
 })
