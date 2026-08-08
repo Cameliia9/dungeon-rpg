@@ -145,8 +145,8 @@ function openPanel(name) {
 // ==================== 游戏主页 (对齐原版 screen='game') ====================
 function buildGame() {
   btns = []
-  const bw = Math.min(220, LW * 0.7), bh = 50, cx = LW / 2
-  let y = LH * 0.58
+  const bw = Math.min(220, LW * 0.7), bh = 46, cx = LW / 2
+  let y = LH * 0.62
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏰 探索地牢', () => switchScene('explore'), ui.BTN.primary)); y += bh + 14
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🎒 背包 (' + player.inventory.length + '件)', () => openPanel('inventory'), ui.BTN.secondary)); y += bh + 14
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏪 商店', () => openPanel('shop'), ui.BTN.gold)); y += bh + 18
@@ -165,24 +165,24 @@ function drawGame() {
   text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 148, 22, COLORS.gold, 'center', true)
   text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 176, 13, COLORS.textDim)
 
-  // 角色状态卡(同步下移)
+  // 角色状态卡(同步下移, 加高+行距拉开)
   const cy = 206
-  roundRect(ctx, 16, cy, LW - 32, 170, 12, ui.cardFill(ctx, 16, cy, LW - 32, 170), COLORS.cardBorder, 1.5)
-  text(ctx, '🧝 ' + player.name, LW / 2, cy + 18, 15, COLORS.text, 'center', true)
+  roundRect(ctx, 16, cy, LW - 32, 200, 12, ui.cardFill(ctx, 16, cy, LW - 32, 200), COLORS.cardBorder, 1.5)
+  text(ctx, '🧝 ' + player.name, LW / 2, cy + 20, 15, COLORS.text, 'center', true)
   // 血量
-  text(ctx, '❤️ 生命值', 32, cy + 42, 12, COLORS.textDim, 'left')
-  text(ctx, player.hp + ' / ' + player.totalMaxHp, LW - 32, cy + 42, 12, COLORS.gold, 'right', true)
-  hpBar(ctx, 32, cy + 52, LW - 64, 8, player.hp / player.totalMaxHp)
+  text(ctx, '❤️ 生命值', 32, cy + 48, 12, COLORS.textDim, 'left')
+  text(ctx, player.hp + ' / ' + player.totalMaxHp, LW - 32, cy + 48, 12, COLORS.gold, 'right', true)
+  hpBar(ctx, 32, cy + 58, LW - 64, 8, player.hp / player.totalMaxHp)
   // 经验
-  text(ctx, '✨ 经验值', 32, cy + 74, 12, COLORS.textDim, 'left')
-  text(ctx, player.exp + ' / ' + player.expToLevel(), LW - 32, cy + 74, 12, COLORS.gold, 'right', true)
+  text(ctx, '✨ 经验值', 32, cy + 84, 12, COLORS.textDim, 'left')
+  text(ctx, player.exp + ' / ' + player.expToLevel(), LW - 32, cy + 84, 12, COLORS.gold, 'right', true)
   // 攻防暴闪
-  text(ctx, '⚔️ 攻击 ' + player.totalAttack + '   🛡️ 防御 ' + player.totalDefense, 32, cy + 98, 12, COLORS.textDim, 'left')
-  text(ctx, '⚡ 暴击 ' + Math.round(player.totalCrit * 100) + '%   💨 闪避 ' + Math.round(player.totalDodge * 100) + '%', 32, cy + 116, 12, COLORS.textDim, 'left')
+  text(ctx, '⚔️ 攻击 ' + player.totalAttack + '   🛡️ 防御 ' + player.totalDefense, 32, cy + 106, 12, COLORS.textDim, 'left')
+  text(ctx, '⚡ 暴击 ' + Math.round(player.totalCrit * 100) + '%   💨 闪避 ' + Math.round(player.totalDodge * 100) + '%', 32, cy + 126, 12, COLORS.textDim, 'left')
   // 金币/击杀
-  text(ctx, '💰 金币 ' + player.gold + '   💀 击杀 ' + player.kills, 32, cy + 134, 12, COLORS.textDim, 'left')
+  text(ctx, '💰 金币 ' + player.gold + '   💀 击杀 ' + player.kills, 32, cy + 146, 12, COLORS.textDim, 'left')
   // 装备一览
-  text(ctx, '🗡️ 武器：' + (player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'), 32, cy + 154, 11, '#a080ff', 'left')
+  text(ctx, '🗡️ 武器：' + (player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'), 32, cy + 168, 11, '#a080ff', 'left')
 
   for (const b of btns) drawBtn(ctx, b)
 }
