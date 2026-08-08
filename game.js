@@ -117,14 +117,26 @@ function startNew(difficulty) {
   switchScene('game')
 }
 
+// ==================== 面板层(商店/背包/铁匠铺) ====================
+function openPanel(name) {
+  const panelsMod = require('./js/panels')
+  const shared = {
+    player, LW, LH, ctx,
+    savePlayer,
+    setPanels: (p) => { panels = p },
+    getPanels: () => panels
+  }
+  panels = panelsMod.create(name, shared)
+}
+
 // ==================== 游戏主页 (对齐原版 screen='game') ====================
 function buildGame() {
   btns = []
   const bw = Math.min(220, LW * 0.7), bh = 50, cx = LW / 2
   let y = LH * 0.44
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏰 探索地牢', () => switchScene('explore'), ui.BTN.primary)); y += bh + 14
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🎒 背包 (' + player.inventory.length + '件)', () => wx.showToast({ title: '背包', icon: 'none' }), ui.BTN.secondary)); y += bh + 14
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏪 商店', () => wx.showToast({ title: '商店', icon: 'none' }), ui.BTN.gold)); y += bh + 18
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🎒 背包 (' + player.inventory.length + '件)', () => openPanel('inventory'), ui.BTN.secondary)); y += bh + 14
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏪 商店', () => openPanel('shop'), ui.BTN.gold)); y += bh + 18
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '↩️ 返回菜单', () => switchScene('menu'), ui.BTN.secondary))
 }
 
