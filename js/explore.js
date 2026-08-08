@@ -74,24 +74,26 @@ function generateEvents() {
 function buttons() { return [] }
 
 function touch(x, y) {
-  // 状态栏折叠箭头（状态栏顶部区域）
-  if (y > S.LH - 148 && y < S.LH - 118) {
+  const fh = footerH()
+  const fy = S.LH - fh
+  // 状态栏折叠箭头（顶部居中箭头区域）
+  if (y > fy && y < fy + 22) {
     footerExpanded = !footerExpanded
     return
   }
-  // 面板按钮（仅展开时）
+  // 面板按钮（仅展开时, y+120 和 y+160 两行）
   if (footerExpanded) {
-    const bw = S.LW * 0.43, bh = 26
-    const bx1 = S.LW * 0.05, bx2 = S.LW * 0.52
+    const bw = S.LW * 0.44, bh = 34
+    const bx1 = S.LW * 0.04, bx2 = S.LW * 0.52
     // 第一行: 商店 / 背包
-    const by1 = S.LH - 46
+    const by1 = fy + 120
     if (y > by1 && y < by1 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('shop')
       else if (x > bx2 && x < bx2 + bw) openPanel('inventory')
       return
     }
     // 第二行: 铁匠铺 / 退出
-    const by2 = S.LH - 12
+    const by2 = fy + 160
     if (y > by2 && y < by2 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('forge')
       else if (x > bx2 && x < bx2 + bw) exitExplore()
@@ -330,9 +332,9 @@ function draw() {
   text(ctx, theme.desc || '', S.LW / 2, 48, 11, COLORS.textDim)
   text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, 66, 11, COLORS.textDark)
 
-  // 双门卡片 (左 0.1s 右 0.2s 滑入)
+  // 双门卡片 (左 0.1s 右 0.2s 滑入) —— 高度对齐原版 min-height 280px
   const cardTop = 92
-  const cardH = S.LH - 150 - 100
+  const cardH = 280
   const cardW = S.LW * 0.46
   const gap = S.LW * 0.04
   const pL = ui.animProgress(enterTime, 100, 600)
@@ -523,37 +525,44 @@ function altarOffer(side, type, evt) {
   if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
 }
 
+// 状态栏高度: 收起70px / 展开190px (对齐原版: 箭头+名字血条+属性3行+2x2按钮)
+function footerH() {
+  return footerExpanded ? 190 : 70
+}
+
 function drawFooter() {
   const ctx = S.ctx
   const p = S.player
-  const slideIn = (1 - ui.animProgress(enterTime, 300, 600)) * 40
-  const y = S.LH - 150 + slideIn
+  const fh = footerH()
+  const y = S.LH - fh
   // 状态栏卡片渐变背景
-  roundRect(ctx, 0, y, S.LW, 150, 14, ui.cardFill(ctx, 0, y, S.LW, 150), '#2a2a4a', 1.5)
+  roundRect(ctx, 0, y, S.LW, fh, 12, ui.cardFill(ctx, 0, y, S.LW, fh), '#2a2a4a', 1.5)
 
-  // 收起行: 名字 + 血条 + 箭头（y+10 ~ y+30）
-  text(ctx, '🧝 ' + p.name + ' · Lv.' + p.level, 16, y + 14, 13, COLORS.text, 'left')
-  text(ctx, footerExpanded ? '▾' : '▴', S.LW - 20, y + 14, 16, COLORS.textDim)
-  hpBar(ctx, 16, y + 26, S.LW - 32, 10, p.hp / p.totalMaxHp)
-  text(ctx, '❤ ' + p.hp + ' / ' + p.totalMaxHp, S.LW / 2, y + 44, 10, COLORS.red)
+  // 顶部居中箭头(26px, 对齐原版)
+  text(ctx, footerExpanded ? '▾' : '▴', S.LW / 2, y + 12, 26, COLORS.textDim)
+
+  // 收起行: 🧝图案 + 名字·Lv + 血条 + ❤️血量 (始终可见)
+  text(ctx, '🧝', 16, y + 32, 22)
+  text(ctx, p.name + ' · Lv.' + p.level, 46, y + 26, 13, COLORS.text, 'left')
+  hpBar(ctx, 46, y + 40, S.LW - 60, 10, p.hp / p.totalMaxHp)
+  text(ctx, '❤️ ' + p.hp + ' / ' + p.totalMaxHp, 46, y + 56, 12, '#ff6b6b', 'left')
 
   if (footerExpanded) {
-    // 属性行（y+54 ~ y+90）
-    text(ctx, '⚔' + p.totalAttack + '攻  🛡' + p.totalDefense + '防  ⚡' + Math.round(p.totalCrit * 100) + '%暴  💨' + Math.round(p.totalDodge * 100) + '%闪', S.LW / 2, y + 62, 10, COLORS.textDim)
-    text(ctx, '💰 ' + p.gold + '  ⭐ ' + p.exp + ' / ' + p.expToLevel(), S.LW / 2, y + 80, 10, COLORS.textDim)
+    // 属性3行 (对齐原版)
+    text(ctx, '⚔️ ' + p.totalAttack + '攻  🛡️ ' + p.totalDefense + '防', S.LW / 2, y + 76, 12, COLORS.textDim)
+    text(ctx, '⚡ ' + Math.round(p.totalCrit * 100) + '%暴  💨 ' + Math.round(p.totalDodge * 100) + '%闪', S.LW / 2, y + 92, 12, COLORS.textDim)
+    text(ctx, '💰 ' + p.gold + '金币  ⭐ ' + p.exp + ' / ' + p.expToLevel() + '经验', S.LW / 2, y + 108, 12, COLORS.textDim)
 
-    // 2x2 按钮（固定 y: 第一行 S.LH-46, 第二行 S.LH-12，渐变配色对齐原版）
-    const bw = S.LW * 0.43, bh = 26
-    const bx1 = S.LW * 0.05, bx2 = S.LW * 0.52
-    let by = S.LH - 46
-    const b1 = makeBtn(bx1, by, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 12 })
+    // 2x2 按钮 (各48%, 对齐原版: 商店金/背包红(带数量)/铁匠橙/退出灰)
+    const bw = S.LW * 0.44, bh = 34
+    const bx1 = S.LW * 0.04, bx2 = S.LW * 0.52
+    const b1 = makeBtn(bx1, y + 120, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 13 })
     drawBtn(ctx, b1)
-    const b2 = makeBtn(bx2, by, bw, bh, '🎒 背包', null, { ...ui.BTN.primary, size: 12 })
+    const b2 = makeBtn(bx2, y + 120, bw, bh, '🎒 背包 (' + p.inventory.length + ')', null, { ...ui.BTN.primary, size: 13 })
     drawBtn(ctx, b2)
-    by = S.LH - 12
-    const b3 = makeBtn(bx1, by, bw, bh, '⚒️ 铁匠铺', null, { ...ui.BTN.forge, size: 12 })
+    const b3 = makeBtn(bx1, y + 160, bw, bh, '⚒️ 铁匠铺', null, { ...ui.BTN.forge, size: 13 })
     drawBtn(ctx, b3)
-    const b4 = makeBtn(bx2, by, bw, bh, '🚪 退出', null, { ...ui.BTN.secondary, size: 12 })
+    const b4 = makeBtn(bx2, y + 160, bw, bh, '🚪 退出', null, { ...ui.BTN.secondary, size: 13 })
     drawBtn(ctx, b4)
   }
 }
