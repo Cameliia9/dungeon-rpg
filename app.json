@@ -4,7 +4,8 @@
     "pages/explore/explore",
     "pages/battle/battle",
     "pages/inventory/inventory",
-    "pages/shop/shop"
+    "pages/shop/shop",
+    "pages/forge/forge"
   ],
   "window": {
     "navigationBarTitleText": "地牢冒险",

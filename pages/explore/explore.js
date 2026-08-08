@@ -502,6 +502,16 @@ Page({
     wx.navigateTo({ url: '/pages/shop/shop' })
   },
 
+  // 游戏中随时打开背包
+  openInventory() {
+    wx.navigateTo({ url: '/pages/inventory/inventory' })
+  },
+
+  // 游戏中随时打开铁匠铺
+  openForge() {
+    wx.navigateTo({ url: '/pages/forge/forge' })
+  },
+
   exitExplore() {
     const player = app.getPlayer()
     player.tempAttackBuff = 0

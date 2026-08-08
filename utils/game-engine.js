@@ -64,19 +64,19 @@ class Player {
 
   get totalAttack() {
     let a = this.baseAttack + this.level * 3 + this.tempAttackBuff
-    if (this.weapon) a += this.weapon.attack
+    if (this.weapon) a += this.weapon.attack + this.getEnhanceBonus(this.weapon)
     return a
   }
 
   get totalDefense() {
     let d = this.baseDefense + Math.floor(this.level * 1.5) + this.tempDefenseBuff
-    if (this.armor) d += this.armor.defense
+    if (this.armor) d += this.armor.defense + this.getEnhanceBonus(this.armor)
     return d
   }
 
   get totalMaxHp() {
     let h = this.maxHp + this.level * 25
-    if (this.accessory) h += this.accessory.hp
+    if (this.accessory) h += this.accessory.hp + this.getEnhanceBonus(this.accessory)
     return h
   }
 
@@ -180,6 +180,42 @@ class Player {
       return item
     }
     return null
+  }
+
+  // ============ 铁匠铺强化 ============
+
+  // 强化等级上限：随层数解锁（1-5层=1级, 6-10层=2级, ... 21-25层=5级）
+  get maxEnhanceLevel() {
+    return Math.min(Math.ceil(this.floor / 5), 5)
+  }
+
+  // 强化加成：每级武器+3攻 / 护甲+3防 / 饰品+15生命
+  getEnhanceBonus(item) {
+    if (!item || !item.enhanceLevel) return 0
+    const lv = item.enhanceLevel
+    if (item.type === 'weapon') return lv * 3
+    if (item.type === 'armor') return lv * 3
+    if (item.type === 'accessory') return lv * 15
+    return 0
+  }
+
+  // 强化费用：基础价 × 0.4 × (当前等级+1)，随等级递增
+  getEnhanceCost(item) {
+    const base = item.price || 50
+    const lv = item.enhanceLevel || 0
+    return Math.floor(base * 0.4 * (lv + 1))
+  }
+
+  // 强化装备：返回 true/false
+  enhance(item) {
+    if (!item) return false
+    const lv = item.enhanceLevel || 0
+    if (lv >= this.maxEnhanceLevel) return false
+    const cost = this.getEnhanceCost(item)
+    if (this.gold < cost) return false
+    this.gold -= cost
+    item.enhanceLevel = lv + 1
+    return true
   }
 }
 

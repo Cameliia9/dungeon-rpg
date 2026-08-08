@@ -1,0 +1,70 @@
+<!-- 铁匠铺页面 -->
+<view class="container">
+  <view class="card" style="text-align: center;">
+    <text class="title">⚒️ 铁匠铺</text>
+    <text class="subtitle">强化你的装备！金币：{{player.gold}} 💰</text>
+    <text style="display: block; font-size: 11px; color: #6a6a7a;">本层强化上限：+{{maxEnhance}}（每过 5 层解锁 +1）</text>
+  </view>
+
+  <!-- 武器 -->
+  <view class="card">
+    <view style="font-size: 15px; color: #e0c080; margin-bottom: 8px;">🗡️ 武器</view>
+    <block wx:if="{{weapon}}">
+      <view style="padding: 10px; background: #141428; border-radius: 8px; border: 1px solid #2a2a4a;">
+        <view class="flex-between">
+          <view>
+            <text style="font-weight: bold;">{{weapon.name}}</text>
+            <text wx:if="{{weapon.enhanceLevel}}" style="color: #ffaa00; font-size: 12px; margin-left: 4px;">+{{weapon.enhanceLevel}}</text>
+            <view style="font-size: 12px; color: #e74c3c;">攻击 +{{weapon.attack + (weapon.enhanceLevel || 0) * 3}}</view>
+            <view style="font-size: 11px; color: #8a8a9a;">当前强化：+{{weapon.enhanceLevel || 0}} / +{{maxEnhance}}</view>
+          </view>
+          <button wx:if="{{(weapon.enhanceLevel || 0) < maxEnhance}}" class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;" bindtap="enhance" data-slot="weapon">💰 {{weapon.cost}} 强化</button>
+          <button wx:else class="btn btn-secondary" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px; opacity: 0.5;" disabled>已满级</button>
+        </view>
+      </view>
+    </block>
+    <view wx:else style="text-align: center; color: #555; font-size: 13px; padding: 14px;">未装备武器</view>
+  </view>
+
+  <!-- 护甲 -->
+  <view class="card">
+    <view style="font-size: 15px; color: #e0c080; margin-bottom: 8px;">🛡️ 护甲</view>
+    <block wx:if="{{armor}}">
+      <view style="padding: 10px; background: #141428; border-radius: 8px; border: 1px solid #2a2a4a;">
+        <view class="flex-between">
+          <view>
+            <text style="font-weight: bold;">{{armor.name}}</text>
+            <text wx:if="{{armor.enhanceLevel}}" style="color: #ffaa00; font-size: 12px; margin-left: 4px;">+{{armor.enhanceLevel}}</text>
+            <view style="font-size: 12px; color: #3498db;">防御 +{{armor.defense + (armor.enhanceLevel || 0) * 3}}</view>
+            <view style="font-size: 11px; color: #8a8a9a;">当前强化：+{{armor.enhanceLevel || 0}} / +{{maxEnhance}}</view>
+          </view>
+          <button wx:if="{{(armor.enhanceLevel || 0) < maxEnhance}}" class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;" bindtap="enhance" data-slot="armor">💰 {{armor.cost}} 强化</button>
+          <button wx:else class="btn btn-secondary" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px; opacity: 0.5;" disabled>已满级</button>
+        </view>
+      </view>
+    </block>
+    <view wx:else style="text-align: center; color: #555; font-size: 13px; padding: 14px;">未装备护甲</view>
+  </view>
+
+  <!-- 饰品 -->
+  <view class="card">
+    <view style="font-size: 15px; color: #e0c080; margin-bottom: 8px;">💍 饰品</view>
+    <block wx:if="{{accessory}}">
+      <view style="padding: 10px; background: #141428; border-radius: 8px; border: 1px solid #2a2a4a;">
+        <view class="flex-between">
+          <view>
+            <text style="font-weight: bold;">{{accessory.name}}</text>
+            <text wx:if="{{accessory.enhanceLevel}}" style="color: #ffaa00; font-size: 12px; margin-left: 4px;">+{{accessory.enhanceLevel}}</text>
+            <view style="font-size: 12px; color: #2ecc71;">生命上限 +{{accessory.hp + (accessory.enhanceLevel || 0) * 15}}</view>
+            <view style="font-size: 11px; color: #8a8a9a;">当前强化：+{{accessory.enhanceLevel || 0}} / +{{maxEnhance}}</view>
+          </view>
+          <button wx:if="{{(accessory.enhanceLevel || 0) < maxEnhance}}" class="btn btn-gold" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px;" bindtap="enhance" data-slot="accessory">💰 {{accessory.cost}} 强化</button>
+          <button wx:else class="btn btn-secondary" style="width: auto; padding: 6px 14px; margin: 0; font-size: 13px; opacity: 0.5;" disabled>已满级</button>
+        </view>
+      </view>
+    </block>
+    <view wx:else style="text-align: center; color: #555; font-size: 13px; padding: 14px;">未装备饰品</view>
+  </view>
+
+  <button class="btn btn-secondary" bindtap="goBack">↩️ 返回</button>
+</view>
