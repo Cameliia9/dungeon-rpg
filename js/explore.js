@@ -120,8 +120,8 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（商人/祭坛内容超出卡片, 命中区向下扩展）
-  const cardTop = 214 + 6
-  const cardH = S.LH - FOOTER_H_EXPAND - 6 - cardTop
+  const cardTop = 214 + 12
+  const cardH = S.LH - FOOTER_H_EXPAND - 12 - cardTop
   const isLeft = x < S.LW / 2
   const side = isLeft ? 'left' : 'right'
   const state = side === 'left' ? leftState : rightState
@@ -383,8 +383,8 @@ function draw() {
   text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 78, 11, '#8a8a9a', 'center')
 
   // ============ 中间探索区(≈50%: 167~500) ============
-  const cardTop = 214 + 6
-  const cardH = S.LH - FOOTER_H_EXPAND - 6 - cardTop
+  const cardTop = 214 + 12
+  const cardH = S.LH - FOOTER_H_EXPAND - 12 - cardTop
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
