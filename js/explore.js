@@ -132,6 +132,7 @@ function touch(x, y) {
   let hitBottom = cardTop + cardH
   if (state === 'merchant') hitBottom = cy + 176
   else if (state === 'altar') hitBottom = cy + 108
+  else if (state === 'monster') hitBottom = cy + 86
   if (y > cardTop && y < hitBottom) {
 
     if (state === 'door') {
@@ -155,11 +156,11 @@ function touch(x, y) {
         }
       }
     } else if (state === 'monster') {
-      // 战斗/逃跑按钮(上下排)
-      const mbw = w * 0.6
-      if (y > cy + 22 && y < cy + 48) {
+      // 战斗/逃跑按钮(上下排, 放大后同步)
+      const mbw = w * 0.72
+      if (y > cy + 22 && y < cy + 52) {
         if (x > cx - mbw / 2 && x < cx + mbw / 2) startBattle(side, false)
-      } else if (y > cy + 50 && y < cy + 76) {
+      } else if (y > cy + 56 && y < cy + 86) {
         if (x > cx - mbw / 2 && x < cx + mbw / 2) fleeMonster(side)
       }
     } else if (state === 'result') {
@@ -532,19 +533,19 @@ function drawResultCard(cx, cy, evt, w) {
 
 function drawMonsterCard(cx, cy, m, w) {
   const ctx = S.ctx
-  // 对齐原版怪物卡(战斗/逃跑上下排)
-  text(ctx, m.icon, cx, cy - 58, 28)
+  // 对齐原版怪物卡(战斗/逃跑上下排, 内容放大)
+  text(ctx, m.icon, cx, cy - 58, 36)
   // 名字 + Lv(橙色小字)
-  text(ctx, m.name, cx, cy - 30, 14, COLORS.gold, 'center', true)
-  text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 14) / 2 + 12, cy - 30, 11, '#ffaa00')
+  text(ctx, m.name, cx, cy - 28, 16, COLORS.gold, 'center', true)
+  text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 16) / 2 + 14, cy - 28, 12, '#ffaa00')
   // 属性
-  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy - 6, 11, COLORS.textDim)
-  text(ctx, '⚡' + m.critPercent + '%暴  💨' + m.dodgePercent + '%闪', cx, cy + 10, 10, '#7a7a8a')
-  // 战斗/逃跑按钮（上下排, 居中整宽）
-  const bw = w * 0.6
+  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy - 2, 12, COLORS.textDim)
+  text(ctx, '⚡' + m.critPercent + '%暴  💨' + m.dodgePercent + '%闪', cx, cy + 14, 11, '#7a7a8a')
+  // 战斗/逃跑按钮（上下排, 加宽加长, 间距4px）
+  const bw = w * 0.72
   const side = activeSide || 'left'
-  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 22, bw, 26, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
-  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 50, bw, 26, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 22, bw, 30, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 56, bw, 30, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
 }
 
 function fleeMonster(side) {
