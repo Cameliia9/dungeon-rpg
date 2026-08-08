@@ -423,8 +423,10 @@ function draw() {
   const ctx = S.ctx
   const p = S.player
   // 背景: 纯净深藏蓝纯色(无渐变, 暗黑简约地牢风)
-  ctx.fillStyle = '#0d1b2a'
+  // 背景: 分割线以上用卡片渐变, 以下用mini-rpg背景色(#0f0f1a)
+  ctx.fillStyle = '#0f0f1a'
   ctx.fillRect(0, 0, S.LW, S.LH)
+  roundRect(ctx, 0, 0, S.LW, 90, 0, ui.cardFill(ctx, 0, 0, S.LW, 90))
 
   // ============ 顶部区域(≈25%: 0~167) ============
   // 左上角白色返回箭头
