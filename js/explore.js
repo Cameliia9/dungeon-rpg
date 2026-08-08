@@ -469,7 +469,7 @@ function drawCard(x, y, w, h, side, slideIn) {
     } else {
       // 普通门: 浅棕色木门图标(大) + 红色大圆角前进按钮
       text(ctx, '🚪', cx, cy - 48, 52)
-      drawBtn(ctx, makeBtn(cx - w * 0.42, cy + 32, w * 0.84, 44, '前进探索', () => pickSide(side), { ...ui.BTN.primary, r: 22, size: 15 }))
+      drawBtn(ctx, makeBtn(cx - w * 0.42, cy + 32, w * 0.84, 44, '前进探索', () => pickSide(side), { ...ui.BTN.primary, size: 15 }))
     }
   } else if (state === 'deadend') {
     // 死路: 🚧 + 死路 + 描述 + 灰色返回按钮
