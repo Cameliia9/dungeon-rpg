@@ -201,9 +201,9 @@ class Player {
 
   // 强化费用：基础价 × 0.4 × (当前等级+1)，随等级递增
   getEnhanceCost(item) {
-    const base = item.price || 50
+    // 固定50一次, 每强化一次+50 (50/100/150...)
     const lv = item.enhanceLevel || 0
-    return Math.floor(base * 0.4 * (lv + 1))
+    return 50 * (lv + 1)
   }
 
   // 强化装备：返回 true/false
