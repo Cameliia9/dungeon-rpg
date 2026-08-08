@@ -2,7 +2,7 @@
 <view class="container">
 
   <!-- ========== 顶部：楼层标题 ========== -->
-  <view class="card" style="text-align: center; padding-bottom: 10px;">
+  <view class="card anim-header" style="text-align: center; padding-bottom: 10px;">
     <view style="display: flex; justify-content: center; align-items: center; gap: 10px;">
       <text class="title" style="margin-bottom: 0;">🏰 地牢第 {{player.floor}} 层</text>
       <text style="font-size: 13px; color: #e0c080; font-weight: bold;">{{themeIcon}} {{themeName}}</text>
@@ -15,7 +15,7 @@
   <view style="display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
 
     <!-- ===== 左卡片区域 ===== -->
-    <view style="flex: 1; position: relative; min-height: 200px;">
+    <view class="anim-left" style="flex: 1; position: relative; min-height: 200px;">
       <view class="card {{leftOut ? 'fly-out-right' : ''}}"
         style="position: relative; z-index: 10; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: visible;">
 
@@ -138,7 +138,7 @@
     </view>
 
     <!-- ===== 右卡片区域 ===== -->
-    <view style="flex: 1; position: relative; min-height: 200px;">
+    <view class="anim-right" style="flex: 1; position: relative; min-height: 200px;">
       <view class="card main-float {{rightOut ? 'fly-out-right' : ''}}"
         style="position: relative; z-index: 10; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: visible;">
 
@@ -262,7 +262,7 @@
   </view>
 
   <!-- ========== 底部状态栏 ========== -->
-  <view class="card" style="position: fixed; bottom: 0; left: 0; right: 0; margin: 0; border-radius: 12px 12px 0 0; padding: 12px 16px; z-index: 100;">
+  <view class="card anim-footer" style="position: fixed; bottom: 0; left: 0; right: 0; margin: 0; border-radius: 12px 12px 0 0; padding: 12px 16px; z-index: 100;">
     <view style="flex: 1;">
       <view class="stat-row"><text class="stat-label">❤️ {{player.hp}} / {{totalMaxHp}}</text></view>
       <view class="hp-bar-wrap" style="margin: 4px 0;"><view class="hp-bar-fill" style="width: {{player.hp / totalMaxHp * 100}}%"></view></view>

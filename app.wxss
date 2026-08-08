@@ -231,3 +231,59 @@ page {
 .btn-sm-gold { background: linear-gradient(135deg, #d4a017, #f0c040); color: #1a1a2e; }
 .btn-sm-danger { background: linear-gradient(135deg, #8b0000, #ff4444); color: white; }
 .btn-sm-forge { background: linear-gradient(135deg, #b34700, #ff8c1a); color: white; }
+
+/* ==================== 入场动画 ==================== */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 难度卡片：交错渐显+上滑 */
+.anim-card {
+  animation: fadeSlideUp 0.45s ease both;
+}
+
+/* 探索页：顶部标题下滑入 */
+.anim-header {
+  animation: fadeSlideDown 0.4s ease both;
+}
+
+/* 探索页：左门左滑入 */
+.anim-left {
+  animation: slideInLeft 0.45s ease both;
+}
+
+/* 探索页：右门右滑入 */
+.anim-right {
+  animation: slideInRight 0.45s ease both;
+}
+
+/* 探索页：底部状态栏上滑入 */
+.anim-footer {
+  animation: fadeSlideUp 0.5s ease both;
+}
+
+/* 淡入（通用） */
+.anim-fade {
+  animation: fadeIn 0.35s ease both;
+}

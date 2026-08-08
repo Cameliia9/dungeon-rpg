@@ -34,28 +34,28 @@
   <!-- ==================== 2. 难度选择 ==================== -->
   <view wx:if="{{screen === 'difficulty'}}" style="display: flex; flex-direction: column; align-items: center; padding-top: 60px;">
 
-    <text style="font-size: 32px; color: #e0c080; margin-bottom: 12px;">选择难度</text>
-    <text style="font-size: 14px; color: #8a8a9a; margin-bottom: 30px;">难度越高，资源越少，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）</text>
+    <text class="anim-card" style="animation-delay: 0s; font-size: 32px; color: #e0c080; margin-bottom: 12px;">选择难度</text>
+    <text class="anim-card" style="animation-delay: 0.06s; font-size: 14px; color: #8a8a9a; margin-bottom: 30px;">难度越高，资源越少，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）</text>
 
-    <button class="btn btn-primary" style="width: 220px; margin-bottom: 12px;"
+    <button class="btn btn-primary anim-card" style="animation-delay: 0.12s; width: 220px; margin-bottom: 12px;"
       data-level="easy" bindtap="selectDifficulty">
       🟢 简单
       <text style="font-size: 11px; color: #a0ffa0; display: block;">HP 100 · ATK 12 · GOLD 50 · 敌人×1.0</text>
     </button>
 
-    <button class="btn btn-secondary" style="width: 220px; margin-bottom: 12px;"
+    <button class="btn btn-secondary anim-card" style="animation-delay: 0.18s; width: 220px; margin-bottom: 12px;"
       data-level="hard" bindtap="selectDifficulty">
       🟡 困难
       <text style="font-size: 11px; color: #ffe080; display: block;">HP 95 · ATK 11 · GOLD 35 · 敌人攻×1.25</text>
     </button>
 
-    <button class="btn btn-danger" style="width: 220px; margin-bottom: 24px;"
+    <button class="btn btn-danger anim-card" style="animation-delay: 0.24s; width: 220px; margin-bottom: 24px;"
       data-level="nightmare" bindtap="selectDifficulty">
       🔴 噩梦
       <text style="font-size: 11px; color: #ff8080; display: block;">HP 90 · ATK 10 · GOLD 20 · 敌人攻×1.5</text>
     </button>
 
-    <button class="btn btn-secondary" style="width: 220px;" bindtap="backToMenu">
+    <button class="btn btn-secondary anim-card" style="animation-delay: 0.3s; width: 220px;" bindtap="backToMenu">
       ↩️ 返回
     </button>
 
