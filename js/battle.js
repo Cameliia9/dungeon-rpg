@@ -141,7 +141,7 @@ function draw() {
 
   // 怪物卡 (入场 0s 下滑)
   const mw = S.LW * 0.8, mh = 130
-  const mx = (S.LW - mw) / 2, my = 24
+  const mx = (S.LW - mw) / 2, my = 58
   const pM = ui.animProgress(enterTime, 0, 450)
   const mOff = (1 - pM) * 36
   roundRect(ctx, mx, my, mw, mh, 12, ui.cardFill(ctx, mx, my, mw, mh), isBoss ? COLORS.red : COLORS.cardBorder, 2)

@@ -102,7 +102,7 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（坐标与绘制一致）
-  const cardTop = 110
+  const cardTop = 138
   const cardH = 280
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
@@ -321,7 +321,7 @@ function draw() {
 
   // 顶部: 楼层标题卡 (对齐原版: 标题行+主题名右侧+描述+进度)
   const theme = Data.getThemeForFloor(p.floor)
-  roundRect(ctx, 16, 16, S.LW - 32, 82, 12, ui.cardFill(ctx, 16, 16, S.LW - 32, 82), COLORS.cardBorder, 1.5)
+  roundRect(ctx, 16, 44, S.LW - 32, 82, 12, ui.cardFill(ctx, 16, 44, S.LW - 32, 82), COLORS.cardBorder, 1.5)
   // 第一行: 🏰地牢第X层 + 主题名(金色粗体13px)
   const titleStr = '🏰 地牢第 ' + p.floor + ' 层'
   const themeStr = theme.icon + ' ' + theme.name
@@ -329,15 +329,15 @@ function draw() {
   const thW = ui.textWidth(ctx, themeStr, 13)
   const totalW = tW + 10 + thW
   let tx = (S.LW - totalW) / 2
-  text(ctx, titleStr, tx + tW / 2, 36, 18, COLORS.gold, 'center', true)
-  text(ctx, themeStr, tx + tW + 10 + thW / 2, 36, 13, '#e0c080', 'center', true)
+  text(ctx, titleStr, tx + tW / 2, 64, 18, COLORS.gold, 'center', true)
+  text(ctx, themeStr, tx + tW + 10 + thW / 2, 64, 13, '#e0c080', 'center', true)
   // 第二行: 主题描述
-  text(ctx, theme.desc || '', S.LW / 2, 62, 11, COLORS.textDim)
+  text(ctx, theme.desc || '', S.LW / 2, 90, 11, COLORS.textDim)
   // 第三行: 进度
-  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, 84, 11, COLORS.textDark)
+  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, 112, 11, COLORS.textDark)
 
   // 双门卡片 (左 0.1s 右 0.2s 滑入) —— 高度对齐原版 min-height 280px
-  const cardTop = 110
+  const cardTop = 138
   const cardH = 280
   const cardW = S.LW * 0.46
   const gap = S.LW * 0.04
