@@ -741,7 +741,28 @@ function drawFooter() {
   roundRect(ctx, 0, y, S.LW, fh, 20, ui.cardFill(ctx, 0, y, S.LW, fh), 'rgba(255,255,255,0.06)', 1)
 
   // 顶部居中向下小三角
-  text(ctx, footerExpanded ? '▾' : '▴', S.LW / 2, y + 16, 18, '#8a8a9a')
+  // 折叠箭头: 胶囊背景 + 实心三角 + 两侧圆点(丰富一点)
+  const aw = 64, ah = 18
+  const ax = S.LW / 2 - aw / 2, ay = y + 7
+  roundRect(ctx, ax, ay, aw, ah, 9, 'rgba(255,255,255,0.1)', 'rgba(255,255,255,0.28)', 1)
+  // 两侧圆点
+  ctx.fillStyle = 'rgba(255,255,255,0.35)'
+  ctx.beginPath(); ctx.arc(ax + 14, y + 16, 2, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(ax + aw - 14, y + 16, 2, 0, Math.PI * 2); ctx.fill()
+  // 实心三角(展开向下/收起向上)
+  ctx.fillStyle = '#a0a0b5'
+  ctx.beginPath()
+  if (footerExpanded) {
+    ctx.moveTo(S.LW / 2 - 7, y + 13)
+    ctx.lineTo(S.LW / 2 + 7, y + 13)
+    ctx.lineTo(S.LW / 2, y + 20)
+  } else {
+    ctx.moveTo(S.LW / 2 - 7, y + 19)
+    ctx.lineTo(S.LW / 2 + 7, y + 19)
+    ctx.lineTo(S.LW / 2, y + 12)
+  }
+  ctx.closePath()
+  ctx.fill()
 
   // 第一行: 左侧角色头像 + 白色文字「名字·Lv.X」(图案x18与血条金币对齐)
   text(ctx, '🧝', 18, y + 44, 22)
