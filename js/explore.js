@@ -109,7 +109,8 @@ function touch(x, y) {
 
   // 卡片区：根据状态分发（商人/祭坛内容超出卡片, 命中区向下扩展）
   const cardTop = 214 + 15
-  const cardH = S.LH - FOOTER_H_EXPAND - 15 - cardTop
+  // 商人特例: 高度增加(内容多), 状态栏自动收起让位
+  const cardH = (leftState === 'merchant' || rightState === 'merchant') ? Math.max(S.LH - FOOTER_H_EXPAND - 15 - cardTop, 300) : S.LH - FOOTER_H_EXPAND - 15 - cardTop
   const isLeft = x < S.LW / 2
   const side = isLeft ? 'left' : 'right'
   const state = side === 'left' ? leftState : rightState
@@ -122,10 +123,13 @@ function touch(x, y) {
     const e = ui.easeOut(t)
     const activeEvt2 = cardAnim.side === 'left' ? leftEvent : rightEvent
     const at2 = activeEvt2 ? activeEvt2.type : ''
-    const bigH2 = at2 === 'merchant' ? 0.12 : at2 === 'monster' ? 0.10 : 0.05
-    const bigW2 = at2 === 'merchant' ? 0.18 : at2 === 'monster' ? 0.16 : 0
-    const shrW2 = at2 === 'merchant' ? 0.16 : at2 === 'monster' ? 0.14 : 0
-    if (cardAnim.side === side) { sy = 1 + bigH2 * e; sx = 1 + bigW2 * e }
+    const bigH2 = at2 === 'merchant' ? 0.14 : at2 === 'monster' ? 0.10 : 0.05
+    const bigW2 = at2 === 'merchant' ? 0.20 : at2 === 'monster' ? 0.16 : 0
+    const shrW2 = at2 === 'merchant' ? 0.18 : at2 === 'monster' ? 0.14 : 0
+    if (cardAnim.side === side) {
+      sy = 1 + bigH2 * e; sx = 1 + bigW2 * e
+      if (at2 === 'merchant') sy = 1  // 商人内容不缩放(布局已加大)
+    }
     else { sy = 1 - 0.08 * e; sx = 1 - shrW2 * e }
     cwX = w * sx
   } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
@@ -138,7 +142,7 @@ function touch(x, y) {
   const xx = sy === 1 ? x : (x - cx) / sy + cx
   const yy = sy === 1 ? y : (y - cy) / sy + cy
   let hitBottom = cardTop + cardH
-  if (state === 'merchant') hitBottom = cy + 176
+  if (state === 'merchant') hitBottom = cy + 235
   else if (state === 'altar') hitBottom = cy + 108
   else if (state === 'monster') hitBottom = cy + 86
   if (y > cardTop && y < hitBottom) {
@@ -178,16 +182,16 @@ function touch(x, y) {
       // 返回按钮(cy+42)
       if (yy > cy + 42 && yy < cy + 76) blockSide(side)
     } else if (state === 'merchant') {
-      // 商品行(46px高) + 离开按钮
-      let yy2 = cy - 8
+      // 商品行(54px高) + 离开按钮
+      let yy2 = cy - 69
       for (let i = 0; i < evt.items.length; i++) {
-        if (yy > yy2 && yy < yy2 + 46) {
+        if (yy > yy2 - 2 && yy < yy2 + 52) {
           const iw = w * 0.9, ix = cx - iw / 2
-          if (xx > ix + iw - 60 && xx < ix + iw - 10 && yy > yy2 + 20 && yy < yy2 + 40) { buyMerchant(side, i); return }
+          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 20 && yy < yy2 + 44) { buyMerchant(side, i); return }
         }
-        yy2 += 50
+        yy2 += 58
       }
-      if (yy > yy2 + 8 && yy < yy2 + 40) finishSide(side)
+      if (yy > yy2 + 6 && yy < yy2 + 42) finishSide(side)
     } else if (state === 'altar') {
       const bw = w * 0.8
       if (yy > cy + 4 && yy < cy + 34) altarOffer(side, 'attack', evt)
@@ -252,8 +256,11 @@ function pickSide(side) {
       S.savePlayer()
       break
     case 'monster':
+      setState(side, evt.type)
+      break
     case 'merchant':
       setState(side, evt.type)
+      footerExpanded = false  // 商人内容多, 自动收起状态栏让位
       break
     case 'buffStone':
       p.tempAttackBuff = (p.tempAttackBuff || 0) + evt.attackBonus
@@ -294,6 +301,7 @@ function doFinishSide(side) {
   const p = S.player
   p.roomsExplored++
   activeSide = null
+  footerExpanded = true  // 事件完成恢复状态栏展开
   S.savePlayer()
 
   // 本层完成 → 楼梯/Boss
@@ -393,7 +401,8 @@ function draw() {
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 214 + 15
-  const cardH = S.LH - FOOTER_H_EXPAND - 15 - cardTop
+  // 商人特例: 高度增加(内容多), 状态栏自动收起让位
+  const cardH = (leftState === 'merchant' || rightState === 'merchant') ? Math.max(S.LH - FOOTER_H_EXPAND - 15 - cardTop, 300) : S.LH - FOOTER_H_EXPAND - 15 - cardTop
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
@@ -422,10 +431,10 @@ function drawCard(x, y, w, h, side, slideIn) {
     // 以选中侧事件类型决定缩放(怪物放大更大, 宽>高)
     const activeEvt = cardAnim.side === 'left' ? leftEvent : rightEvent
     const at = activeEvt ? activeEvt.type : ''
-    // 放大分级: 商人最大(高1.12/宽1.18), 怪物(高1.10/宽1.16), 其他等比1.05
-    const bigH = at === 'merchant' ? 0.12 : at === 'monster' ? 0.10 : 0.05
-    const bigW = at === 'merchant' ? 0.18 : at === 'monster' ? 0.16 : 0
-    const shrW = at === 'merchant' ? 0.16 : at === 'monster' ? 0.14 : 0
+    // 放大分级: 商人最大(高1.14/宽1.20), 怪物(高1.10/宽1.16), 其他等比1.05
+    const bigH = at === 'merchant' ? 0.14 : at === 'monster' ? 0.10 : 0.05
+    const bigW = at === 'merchant' ? 0.20 : at === 'monster' ? 0.16 : 0
+    const shrW = at === 'merchant' ? 0.18 : at === 'monster' ? 0.14 : 0
     if (cardAnim.side === side) {
       // 选中侧: 按事件类型放大(宽>高)
       scale = 1 + bigH * e
@@ -470,8 +479,8 @@ function drawCard(x, y, w, h, side, slideIn) {
   roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), isActive ? COLORS.goldBright : COLORS.cardBorder, isActive ? 2 : 1.5)
   if (isActive) ctx.restore()
 
-  // 内容随卡片缩放: 选中侧放大(信息显示更全), 未选中侧缩小
-  const zoomContent = cardAnim.phase === 'expand'
+  // 内容随卡片缩放: 选中侧放大(信息显示更全), 未选中侧缩小; 商人内容布局已加大不缩放
+  const zoomContent = cardAnim.phase === 'expand' && !(cardAnim.side === side && ((cardAnim.side === 'left' ? leftEvent : rightEvent) || {}).type === 'merchant')
   if (zoomContent) { ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy) }
 
   if (state === 'door') {
@@ -575,24 +584,24 @@ function fleeMonster(side) {
 
 function drawMerchantCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
-  // 对齐原版商人卡
-  text(ctx, evt.merchantIcon || '🧙', cx, cy - 60, 36)
-  text(ctx, evt.merchantName || '神秘商人', cx, cy - 32, 16, COLORS.gold, 'center', true)
-  text(ctx, '来自【' + (evt.themeName || '') + '】的游商', cx, cy - 12, 11, COLORS.textDim)
+  // 商人卡(特例: 内容加大, 卡片高度增加, 状态栏自动收起; 内容上移63居中)
+  text(ctx, evt.merchantIcon || '🧙', cx, cy - 127, 40)
+  text(ctx, evt.merchantName || '神秘商人', cx, cy - 97, 18, COLORS.gold, 'center', true)
+  text(ctx, '来自【' + (evt.themeName || '') + '】的游商', cx, cy - 75, 12, COLORS.textDim)
 
-  // 商品列表（每项: 名称金色13px+desc灰10px / 💰价格+金色购买按钮）
-  let yy = cy - 8
+  // 商品列表（每项: 名称金色15px+desc灰11px / 💰价格15px+金色购买按钮）
+  let yy = cy - 69
   for (let i = 0; i < evt.items.length; i++) {
     const it = evt.items[i]
     const iw = w * 0.9, ix = cx - iw / 2
-    roundRect(ctx, ix, yy - 2, iw, 46, 6, '#1a1a2e', '#2a2a4a', 1)
-    text(ctx, it.name, ix + 8, yy + 10, 13, COLORS.gold, 'left', true)
-    text(ctx, it.desc || '', ix + 8, yy + 26, 10, COLORS.textDim, 'left')
-    text(ctx, '💰 ' + it.price, ix + iw - 56, yy + 10, 13, '#f0c040', 'left', true)
-    drawBtn(ctx, makeBtn(ix + iw - 60, yy + 20, 50, 20, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 10 }))
-    yy += 50
+    roundRect(ctx, ix, yy - 2, iw, 54, 6, '#1a1a2e', '#2a2a4a', 1)
+    text(ctx, it.name, ix + 8, yy + 12, 15, COLORS.gold, 'left', true)
+    text(ctx, it.desc || '', ix + 8, yy + 34, 11, COLORS.textDim, 'left')
+    text(ctx, '💰 ' + it.price, ix + iw - 64, yy + 12, 15, '#f0c040', 'left', true)
+    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 20, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
+    yy += 58
   }
-  drawBtn(ctx, makeBtn(cx - w * 0.34, yy + 8, w * 0.68, 32, '离开', () => finishSide(side), ui.BTN.secondary))
+  drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
 }
 
 function buyMerchant(side, idx) {
