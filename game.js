@@ -134,7 +134,7 @@ function openPanel(name) {
 function buildGame() {
   btns = []
   const bw = Math.min(220, LW * 0.7), bh = 50, cx = LW / 2
-  let y = LH * 0.56
+  let y = LH * 0.58
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏰 探索地牢', () => switchScene('explore'), ui.BTN.primary)); y += bh + 14
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🎒 背包 (' + player.inventory.length + '件)', () => openPanel('inventory'), ui.BTN.secondary)); y += bh + 14
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏪 商店', () => openPanel('shop'), ui.BTN.gold)); y += bh + 18
@@ -148,13 +148,13 @@ function drawGame() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, LW, LH)
 
-  // 标题卡
-  roundRect(ctx, 16, 100, LW - 32, 64, 12, ui.cardFill(ctx, 16, 100, LW - 32, 64), COLORS.cardBorder, 1.5)
-  text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 120, 18, COLORS.gold, 'center', true)
-  text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 144, 12, COLORS.textDim)
+  // 标题卡(下移+放大)
+  roundRect(ctx, 16, 120, LW - 32, 74, 12, ui.cardFill(ctx, 16, 120, LW - 32, 74), COLORS.cardBorder, 1.5)
+  text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 148, 22, COLORS.gold, 'center', true)
+  text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 176, 13, COLORS.textDim)
 
-  // 角色状态卡
-  const cy = 180
+  // 角色状态卡(同步下移)
+  const cy = 206
   roundRect(ctx, 16, cy, LW - 32, 170, 12, ui.cardFill(ctx, 16, cy, LW - 32, 170), COLORS.cardBorder, 1.5)
   text(ctx, '🧝 ' + player.name, LW / 2, cy + 18, 15, COLORS.text, 'center', true)
   // 血量
