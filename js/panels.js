@@ -69,7 +69,9 @@ function build() {
     layout.push({ kind: 'eqRow', slot: 'accessory', item: p.accessory, y, h: 46 }); y += 46
     layout[0].endY = y + 12  // 饰品行下方留白, 卡片加高
     const invHi = layout.length
-    layout.push({ kind: 'invHeader', count: list.length, y: y + 52, endY: 0 }); y += 34
+    const invY = y + 52
+    layout.push({ kind: 'invHeader', count: list.length, y: invY, endY: 0 })
+    y = invY + 34  // 后续元素从标题卡内下方开始(原bug: y+=34导致与标题重叠)
     if (list.length === 0) {
       layout.push({ kind: 'invEmpty', y: y + 24 })
       y += 60
