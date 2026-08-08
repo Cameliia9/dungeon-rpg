@@ -101,11 +101,21 @@ function drawMenu() {
 // 对齐原版: 标题32 说明14 按钮220 交错 0/0.06/0.12/0.18/0.24/0.3s
 function buildDifficulty() {
   btns = []
-  const bw = Math.min(220, LW * 0.7), bh = 56, cx = LW / 2
-  let y = LH * 0.34
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟢 简单', () => startNew('easy'), { ...ui.BTN.primary, size: 15 })); y += bh + 12
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟡 困难', () => startNew('hard'), { ...ui.BTN.secondary, size: 15 })); y += bh + 12
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🔴 噩梦', () => startNew('nightmare'), { ...ui.BTN.danger, size: 15 })); y += bh + 24
+  // 对齐原版: 每个难度按钮带属性描述(HP/ATK/GOLD/敌人倍率)
+  const bw = Math.min(220, LW * 0.7), bh = 64, cx = LW / 2
+  let y = LH * 0.30
+  btns.push({
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => startNew('easy'), { ...ui.BTN.primary, size: 15 }),
+    label: '🟢 简单', desc: 'HP 100 · ATK 12 · GOLD 50 · 敌人×1.0', descColor: '#a0ffa0'
+  }); y += bh + 12
+  btns.push({
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => startNew('hard'), { ...ui.BTN.secondary, size: 15 }),
+    label: '🟡 困难', desc: 'HP 95 · ATK 11 · GOLD 35 · 敌人攻×1.25', descColor: '#ffe080'
+  }); y += bh + 12
+  btns.push({
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => startNew('nightmare'), { ...ui.BTN.danger, size: 15 }),
+    label: '🔴 噩梦', desc: 'HP 90 · ATK 10 · GOLD 20 · 敌人攻×1.5', descColor: '#ff8080'
+  }); y += bh + 24
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '↩️ 返回', () => switchScene('menu'), ui.BTN.secondary))
 }
 
@@ -197,6 +207,12 @@ function drawDifficulty() {
     const p = ui.animProgress(sceneEnterTime, delays[i], dur)
     // 只做淡入，不做位移
     drawBtn(ctx, btns[i], null, p)
+    // 难度按钮: 主文字 + 属性描述(对齐原版)
+    if (btns[i].label) {
+      const b = btns[i]
+      text(ctx, b.label, b.x + b.w / 2, b.y + 20, 15, COLORS.text, 'center', true, p)
+      text(ctx, b.desc, b.x + b.w / 2, b.y + 41, 11, b.descColor, 'center', true, p)
+    }
   }
 }
 
