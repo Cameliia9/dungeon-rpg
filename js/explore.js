@@ -185,10 +185,10 @@ function touch(x, y) {
       let yy2 = cy - 69
       for (let i = 0; i < evt.items.length; i++) {
         if (yy > yy2 - 2 && yy < yy2 + 56) {
-          const iw = w * 0.9, ix = cx - iw / 2
+          const iw = w * 0.96, ix = cx - iw / 2
           if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 42 && yy < yy2 + 66) { buyMerchant(side, i); return }
         }
-        yy2 += 62
+        yy2 += 68
       }
       if (yy > yy2 + 6 && yy < yy2 + 42) finishSide(side)
     } else if (state === 'altar') {
@@ -589,13 +589,13 @@ function drawMerchantCard(cx, cy, evt, side, w) {
   let yy = cy - 69
   for (let i = 0; i < evt.items.length; i++) {
     const it = evt.items[i]
-    const iw = w * 0.9, ix = cx - iw / 2
+    const iw = w * 0.96, ix = cx - iw / 2
     roundRect(ctx, ix, yy - 2, iw, 58, 6, '#1a1a2e', '#2a2a4a', 1)
     text(ctx, it.name, ix + 8, yy + 14, 15, COLORS.gold, 'left', true)
     text(ctx, it.desc || '', ix + 8, yy + 34, 11, COLORS.textDim, 'left')
     drawBtn(ctx, makeBtn(ix + iw - 66, yy + 42, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
     text(ctx, '💰 ' + it.price, ix + iw - 74, yy + 52, 15, '#f0c040', 'right', true)
-    yy += 62
+    yy += 68
   }
   drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
 }
