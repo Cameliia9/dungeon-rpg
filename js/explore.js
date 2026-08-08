@@ -86,14 +86,14 @@ function touch(x, y) {
     const bw = S.LW * 0.44, bh = 34
     const bx1 = S.LW * 0.04, bx2 = S.LW * 0.52
     // 第一行: 商店 / 背包
-    const by1 = fy + 120
+    const by1 = fy + 130
     if (y > by1 && y < by1 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('shop')
       else if (x > bx2 && x < bx2 + bw) openPanel('inventory')
       return
     }
     // 第二行: 铁匠铺 / 退出
-    const by2 = fy + 160
+    const by2 = fy + 174
     if (y > by2 && y < by2 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('forge')
       else if (x > bx2 && x < bx2 + bw) exitExplore()
@@ -102,8 +102,8 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（坐标与绘制一致）
-  const cardTop = 92
-  const cardH = S.LH - 150 - 100
+  const cardTop = 110
+  const cardH = 280
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
     const side = isLeft ? 'left' : 'right'
@@ -115,11 +115,14 @@ function touch(x, y) {
 
     if (state === 'door') {
       if (evt && evt.type === 'stairs') {
+        // 楼梯按钮 cy+23~cy+57 (绘制 cy+40 高34)
         if (y > cy + 23 && y < cy + 57) descend()
       } else if (evt && evt.type === 'boss') {
+        // Boss按钮 cy+25~cy+59 (绘制 cy+42 高34)
         if (y > cy + 25 && y < cy + 59) startBattle(side, true)
       } else {
-        if (y > cy + 13 && y < cy + 47) pickSide(side)
+        // 前进按钮 cy+13~cy+47 (绘制 cy+30 高34: cy+30~cy+64)
+        if (y > cy + 13 && y < cy + 64) pickSide(side)
       }
     } else if (state === 'monster') {
       // 战斗/逃跑按钮(并排, cy+52)
@@ -316,24 +319,25 @@ function draw() {
   S.ctx.fillStyle = g
   S.ctx.fillRect(0, 0, S.LW, S.LH)
 
-  // 顶部: 楼层标题卡 (对齐原版: 🏰地牢第X层 + 主题名右侧金色粗体13px + 描述 + 进度)
+  // 顶部: 楼层标题卡 (对齐原版: 标题行+主题名右侧+描述+进度)
   const theme = Data.getThemeForFloor(p.floor)
-  // 标题卡背景
-  roundRect(ctx, 8, 10, S.LW - 16, 72, 12, ui.cardFill(ctx, 8, 10, S.LW - 16, 72), COLORS.cardBorder, 1.5)
+  roundRect(ctx, 16, 16, S.LW - 32, 82, 12, ui.cardFill(ctx, 16, 16, S.LW - 32, 82), COLORS.cardBorder, 1.5)
+  // 第一行: 🏰地牢第X层 + 主题名(金色粗体13px)
   const titleStr = '🏰 地牢第 ' + p.floor + ' 层'
   const themeStr = theme.icon + ' ' + theme.name
   const tW = ui.textWidth(ctx, titleStr, 18)
   const thW = ui.textWidth(ctx, themeStr, 13)
-  // 标题居中(整体含主题名), 主题名金色粗体
   const totalW = tW + 10 + thW
   let tx = (S.LW - totalW) / 2
-  text(ctx, titleStr, tx + tW / 2, 28, 18, COLORS.gold, 'center', true)
-  text(ctx, themeStr, tx + tW + 10 + thW / 2, 28, 13, '#e0c080', 'center', true)
-  text(ctx, theme.desc || '', S.LW / 2, 48, 11, COLORS.textDim)
-  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, 66, 11, COLORS.textDark)
+  text(ctx, titleStr, tx + tW / 2, 36, 18, COLORS.gold, 'center', true)
+  text(ctx, themeStr, tx + tW + 10 + thW / 2, 36, 13, '#e0c080', 'center', true)
+  // 第二行: 主题描述
+  text(ctx, theme.desc || '', S.LW / 2, 62, 11, COLORS.textDim)
+  // 第三行: 进度
+  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, 84, 11, COLORS.textDark)
 
   // 双门卡片 (左 0.1s 右 0.2s 滑入) —— 高度对齐原版 min-height 280px
-  const cardTop = 92
+  const cardTop = 110
   const cardH = 280
   const cardW = S.LW * 0.46
   const gap = S.LW * 0.04
@@ -525,9 +529,9 @@ function altarOffer(side, type, evt) {
   if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
 }
 
-// 状态栏高度: 收起70px / 展开190px (对齐原版: 箭头+名字血条+属性3行+2x2按钮)
+// 状态栏高度: 收起70px / 展开220px (对齐原版: 箭头+名字血条+属性3行+2x2按钮)
 function footerH() {
-  return footerExpanded ? 190 : 70
+  return footerExpanded ? 220 : 70
 }
 
 function drawFooter() {
@@ -554,15 +558,15 @@ function drawFooter() {
     text(ctx, '💰 ' + p.gold + '金币  ⭐ ' + p.exp + ' / ' + p.expToLevel() + '经验', S.LW / 2, y + 108, 12, COLORS.textDim)
 
     // 2x2 按钮 (各48%, 对齐原版: 商店金/背包红(带数量)/铁匠橙/退出灰)
-    const bw = S.LW * 0.44, bh = 34
+    const bw = S.LW * 0.44, bh = 36
     const bx1 = S.LW * 0.04, bx2 = S.LW * 0.52
-    const b1 = makeBtn(bx1, y + 120, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 13 })
+    const b1 = makeBtn(bx1, y + 130, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 13 })
     drawBtn(ctx, b1)
-    const b2 = makeBtn(bx2, y + 120, bw, bh, '🎒 背包 (' + p.inventory.length + ')', null, { ...ui.BTN.primary, size: 13 })
+    const b2 = makeBtn(bx2, y + 130, bw, bh, '🎒 背包 (' + p.inventory.length + ')', null, { ...ui.BTN.primary, size: 13 })
     drawBtn(ctx, b2)
-    const b3 = makeBtn(bx1, y + 160, bw, bh, '⚒️ 铁匠铺', null, { ...ui.BTN.forge, size: 13 })
+    const b3 = makeBtn(bx1, y + 174, bw, bh, '⚒️ 铁匠铺', null, { ...ui.BTN.forge, size: 13 })
     drawBtn(ctx, b3)
-    const b4 = makeBtn(bx2, y + 160, bw, bh, '🚪 退出', null, { ...ui.BTN.secondary, size: 13 })
+    const b4 = makeBtn(bx2, y + 174, bw, bh, '🚪 退出', null, { ...ui.BTN.secondary, size: 13 })
     drawBtn(ctx, b4)
   }
 }
