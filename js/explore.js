@@ -16,6 +16,23 @@ let trapResult = null
 let roomsPerFloor = 15
 let enterTime = Date.now()   // 探索页入场时间(动画)
 
+// ---- 卡片交互动画状态机 ----
+// phase: 'idle'(两卡相等) | 'expand'(选中放大/另一侧缩小) | 'flyout'(完成向右上旋出)
+let cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
+// 各事件类型的选中放大比例(神秘商人最大)
+function expandScale(type) {
+  switch (type) {
+    case 'merchant': return 1.14
+    case 'monster': return 1.06
+    case 'altar': return 1.08
+    case 'result': return 1.05
+    case 'deadend': return 1.0
+    default: return 1.05
+  }
+}
+// 未选中侧缩小比例
+const SHRINK_SCALE = 0.86
+
 function init(shared) {
   S = shared
   enterTime = Date.now()
@@ -68,6 +85,7 @@ function generateEvents() {
   rightState = 'door'
   activeSide = null
   trapResult = null
+  cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
   roomsPerFloor = GE.getRoomsPerFloor(S.player.floor)
 }
 
@@ -102,8 +120,8 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（坐标与绘制一致）
-  const cardTop = 170
-  const cardH = 272
+  const cardTop = 192
+  const cardH = 252
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
     const side = isLeft ? 'left' : 'right'
@@ -158,7 +176,7 @@ function touch(x, y) {
   }
 }
 
-function cardW() { return S.LW * 0.46 }
+function cardW() { return S.LW * 0.43 }
 
 function openPanel(name) {
   const panels = require('./panels')
@@ -184,6 +202,8 @@ function pickSide(side) {
   if (!evt) return
   const key = side + 'State'
   activeSide = side
+  // 启动展开动画(选中放大/另一侧缩小)
+  cardAnim = { phase: 'expand', start: Date.now(), side: side, dur: 350 }
   const p = S.player
 
   switch (evt.type) {
@@ -236,7 +256,18 @@ function blockSide(side) {
   S.savePlayer()
 }
 
+// 事件完成: 先播扑克牌飞出动画, 动画结束后推进逻辑
 function finishSide(side) {
+  if (cardAnim.phase === 'flyout') return  // 防重复触发
+  cardAnim = { phase: 'flyout', start: Date.now(), side: side, dur: 450 }
+  setTimeout(() => {
+    doFinishSide(side)
+    // 动画结束后: 两卡恢复相等
+    cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
+  }, 460)
+}
+
+function doFinishSide(side) {
   const p = S.player
   p.roomsExplored++
   activeSide = null
@@ -336,11 +367,10 @@ function draw() {
   // 第三行: 进度
   text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, 148, 11, COLORS.textDark)
 
-  // 双门卡片 (左 0.1s 右 0.2s 滑入) —— 高度对齐原版 min-height 280px
-  const cardTop = 170
-  const cardH = 272
-  const cardW = S.LW * 0.46
-  const gap = S.LW * 0.04
+  // 双门卡片 (左 0.1s 右 0.2s 滑入) —— 标题卡下留 30px 间距, 两卡之间留 16px
+  const cardTop = 192
+  const cardH = 252
+  const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
   drawCard(leftX(), cardTop, cardW, cardH, 'left', (1 - pL) * 36)
@@ -350,20 +380,59 @@ function draw() {
   drawFooter()
 }
 
-function leftX() { return S.LW * 0.04 }
-function rightX() { return S.LW - S.LW * 0.04 - S.LW * 0.46 }
+function leftX() { return S.LW * 0.05 }
+function rightX() { return S.LW * 0.52 }
 
 function drawCard(x, y, w, h, side, slideIn) {
   const ctx = S.ctx
   const p = S.player
   const evt = side === 'left' ? leftEvent : rightEvent
   const state = side === 'left' ? leftState : rightState
-  const scale = activeSide === side ? 1.05 : activeSide ? 0.92 : 1
-  const cw = w * scale, ch = h * scale
-  const cx = x + w / 2, cy = y + h / 2 + (slideIn || 0)
+
+  // ---- 交互动画: 计算 scale/scaleX/旋转/位移/透明度 ----
+  let scale = 1, scaleX = 1, rot = 0, dx = 0, dy = 0, alpha = 1
+  const now = Date.now()
+  const evtType = evt ? evt.type : ''
+  if (cardAnim.phase === 'expand') {
+    const t = Math.min(1, (now - cardAnim.start) / cardAnim.dur)
+    const e = ui.easeOut(t)
+    if (cardAnim.side === side) {
+      // 选中侧: 放大到事件类型比例
+      const target = expandScale(evtType)
+      scale = 1 + (target - 1) * e
+    } else {
+      // 未选中侧: 缩小 + 横向压缩
+      scale = 1 + (SHRINK_SCALE - 1) * e
+      scaleX = 1 + (0.82 - 1) * e
+    }
+  } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
+    // 完成侧: 向右上旋转滑出(扑克牌式)
+    const t = Math.min(1, (now - cardAnim.start) / 450)
+    const e = ui.easeOut(t)
+    scale = 1 + (1.1 - 1) * e
+    rot = 18 * e
+    dx = 90 * e
+    dy = -70 * e
+    alpha = 1 - e
+  } else if (cardAnim.phase === 'idle') {
+    // 两卡相等
+    scale = 1; scaleX = 1
+  }
+
+  const cw = w * scale * scaleX, ch = h * scale
+  const cx = x + w / 2 + dx, cy = y + h / 2 + (slideIn || 0) + dy
+  ctx.globalAlpha = alpha
+
+  // 旋转支持(扑克牌飞出)
+  if (rot !== 0) {
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(rot * Math.PI / 180)
+    ctx.translate(-cx, -cy)
+  }
 
   // 卡片渐变背景(对齐原版 .card)
-  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), activeSide === side ? COLORS.goldBright : COLORS.cardBorder, activeSide === side ? 2 : 1.5)
+  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), cardAnim.side === side && cardAnim.phase !== 'flyout' ? COLORS.goldBright : COLORS.cardBorder, cardAnim.side === side && cardAnim.phase !== 'flyout' ? 2 : 1.5)
 
   if (state === 'door') {
     if (evt && evt.type === 'stairs') {
@@ -401,6 +470,10 @@ function drawCard(x, y, w, h, side, slideIn) {
   } else if (state === 'altar') {
     drawAltarCard(cx, cy, evt, side, w)
   }
+
+  // 恢复旋转/透明度
+  if (rot !== 0) ctx.restore()
+  ctx.globalAlpha = 1
 }
 
 function drawResultCard(cx, cy, evt, w) {
