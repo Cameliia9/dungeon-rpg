@@ -165,24 +165,25 @@ function drawGame() {
   text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 148, 22, COLORS.gold, 'center', true)
   text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 176, 13, COLORS.textDim)
 
-  // 角色状态卡(同步下移, 加高+行距拉开)
+  // 角色状态卡(高度随屏幕动态, 上限240; 字号加大)
   const cy = 206
-  roundRect(ctx, 16, cy, LW - 32, 200, 12, ui.cardFill(ctx, 16, cy, LW - 32, 200), COLORS.cardBorder, 1.5)
-  text(ctx, '🧝 ' + player.name, LW / 2, cy + 20, 15, COLORS.text, 'center', true)
+  const cardH2 = Math.min(240, LH * 0.62 - 14 - cy)
+  roundRect(ctx, 16, cy, LW - 32, cardH2, 12, ui.cardFill(ctx, 16, cy, LW - 32, cardH2), COLORS.cardBorder, 1.5)
+  text(ctx, '🧝 ' + player.name, LW / 2, cy + 22, 17, COLORS.text, 'center', true)
   // 血量
-  text(ctx, '❤️ 生命值', 32, cy + 48, 12, COLORS.textDim, 'left')
-  text(ctx, player.hp + ' / ' + player.totalMaxHp, LW - 32, cy + 48, 12, COLORS.gold, 'right', true)
-  hpBar(ctx, 32, cy + 58, LW - 64, 8, player.hp / player.totalMaxHp)
+  text(ctx, '❤️ 生命值', 32, cy + 54, 14, COLORS.textDim, 'left')
+  text(ctx, player.hp + ' / ' + player.totalMaxHp, LW - 32, cy + 54, 14, COLORS.gold, 'right', true)
+  hpBar(ctx, 32, cy + 64, LW - 64, 10, player.hp / player.totalMaxHp)
   // 经验
-  text(ctx, '✨ 经验值', 32, cy + 84, 12, COLORS.textDim, 'left')
-  text(ctx, player.exp + ' / ' + player.expToLevel(), LW - 32, cy + 84, 12, COLORS.gold, 'right', true)
+  text(ctx, '✨ 经验值', 32, cy + 90, 14, COLORS.textDim, 'left')
+  text(ctx, player.exp + ' / ' + player.expToLevel(), LW - 32, cy + 90, 14, COLORS.gold, 'right', true)
   // 攻防暴闪
-  text(ctx, '⚔️ 攻击 ' + player.totalAttack + '   🛡️ 防御 ' + player.totalDefense, 32, cy + 106, 12, COLORS.textDim, 'left')
-  text(ctx, '⚡ 暴击 ' + Math.round(player.totalCrit * 100) + '%   💨 闪避 ' + Math.round(player.totalDodge * 100) + '%', 32, cy + 126, 12, COLORS.textDim, 'left')
+  text(ctx, '⚔️ 攻击 ' + player.totalAttack + '   🛡️ 防御 ' + player.totalDefense, 32, cy + 114, 14, COLORS.textDim, 'left')
+  text(ctx, '⚡ 暴击 ' + Math.round(player.totalCrit * 100) + '%   💨 闪避 ' + Math.round(player.totalDodge * 100) + '%', 32, cy + 136, 14, COLORS.textDim, 'left')
   // 金币/击杀
-  text(ctx, '💰 金币 ' + player.gold + '   💀 击杀 ' + player.kills, 32, cy + 146, 12, COLORS.textDim, 'left')
+  text(ctx, '💰 金币 ' + player.gold + '   💀 击杀 ' + player.kills, 32, cy + 158, 14, COLORS.textDim, 'left')
   // 装备一览
-  text(ctx, '🗡️ 武器：' + (player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'), 32, cy + 168, 11, '#a080ff', 'left')
+  text(ctx, '🗡️ 武器：' + (player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'), 32, cy + 182, 13, '#a080ff', 'left')
 
   for (const b of btns) drawBtn(ctx, b)
 }
