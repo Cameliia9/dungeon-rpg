@@ -43,7 +43,7 @@ function build() {
       { title: '🛡️ 护甲', items: Data.equipment.armor.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'armor' })) },
       { title: '💍 饰品', items: Data.equipment.accessory.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'accessory' })) }
     ]
-    let y = 144  // 与标题卡间距20px(卡顶136)
+    let y = 208  // 标题卡下移后同步(卡顶200, 距标题卡底180为20px)
     for (let si = 0; si < sections.length; si++) {
       const sec = sections[si]
       const hi = layout.length
@@ -58,8 +58,8 @@ function build() {
   } else if (type === 'inventory') {
     // 对齐原版: 当前装备区 + 物品列表
     list = p.inventory.map((it, i) => ({ ...it, invIdx: i }))
-    layout.push({ kind: 'eqHeader', y: 104, endY: 0 })
-    let y = 104 + 42
+    layout.push({ kind: 'eqHeader', y: 168, endY: 0 })
+    let y = 168 + 42
     layout.push({ kind: 'eqRow', slot: 'weapon', item: p.weapon, y, h: 40 }); y += 40
     layout.push({ kind: 'eqRow', slot: 'armor', item: p.armor, y, h: 40 }); y += 40
     layout.push({ kind: 'eqRow', slot: 'accessory', item: p.accessory, y, h: 40 }); y += 40
@@ -78,7 +78,7 @@ function build() {
     contentH = y
   } else if (type === 'forge') {
     list = ['weapon', 'armor', 'accessory'].map(slot => ({ slot, item: p[slot] }))
-    let y = 148
+    let y = 212
     for (const it of list) {
       layout.push({ kind: 'item', item: it, y, h: 66 }); y += 66
     }
@@ -93,7 +93,7 @@ function touch(x, y) {
   if (y > S.LH - 60 && y < S.LH - 16 && x > M && x < M + PW()) { close(); return }
   // 列表区: 顶部上滑 / 底部下滑 / 点击项
   const th = type === 'shop' ? 100 : 58
-  const topY = M + th + 10
+  const topY = 80 + th + 10
   const bottomY = S.LH - 70
   if (y > topY && y < bottomY) {
     if (y < topY + 24) { scroll = Math.max(0, scroll - 40); return }
@@ -173,25 +173,27 @@ function draw() {
   ctx.fillStyle = '#0f0f1a'
   ctx.fillRect(0, 0, S.LW, S.LH)
 
-  // ===== 标题卡(对齐原版: 标题+金币+区域/阶数) =====
-  const th = type === 'shop' ? 100 : 58
-  roundRect(ctx, M, M, PW(), th, 12, ui.cardFill(ctx, M, M, PW(), th), COLORS.goldBright, 1.5)
-  if (type === 'shop') {
-    text(ctx, '🏪 冒险者商店', S.LW / 2, M + 26, 20, COLORS.gold, 'center', true)
-    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, M + 50, 13, COLORS.goldBright)
-    text(ctx, '当前区域：' + themeName + ' · 第 ' + shopTier + ' 阶装备', S.LW / 2, M + 74, 12, '#6a6a7a')
-  } else if (type === 'inventory') {
-    text(ctx, '🎒 背包', S.LW / 2, M + 24, 20, COLORS.gold, 'center', true)
-    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, M + 44, 12, COLORS.goldBright)
-  } else {
-    text(ctx, '⚒️ 铁匠铺', S.LW / 2, M + 24, 20, COLORS.gold, 'center', true)
-    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, M + 44, 12, COLORS.goldBright)
-  }
-  // ✕ 关闭
+  // ✕ 关闭(右上角悬浮)
   text(ctx, '✕', S.LW - M - 22, M + 22, 22, COLORS.red, 'center', true)
 
+  // ===== 标题卡(下移到✕下方, 对齐原版: 标题+金币+区域/阶数) =====
+  const th = type === 'shop' ? 100 : 58
+  const headY = 80
+  roundRect(ctx, M, headY, PW(), th, 12, ui.cardFill(ctx, M, headY, PW(), th), COLORS.goldBright, 1.5)
+  if (type === 'shop') {
+    text(ctx, '🏪 冒险者商店', S.LW / 2, headY + 26, 20, COLORS.gold, 'center', true)
+    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, headY + 50, 13, COLORS.goldBright)
+    text(ctx, '当前区域：' + themeName + ' · 第 ' + shopTier + ' 阶装备', S.LW / 2, headY + 74, 12, '#6a6a7a')
+  } else if (type === 'inventory') {
+    text(ctx, '🎒 背包', S.LW / 2, headY + 24, 20, COLORS.gold, 'center', true)
+    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, headY + 44, 12, COLORS.goldBright)
+  } else {
+    text(ctx, '⚒️ 铁匠铺', S.LW / 2, headY + 24, 20, COLORS.gold, 'center', true)
+    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, headY + 44, 12, COLORS.goldBright)
+  }
+
   // ===== 列表区(可滚动, 裁剪) =====
-  const topY = M + th + 10
+  const topY = headY + th + 10
   const bottomY = S.LH - 70
   ctx.save()
   ctx.beginPath()
