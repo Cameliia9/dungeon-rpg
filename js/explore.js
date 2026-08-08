@@ -19,19 +19,7 @@ let enterTime = Date.now()   // 探索页入场时间(动画)
 // ---- 卡片交互动画状态机 ----
 // phase: 'idle'(两卡相等) | 'expand'(选中放大/另一侧缩小) | 'flyout'(完成向右上旋出)
 let cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
-// 各事件类型的选中横向放大比例(宽度倍数, 神秘商人最长)
-function expandScale(type) {
-  switch (type) {
-    case 'merchant': return 1.25
-    case 'altar': return 1.15
-    case 'monster': return 1.12
-    case 'result': return 1.08
-    case 'deadend': return 1.05
-    default: return 1.08
-  }
-}
-// 未选中侧宽度收缩比例(高度不变, 内容随宽度变窄)
-const SHRINK_SCALE_X = 0.8
+// 点击门后动画: 选中侧放大1.05+金色发光, 未选中侧缩小0.92+半透明
 
 function init(shared) {
   S = shared
@@ -132,7 +120,7 @@ function touch(x, y) {
   if (cardAnim.phase === 'expand') {
     const t = Math.min(1, (Date.now() - cardAnim.start) / cardAnim.dur)
     const e = ui.easeOut(t)
-    cwX = w * (cardAnim.side === side ? 1 + (expandScale(evt ? evt.type : '') - 1) * e : 1 + (SHRINK_SCALE_X - 1) * e)
+    cwX = w * (cardAnim.side === side ? 1 + 0.05 * e : 1 - 0.08 * e)
   } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
     const t = Math.min(1, (Date.now() - cardAnim.start) / 450)
     dxT = 90 * ui.easeOut(t)
@@ -417,17 +405,16 @@ function drawCard(x, y, w, h, side, slideIn) {
   // ---- 交互动画: 计算 scale/scaleX/旋转/位移/透明度 ----
   let scale = 1, scaleX = 1, rot = 0, dx = 0, dy = 0, alpha = 1
   const now = Date.now()
-  const evtType = evt ? evt.type : ''
   if (cardAnim.phase === 'expand') {
     const t = Math.min(1, (now - cardAnim.start) / cardAnim.dur)
     const e = ui.easeOut(t)
     if (cardAnim.side === side) {
-      // 选中侧: 横向放大(宽度变长, 高度不变), 商人最宽
-      scaleX = 1 + (expandScale(evtType) - 1) * e
+      // 选中侧: 等比放大1.05
+      scale = 1 + 0.05 * e
     } else {
-      // 未选中侧: 只缩宽度, 高度不变, 内容随宽度变窄
-      scale = 1
-      scaleX = 1 + (SHRINK_SCALE_X - 1) * e
+      // 未选中侧: 等比缩小0.92 + 半透明(alpha降到0.6)
+      scale = 1 - 0.08 * e
+      alpha = 1 - 0.4 * e
     }
   } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
     // 完成侧: 向右上旋转滑出(扑克牌式)
@@ -457,8 +444,11 @@ function drawCard(x, y, w, h, side, slideIn) {
     ctx.translate(-cx, -cy)
   }
 
-  // 卡片渐变背景(对齐原版 .card)
-  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), cardAnim.side === side && cardAnim.phase !== 'flyout' ? COLORS.goldBright : COLORS.cardBorder, cardAnim.side === side && cardAnim.phase !== 'flyout' ? 2 : 1.5)
+  // 卡片渐变背景(对齐原版 .card; 选中侧金色发光)
+  const isActive = cardAnim.side === side && cardAnim.phase !== 'flyout'
+  if (isActive) { ctx.save(); ctx.shadowColor = 'rgba(240,192,64,0.75)'; ctx.shadowBlur = 16 }
+  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), isActive ? COLORS.goldBright : COLORS.cardBorder, isActive ? 2 : 1.5)
+  if (isActive) ctx.restore()
 
   // 未选中侧内容随卡片缩小(按钮/文字一起变小)
   const shrink = cardAnim.phase === 'expand' && cardAnim.side !== side
