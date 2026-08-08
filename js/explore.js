@@ -132,10 +132,11 @@ function touch(x, y) {
   const fy = S.LH - fh
   // 状态栏折叠箭头（顶部居中箭头区域, 带平滑动画）
   if (y > fy && y < fy + 22) {
+    const curH = footerH()  // 切换前当前高度(动画中为插值)
     footerExpanded = !footerExpanded
     footerAnim = {
       start: Date.now(), dur: 300,
-      from: footerH(),
+      from: curH,
       to: footerExpanded ? FOOTER_H_EXPAND : FOOTER_H_COLLAPSE
     }
     return
