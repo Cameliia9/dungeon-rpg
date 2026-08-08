@@ -431,9 +431,9 @@ function draw() {
   text(ctx, '←', 26, 72, 22, '#ffffff', 'center', true)
   // 顶部居中白色标题「探索地牢」(下移)
   text(ctx, '探索地牢', S.LW / 2, 72, 20, '#ffffff', 'center', true)
-  // 分割线(对齐mini-rpg: 1px #1a1a2e)
-  ctx.strokeStyle = '#1a1a2e'
-  ctx.lineWidth = 1
+  // 分割线(白色2px)
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 2
   ctx.beginPath()
   ctx.moveTo(16, 90)
   ctx.lineTo(S.LW - 16, 90)
