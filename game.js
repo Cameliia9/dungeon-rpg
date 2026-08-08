@@ -102,7 +102,7 @@ function drawMenu() {
 function buildDifficulty() {
   btns = []
   const bw = Math.min(220, LW * 0.7), bh = 56, cx = LW / 2
-  let y = LH * 0.28
+  let y = LH * 0.34
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟢 简单', () => startNew('easy'), { ...ui.BTN.primary, size: 15 })); y += bh + 12
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟡 困难', () => startNew('hard'), { ...ui.BTN.secondary, size: 15 })); y += bh + 12
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🔴 噩梦', () => startNew('nightmare'), { ...ui.BTN.danger, size: 15 })); y += bh + 24
@@ -133,7 +133,7 @@ function openPanel(name) {
 function buildGame() {
   btns = []
   const bw = Math.min(220, LW * 0.7), bh = 50, cx = LW / 2
-  let y = LH * 0.52
+  let y = LH * 0.56
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏰 探索地牢', () => switchScene('explore'), ui.BTN.primary)); y += bh + 14
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🎒 背包 (' + player.inventory.length + '件)', () => openPanel('inventory'), ui.BTN.secondary)); y += bh + 14
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏪 商店', () => openPanel('shop'), ui.BTN.gold)); y += bh + 18
@@ -148,12 +148,12 @@ function drawGame() {
   ctx.fillRect(0, 0, LW, LH)
 
   // 标题卡
-  roundRect(ctx, 16, 80, LW - 32, 64, 12, ui.cardFill(ctx, 16, 80, LW - 32, 64), COLORS.cardBorder, 1.5)
-  text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 100, 18, COLORS.gold, 'center', true)
-  text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 124, 12, COLORS.textDim)
+  roundRect(ctx, 16, 100, LW - 32, 64, 12, ui.cardFill(ctx, 16, 100, LW - 32, 64), COLORS.cardBorder, 1.5)
+  text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 120, 18, COLORS.gold, 'center', true)
+  text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 144, 12, COLORS.textDim)
 
   // 角色状态卡
-  const cy = 160
+  const cy = 180
   roundRect(ctx, 16, cy, LW - 32, 170, 12, ui.cardFill(ctx, 16, cy, LW - 32, 170), COLORS.cardBorder, 1.5)
   text(ctx, '🧝 ' + player.name, LW / 2, cy + 18, 15, COLORS.text, 'center', true)
   // 血量
@@ -188,8 +188,8 @@ function drawDifficulty() {
   const dur = 450, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 60, dur)
-  text(ctx, '选择难度', LW / 2, LH * 0.10 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
-  text(ctx, '难度越高，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）', LW / 2, LH * 0.16 + (1 - p2) * dist, 12, COLORS.textDim, 'center', false, p2)
+  text(ctx, '选择难度', LW / 2, LH * 0.14 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
+  text(ctx, '难度越高，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）', LW / 2, LH * 0.20 + (1 - p2) * dist, 12, COLORS.textDim, 'center', false, p2)
 
   const delays = [120, 180, 240, 300]
   for (let i = 0; i < btns.length; i++) {

@@ -32,9 +32,9 @@ const BTN_X = 32
 const BTN_W = 311  // LW-64
 const BTN_H = 46
 const BTN_GAP = 10
-const BTN_Y1 = 400  // 攻击
-const BTN_Y2 = 456  // 防御
-const BTN_Y3 = 512  // 逃跑
+const BTN_Y1 = 440  // 攻击
+const BTN_Y2 = 496  // 防御
+const BTN_Y3 = 552  // 逃跑
 
 function touch(x, y) {
   if (result === 'fighting') {
@@ -215,13 +215,13 @@ function draw() {
     drawBtn(ctx, makeBtn(BTN_X, ry + 150, BTN_W, 40, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
   }
 
-  // ============ 4. 战斗日志(底部) ============
-  const ly = S.LH - 92
-  roundRect(ctx, cxp, ly, cw, 76, 12, '#101024', '#2a2a4a', 1.5)
-  text(ctx, '战斗日志：', cxp + 14, ly + 18, 13, COLORS.gold, 'left', true)
-  const show = logs.slice(-3)
+  // ============ 4. 战斗日志(逃跑按钮下方, 60高) ============
+  const ly = 600
+  roundRect(ctx, cxp, ly, cw, 60, 12, '#101024', '#2a2a4a', 1.5)
+  text(ctx, '战斗日志：', cxp + 14, ly + 16, 12, COLORS.gold, 'left', true)
+  const show = logs.slice(-2)
   for (let i = 0; i < show.length; i++) {
-    text(ctx, show[i], cxp + 14, ly + 40 + i * 16, 11, COLORS.textDim, 'left')
+    text(ctx, show[i], cxp + 14, ly + 36 + i * 14, 10, COLORS.textDim, 'left')
   }
 }
 
