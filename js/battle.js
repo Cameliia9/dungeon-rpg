@@ -213,6 +213,16 @@ function finish() {
   if (onDone) onDone()
 }
 
+let battleBgGrad = null  // 战斗背景渐变缓存
+function battleBg() {
+  if (!battleBgGrad) {
+    battleBgGrad = S.ctx.createLinearGradient(0, 0, 0, S.LH)
+    battleBgGrad.addColorStop(0, '#2a0a0a')
+    battleBgGrad.addColorStop(1, '#1a1a2e')
+  }
+  return battleBgGrad
+}
+
 function draw() {
   const ctx = S.ctx
   const p = S.player
@@ -223,10 +233,7 @@ function draw() {
   }
   dispPlayerHp += (p.hp - dispPlayerHp) * 0.15
   if (Math.abs(p.hp - dispPlayerHp) < 0.5) dispPlayerHp = p.hp
-  const g = ctx.createLinearGradient(0, 0, 0, S.LH)
-  g.addColorStop(0, '#2a0a0a')
-  g.addColorStop(1, '#1a1a2e')
-  ctx.fillStyle = g
+  ctx.fillStyle = battleBg()
   ctx.fillRect(0, 0, S.LW, S.LH)
 
   const cw = S.LW - 32   // 卡片宽(16边距)

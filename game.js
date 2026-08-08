@@ -12,7 +12,8 @@ const Data = require('./utils/data')
 // 显式设置 canvas 物理尺寸 = 逻辑尺寸 × DPR，再 scale(DPR)
 // 不显式设置时部分环境下主 canvas 尺寸异常 → 黑屏
 const sysInfo = wx.getSystemInfoSync()
-const DPR = sysInfo.pixelRatio || 2
+// DPR上限2x: 真机3x时每帧填充像素是1x的9倍(帧率杀手), 2x平衡清晰度与帧率
+const DPR = Math.min(sysInfo.pixelRatio || 2, 2)
 const LW = sysInfo.windowWidth    // 逻辑宽(如375)
 const LH = sysInfo.windowHeight   // 逻辑高(如667)
 
@@ -316,13 +317,10 @@ if (loadGame()) savedGame = true
 switchScene('menu')
 
 // 渲染循环带异常保护，避免单帧错误卡死
-// 双保险: requestAnimationFrame + setInterval(部分开发者工具环境 rAF 不触发)
-// 节流: rAF 正常(16ms)时 interval(33ms)触发的重复帧直接跳过, 真机不再双倍绘制
+// rAF 全速驱动(60fps): 每帧绘制, 丝滑
 let lastDraw = 0
 function loop() {
-  const now = Date.now()
-  if (now - lastDraw < 30) return
-  lastDraw = now
+  lastDraw = Date.now()
   try {
     draw()
   } catch (err) {
@@ -331,4 +329,15 @@ function loop() {
   requestAnimationFrame(loop)
 }
 requestAnimationFrame(loop)
-setInterval(loop, 33) // 30fps 兜底，确保画面一定刷新
+// interval 仅兜底: 若 rAF 不触发(部分开发者工具环境), 30fps 保证刷新;
+// rAF 正常时(16ms间隔)兜底帧距上次绘制<33ms直接跳过, 不重复绘制
+setInterval(() => {
+  const now = Date.now()
+  if (now - lastDraw < 33) return
+  lastDraw = now
+  try {
+    draw()
+  } catch (err) {
+    console.error('draw error:', err)
+  }
+}, 33)
