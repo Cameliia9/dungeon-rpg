@@ -140,7 +140,7 @@ function draw() {
   // 怪物卡
   const mw = S.LW * 0.8, mh = 130
   const mx = (S.LW - mw) / 2, my = 24
-  roundRect(ctx, mx, my, mw, mh, 12, COLORS.card, isBoss ? COLORS.red : COLORS.cardBorder, 2)
+  roundRect(ctx, mx, my, mw, mh, 12, ui.cardFill(ctx, mx, my, mw, mh), isBoss ? COLORS.red : COLORS.cardBorder, 2)
   text(ctx, monster.icon, mx + 50, my + mh / 2, 44)
   text(ctx, monster.name + '  Lv.' + monster.level, mx + 130, my + 30, 16, isBoss ? COLORS.red : COLORS.gold, 'left', true)
   if (isBoss) text(ctx, '⚠️ BOSS ⚠️', mx + 130, my + 52, 11, COLORS.red, 'left', true)
@@ -150,7 +150,7 @@ function draw() {
 
   // 玩家卡
   const py = my + mh + 16
-  roundRect(ctx, mx, py, mw, 100, 12, COLORS.card, COLORS.cardBorder, 2)
+  roundRect(ctx, mx, py, mw, 100, 12, ui.cardFill(ctx, mx, py, mw, 100), COLORS.cardBorder, 2)
   text(ctx, '🧝 ' + p.name, mx + 50, py + 25, 14, COLORS.text, 'left', true)
   hpBar(ctx, mx + 100, py + 14, mw - 120, 10, p.hp / p.totalMaxHp)
   text(ctx, p.hp + ' / ' + p.totalMaxHp, mx + 100 + (mw - 120) / 2, py + 34, 11, COLORS.textDim)

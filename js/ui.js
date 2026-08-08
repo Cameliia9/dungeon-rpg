@@ -21,6 +21,14 @@ const COLORS = {
   dodge: '#3498db'
 }
 
+/** 卡片渐变背景(对齐原版 .card: linear-gradient 135deg #1a1a2e→#16213e) */
+function cardFill(ctx, x, y, w, h) {
+  const g = ctx.createLinearGradient(x, y, x + w, y + h)
+  g.addColorStop(0, '#1a1a2e')
+  g.addColorStop(1, '#16213e')
+  return g
+}
+
 /** 圆角矩形 */
 function roundRect(ctx, x, y, w, h, r, fill, stroke, lineW) {
   ctx.beginPath()
@@ -61,13 +69,33 @@ function makeBtn(x, y, w, h, label, cb, style) {
   return { x, y, w, h, label, cb, style: style || {} }
 }
 
-/** 绘制按钮 */
+/** 绘制按钮（渐变背景，对齐小程序原版） */
 function drawBtn(ctx, b, theme) {
   const s = b.style
-  const bg = s.bg || COLORS.card
+  const bg1 = s.bg1 || s.bg || COLORS.card
+  const bg2 = s.bg2 || bg1
   const border = s.border || COLORS.cardBorder
   const fg = s.fg || COLORS.text
-  roundRect(ctx, b.x, b.y, b.w, b.h, s.r || 10, bg, border, 1.5)
+  // 渐变背景
+  const g = ctx.createLinearGradient(b.x, b.y, b.x + b.w, b.y + b.h)
+  g.addColorStop(0, bg1)
+  g.addColorStop(1, bg2)
+  ctx.fillStyle = g
+  ctx.beginPath()
+  const r = s.r || 8
+  const x = b.x, y = b.y, w = b.w, h = b.h
+  ctx.moveTo(x + r, y)
+  ctx.lineTo(x + w - r, y)
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+  ctx.lineTo(x + w, y + h - r)
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+  ctx.lineTo(x + r, y + h)
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+  ctx.lineTo(x, y + r)
+  ctx.quadraticCurveTo(x, y, x + r, y)
+  ctx.closePath()
+  ctx.fill()
+  if (border) { ctx.strokeStyle = border; ctx.lineWidth = 1.5; ctx.stroke() }
   text(ctx, b.label, b.x + b.w / 2, b.y + b.h / 2, s.size || 15, fg, 'center', s.bold)
 }
 
@@ -81,13 +109,13 @@ function hitBtn(btns, x, y) {
   return null
 }
 
-/** 按钮配色 */
+/** 按钮配色（对齐小程序原版渐变） */
 const BTN = {
-  primary: { bg: 'linear', border: '#e74c3c', fg: '#fff' },
-  secondary: { bg: '#2c3e50', border: '#34495e', fg: '#ccc' },
-  gold: { bg: '#d4a017', border: '#f0c040', fg: '#1a1a2e' },
-  danger: { bg: '#8b0000', border: '#ff4444', fg: '#fff' },
-  forge: { bg: '#b34700', border: '#ff8c1a', fg: '#fff' }
+  primary: { bg1: '#c0392b', bg2: '#e74c3c', border: 'rgba(255,255,255,0.15)', fg: '#ffffff' },
+  secondary: { bg1: '#2c3e50', bg2: '#34495e', border: 'rgba(255,255,255,0.1)', fg: '#cccccc' },
+  gold: { bg1: '#d4a017', bg2: '#f0c040', border: 'rgba(255,255,255,0.25)', fg: '#1a1a2e' },
+  danger: { bg1: '#8b0000', bg2: '#c0392b', border: 'rgba(255,255,255,0.15)', fg: '#ffffff' },
+  forge: { bg1: '#b34700', bg2: '#ff8c1a', border: 'rgba(255,255,255,0.2)', fg: '#ffffff' }
 }
 
-module.exports = { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn, BTN }
+module.exports = { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn, BTN, cardFill }

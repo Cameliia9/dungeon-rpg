@@ -117,7 +117,7 @@ function draw() {
 
   const pw = S.LW * 0.92, ph = S.LH * 0.9
   const px = (S.LW - pw) / 2, py = (S.LH - ph) / 2
-  roundRect(ctx, px, py, pw, ph, 16, COLORS.card, COLORS.goldBright, 2)
+  roundRect(ctx, px, py, pw, ph, 16, ui.cardFill(ctx, px, py, pw, ph), COLORS.goldBright, 2)
 
   const title = type === 'shop' ? '🏪 冒险者商店' : type === 'inventory' ? '🎒 背包' : '⚒️ 铁匠铺'
   text(ctx, title, px + pw / 2, py + 32, 20, COLORS.gold, 'center', true)

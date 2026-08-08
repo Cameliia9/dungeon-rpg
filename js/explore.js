@@ -324,7 +324,8 @@ function drawCard(x, y, w, h, side) {
   const cw = w * scale, ch = h * scale
   const cx = x + w / 2, cy = y + h / 2
 
-  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 14, COLORS.card, activeSide === side ? COLORS.goldBright : COLORS.cardBorder, activeSide === side ? 2 : 1.5)
+  // 卡片渐变背景(对齐原版 .card)
+  roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 14, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), activeSide === side ? COLORS.goldBright : COLORS.cardBorder, activeSide === side ? 2 : 1.5)
 
   if (state === 'door') {
     if (evt && evt.type === 'stairs') {
@@ -470,7 +471,8 @@ function drawFooter() {
   const ctx = S.ctx
   const p = S.player
   const y = S.LH - 150
-  roundRect(ctx, 0, y, S.LW, 150, 14, '#101024', '#2a2a4a', 1.5)
+  // 状态栏卡片渐变背景
+  roundRect(ctx, 0, y, S.LW, 150, 14, ui.cardFill(ctx, 0, y, S.LW, 150), '#2a2a4a', 1.5)
 
   // 收起行: 名字 + 血条 + 箭头（y+10 ~ y+30）
   text(ctx, '🧝 ' + p.name + ' · Lv.' + p.level, 16, y + 14, 13, COLORS.text, 'left')
@@ -483,15 +485,19 @@ function drawFooter() {
     text(ctx, '⚔' + p.totalAttack + '攻  🛡' + p.totalDefense + '防  ⚡' + Math.round(p.totalCrit * 100) + '%暴  💨' + Math.round(p.totalDodge * 100) + '%闪', S.LW / 2, y + 62, 10, COLORS.textDim)
     text(ctx, '💰 ' + p.gold + '  ⭐ ' + p.exp + ' / ' + p.expToLevel(), S.LW / 2, y + 80, 10, COLORS.textDim)
 
-    // 2x2 按钮（固定 y: 第一行 S.LH-46, 第二行 S.LH-12）
+    // 2x2 按钮（固定 y: 第一行 S.LH-46, 第二行 S.LH-12，渐变配色对齐原版）
     const bw = S.LW * 0.43, bh = 26
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.52
     let by = S.LH - 46
-    roundRect(ctx, bx1, by, bw, bh, 8, '#d4a017', '#f0c040', 1); text(ctx, '🏪 商店', bx1 + bw / 2, by + bh / 2, 12, '#1a1a2e', 'center', true)
-    roundRect(ctx, bx2, by, bw, bh, 8, '#c0392b', '#e74c3c', 1); text(ctx, '🎒 背包', bx2 + bw / 2, by + bh / 2, 12, '#fff', 'center', true)
+    const b1 = makeBtn(bx1, by, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 12 })
+    drawBtn(ctx, b1)
+    const b2 = makeBtn(bx2, by, bw, bh, '🎒 背包', null, { ...ui.BTN.primary, size: 12 })
+    drawBtn(ctx, b2)
     by = S.LH - 12
-    roundRect(ctx, bx1, by, bw, bh, 8, '#b34700', '#ff8c1a', 1); text(ctx, '⚒️ 铁匠铺', bx1 + bw / 2, by + bh / 2, 12, '#fff', 'center', true)
-    roundRect(ctx, bx2, by, bw, bh, 8, '#2c3e50', '#34495e', 1); text(ctx, '🚪 退出', bx2 + bw / 2, by + bh / 2, 12, '#ccc', 'center', true)
+    const b3 = makeBtn(bx1, by, bw, bh, '⚒️ 铁匠铺', null, { ...ui.BTN.forge, size: 12 })
+    drawBtn(ctx, b3)
+    const b4 = makeBtn(bx2, by, bw, bh, '🚪 退出', null, { ...ui.BTN.secondary, size: 12 })
+    drawBtn(ctx, b4)
   }
 }
 
