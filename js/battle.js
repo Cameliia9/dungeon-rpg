@@ -152,7 +152,7 @@ function draw() {
   const cxp = 16         // 卡片x
 
   // ============ 1. 怪物卡 (对齐原版: icon 48px 居中 + 名字 + Lv掉落 + 生命值 + 血条 + 攻防暴闪) ============
-  const my = 56
+  const my = 80
   const mh = 210
   roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : COLORS.cardBorder, isBoss ? 2 : 1.5)
   text(ctx, monster.icon || '👹', cx, my + 44, 48)
