@@ -431,12 +431,12 @@ function draw() {
   text(ctx, '←', 26, 72, 22, '#ffffff', 'center', true)
   // 顶部居中白色标题「探索地牢」(下移)
   text(ctx, '探索地牢', S.LW / 2, 72, 20, '#ffffff', 'center', true)
-  // 分割线(白色2px)
+  // 分割线(白色1px, 画满全宽)
   ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = 2
+  ctx.lineWidth = 1
   ctx.beginPath()
-  ctx.moveTo(16, 90)
-  ctx.lineTo(S.LW - 16, 90)
+  ctx.moveTo(0, 90)
+  ctx.lineTo(S.LW, 90)
   ctx.stroke()
 
   // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
