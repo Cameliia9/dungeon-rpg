@@ -37,15 +37,15 @@ const BTN_GAP = 9
 // 动态布局: 怪卡与玩家卡间距大(32), 玩家卡加高(140), 按钮下移, 日志区加高
 function layoutY() {
   const my = 80
-  const mh = 180
+  const mh = 215            // 怪卡加高(攻防数据回到卡内)
   const gap = 32
   const py = my + mh + gap
   const ph = 140
-  const btn1 = py + ph + 24
+  const btn1 = py + ph + 20
   const btn2 = btn1 + BTN_H + BTN_GAP
   const btn3 = btn2 + BTN_H + BTN_GAP
-  const logY = btn3 + BTN_H + 12
-  const logH = Math.max(50, S.LH - logY - 12)
+  const logY = btn3 + BTN_H + 10
+  const logH = Math.min(100, Math.max(50, S.LH - logY - 10))  // 日志缩小(上限100)
   return { my, mh, py, ph, btn1, btn2, btn3, logY, logH }
 }
 // 日志滑动状态
