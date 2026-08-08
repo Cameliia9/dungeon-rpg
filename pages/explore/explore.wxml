@@ -16,7 +16,7 @@
 
     <!-- ===== 左卡片区域 ===== -->
     <view class="anim-left" style="flex: 1; position: relative; min-height: 200px;">
-      <view class="card {{leftOut ? 'fly-out-right' : ''}}"
+      <view class="card card-scale {{leftOut ? 'fly-out-right' : ''}} {{activeSide === 'left' ? 'card-active' : (activeSide === 'right' ? 'card-idle' : '')}}"
         style="position: relative; z-index: 10; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: visible;">
 
       <!-- 门状态 -->
@@ -141,7 +141,7 @@
 
     <!-- ===== 右卡片区域 ===== -->
     <view class="anim-right" style="flex: 1; position: relative; min-height: 200px;">
-      <view class="card main-float {{rightOut ? 'fly-out-right' : ''}}"
+      <view class="card main-float card-scale {{rightOut ? 'fly-out-right' : ''}} {{activeSide === 'right' ? 'card-active' : (activeSide === 'left' ? 'card-idle' : '')}}"
         style="position: relative; z-index: 10; min-height: 280px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px 10px; overflow: visible;">
 
       <!-- 门状态 -->

@@ -9,6 +9,7 @@ Page({
     rightEvent: null,
     leftState: 'door',     // door | result | monster | merchant | camp | altar | oldGear | camp_ambush
     rightState: 'door',
+    activeSide: null,      // 当前放大的卡片: left | right | null
     trapResult: null,
     totalAttack: 0,
     totalDefense: 0,
@@ -191,6 +192,9 @@ Page({
     const stateKey = side + 'State'
     const player = app.getPlayer()
 
+    // 点开的卡片放大，另一张缩小（渐变）
+    this.setData({ activeSide: side })
+
     switch (event.type) {
       case 'treasure':
         player.gold += event.gold
@@ -256,7 +260,7 @@ Page({
 
   // 封锁死路一侧（该侧不可再点击）
   blockSide(side) {
-    this.setData({ [side + 'State']: 'blocked' })
+    this.setData({ [side + 'State']: 'blocked', activeSide: null })
     this._saveExploreState()
   },
 
@@ -265,6 +269,9 @@ Page({
   finishSide(side) {
     const player = app.getPlayer()
     if (!player || player.isDead()) { this.checkDead(); return }
+
+    // 事件完成后两侧恢复原大小
+    this.setData({ activeSide: null })
 
     player.roomsExplored++
     app.saveGame()

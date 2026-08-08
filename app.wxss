@@ -213,6 +213,23 @@ page {
   to   { transform: translate(32px, -50px) rotate(12deg); opacity: 0; }
 }
 
+/* 点开门时卡片缩放动画：弹性过渡 */
+.card-scale {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+}
+
+/* 点开的卡片：放大 + 发光 */
+.card-active {
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(224, 192, 128, 0.35);
+}
+
+/* 未被点开的卡片：缩小 */
+.card-idle {
+  transform: scale(0.92);
+  opacity: 0.75;
+}
+
 /* 小按钮（探索卡片内用） */
 .btn-sm {
   display: block;
