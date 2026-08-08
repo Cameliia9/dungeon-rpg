@@ -242,6 +242,13 @@ function draw() {
   const L = layoutY()
   const { my, mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
 
+  // 入场动画: 怪卡->玩家卡->操作区->日志 交错淡入(对齐其他场景风格)
+  const dur = 700
+  const a1 = ui.animProgress(enterTime, 0, dur)
+  const a2 = ui.animProgress(enterTime, 140, dur)
+  const a3 = ui.animProgress(enterTime, 280, dur)
+  const a4 = ui.animProgress(enterTime, 420, dur)
+
   // ============ 1. 怪物卡 (对齐原版: icon 48px 居中 + 名字 + Lv掉落 + 生命值 + 血条 + 攻防暴闪) ============
   roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : COLORS.cardBorder, isBoss ? 2 : 1.5)
   text(ctx, monster.icon || '👹', cx, my + 44, 48)
@@ -255,8 +262,10 @@ function draw() {
   // 攻防/暴闪
   text(ctx, '⚔️ ' + monster.attack + '攻 🛡️ ' + monster.defense + '防', cxp + 16, my + 190, 12, COLORS.textDim, 'left')
   text(ctx, '⚡' + monster.critPercent + '%暴 💨' + monster.dodgePercent + '%闪', cxp + cw - 16, my + 190, 12, COLORS.textDim, 'right')
+  ctx.globalAlpha = 1
 
   // ============ 2. 玩家卡 (加高140, 内容分散不紧凑) ============
+  ctx.globalAlpha = a2
   roundRect(ctx, cxp, py, cw, ph, 12, ui.cardFill(ctx, cxp, py, cw, ph), COLORS.cardBorder, 1.5)
   text(ctx, '🧝', cx, py + 38, 44)
   // 名字 + 血量
@@ -269,8 +278,10 @@ function draw() {
   // 攻防
   text(ctx, '⚔️ ' + p.totalAttack + '攻 🛡️ ' + p.totalDefense + '防', cxp + 16, py + 108, 13, COLORS.textDim, 'left')
   text(ctx, '💾 ' + p.gold + '金', cxp + cw - 16, py + 108, 13, COLORS.textDim, 'right')
+  ctx.globalAlpha = 1
 
   // ============ 3. 操作/结果区 ============
+  ctx.globalAlpha = a3
   if (result === 'fighting') {
     // 三个按钮共用一个卡片背景(加高)
     roundRect(ctx, cxp, btnCardY, cw, btnCardH, 12, ui.cardFill(ctx, cxp, btnCardY, cw, btnCardH), COLORS.cardBorder, 1.5)
@@ -310,7 +321,10 @@ function draw() {
     drawBtn(ctx, makeBtn(btnX(), btn3, BTN_W, BTN_H, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
   }
 
+  ctx.globalAlpha = 1
+
   // ============ 4. 战斗日志(可上下滑动) ============
+  ctx.globalAlpha = a4
   roundRect(ctx, cxp, logY, cw, logH, 12, '#101024', '#2a2a4a', 1.5)
   text(ctx, '战斗日志：', cxp + 14, logY + 14, 12, COLORS.gold, 'left', true)
   const lineH = 14
