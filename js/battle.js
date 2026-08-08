@@ -13,6 +13,9 @@ let logs = []
 let onDone = null
 let result = 'fighting' // fighting | victory | defeat | fled
 let enterTime = Date.now()
+// 血条动画: 显示血量平滑趋近实际血量(每次伤害后血条滑落而不是瞬间跳变)
+let dispMonHp = 0
+let dispPlayerHp = 0
 
 function start(shared, m, boss, done) {
   S = shared
@@ -25,6 +28,8 @@ function start(shared, m, boss, done) {
   S.lastReward = null
   enterTime = Date.now()
   battle = new GE.Battle(S.player, m)
+  dispMonHp = m.hp
+  dispPlayerHp = S.player.hp
   logs.push(isBoss ? '👑 ' + m.name + ' 拦住了去路！' : m.icon + ' ' + m.name + ' 出现了！')
   syncLogs()
 }
@@ -211,6 +216,13 @@ function finish() {
 function draw() {
   const ctx = S.ctx
   const p = S.player
+  // 血条平滑动画: 显示血量每帧趋近实际血量(15%步进, 约200ms滑落)
+  if (monster) {
+    dispMonHp += (monster.hp - dispMonHp) * 0.15
+    if (Math.abs(monster.hp - dispMonHp) < 0.5) dispMonHp = monster.hp
+  }
+  dispPlayerHp += (p.hp - dispPlayerHp) * 0.15
+  if (Math.abs(p.hp - dispPlayerHp) < 0.5) dispPlayerHp = p.hp
   const g = ctx.createLinearGradient(0, 0, 0, S.LH)
   g.addColorStop(0, '#2a0a0a')
   g.addColorStop(1, '#1a1a2e')
@@ -232,7 +244,7 @@ function draw() {
   // 生命值行
   text(ctx, '生命值', cxp + 16, my + 154, 12, COLORS.textDim, 'left')
   text(ctx, monster.hp + ' / ' + monster.maxHp, cxp + cw - 16, my + 154, 12, COLORS.gold, 'right', true)
-  hpBar(ctx, cxp + 16, my + 164, cw - 32, 10, monster.hp / monster.maxHp, isBoss ? '#ff8800' : '#ff4444')
+  hpBar(ctx, cxp + 16, my + 164, cw - 32, 10, dispMonHp / monster.maxHp, isBoss ? '#ff8800' : '#ff4444')
   // 攻防/暴闪
   text(ctx, '⚔️ ' + monster.attack + '攻 🛡️ ' + monster.defense + '防', cxp + 16, my + 190, 12, COLORS.textDim, 'left')
   text(ctx, '⚡' + monster.critPercent + '%暴 💨' + monster.dodgePercent + '%闪', cxp + cw - 16, my + 190, 12, COLORS.textDim, 'right')
@@ -243,7 +255,7 @@ function draw() {
   // 名字 + 血量
   text(ctx, '❤️ ' + p.name, cxp + 16, py + 32, 14, COLORS.textDim, 'left')
   text(ctx, p.hp + ' / ' + p.totalMaxHp, cxp + cw - 16, py + 32, 14, COLORS.gold, 'right', true)
-  hpBar(ctx, cxp + 16, py + 48, cw - 32, 12, p.hp / p.totalMaxHp)
+  hpBar(ctx, cxp + 16, py + 48, cw - 32, 12, dispPlayerHp / p.totalMaxHp)
   // 暴闪
   text(ctx, '⚡' + Math.round(p.totalCrit * 100) + '%暴 💨' + Math.round(p.totalDodge * 100) + '%闪', cxp + 16, py + 78, 13, COLORS.textDim, 'left')
   if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', cxp + cw - 16, py + 78, 13, COLORS.purple, 'right', true)
@@ -258,7 +270,13 @@ function draw() {
     // 按钮居中(宽约原一半), 间距大
     const bx = btnX()
     drawBtn(ctx, makeBtn(bx, btn1, BTN_W, BTN_H, '⚔️ 攻击', null, ui.BTN.primary))
-    drawBtn(ctx, makeBtn(bx, btn2, BTN_W, BTN_H, '🛡️ 防御（减少50%伤害，本回合）', null, ui.BTN.secondary))
+    // 防御按钮: 主文字 + 小字描述(本回合减伤50%)
+    {
+      const defBtn = makeBtn(bx, btn2, BTN_W, BTN_H, '', null, ui.BTN.secondary)
+      drawBtn(ctx, defBtn)
+      text(ctx, '🛡️ 防御', bx + BTN_W / 2, btn2 + 17, 15, '#cccccc', 'center', true)
+      text(ctx, '本回合减少50%伤害', bx + BTN_W / 2, btn2 + 33, 10, '#8a8a9a', 'center')
+    }
     if (!isBoss) {
       const fleePct = Math.round(Math.min(0.9, 0.2 + p.fleeFails * 0.1) * 100)
       drawBtn(ctx, makeBtn(bx, btn3, BTN_W, BTN_H, '🏃 逃跑（' + fleePct + '%成功率）', null, ui.BTN.danger))
