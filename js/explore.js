@@ -550,11 +550,9 @@ function drawCard(x, y, w, h, side, slideIn) {
     ctx.translate(-cx, -cy)
   }
 
-  // 卡片渐变背景(对齐原版 .card; 选中侧金色发光)
+  // 卡片渐变背景(对齐原版 .card; 选中侧金色发光, 持续发光)
   const isActive = cardAnim.side === side && cardAnim.phase !== 'flyout'
-  // 阴影只在动画过程中画(结束只留金边框), shadowBlur每帧开销大
-  const shadowOn = isActive && cardAnim.phase === 'expand' && (Date.now() - cardAnim.start) < cardAnim.dur
-  if (shadowOn) { ctx.save(); ctx.shadowColor = 'rgba(240,192,64,0.75)'; ctx.shadowBlur = 16 }
+  if (isActive) { ctx.save(); ctx.shadowColor = 'rgba(240,192,64,0.75)'; ctx.shadowBlur = 16 }
   roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), isActive ? COLORS.goldBright : COLORS.cardBorder, isActive ? 2 : 1.5)
   if (isActive) ctx.restore()
 
