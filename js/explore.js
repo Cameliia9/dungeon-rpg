@@ -120,7 +120,9 @@ function touch(x, y) {
   if (cardAnim.phase === 'expand') {
     const t = Math.min(1, (Date.now() - cardAnim.start) / cardAnim.dur)
     const e = ui.easeOut(t)
-    cwX = w * (cardAnim.side === side ? 1 + 0.05 * e : 1 - 0.08 * e)
+    const activeEvt2 = cardAnim.side === 'left' ? leftEvent : rightEvent
+    const isMonster2 = activeEvt2 && activeEvt2.type === 'monster'
+    cwX = w * (cardAnim.side === side ? 1 + (isMonster2 ? 0.16 : 0.05) * e : 1 - (isMonster2 ? 0.14 : 0.08) * e)
   } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
     const t = Math.min(1, (Date.now() - cardAnim.start) / 450)
     dxT = 90 * ui.easeOut(t)
@@ -408,12 +410,17 @@ function drawCard(x, y, w, h, side, slideIn) {
   if (cardAnim.phase === 'expand') {
     const t = Math.min(1, (now - cardAnim.start) / cardAnim.dur)
     const e = ui.easeOut(t)
+    // 以选中侧事件类型决定缩放(怪物放大更大, 宽>高)
+    const activeEvt = cardAnim.side === 'left' ? leftEvent : rightEvent
+    const isMonster = activeEvt && activeEvt.type === 'monster'
     if (cardAnim.side === side) {
-      // 选中侧: 等比放大1.05
-      scale = 1 + 0.05 * e
+      // 选中侧: 怪物 高1.10/宽1.16, 其他等比1.05
+      scale = 1 + (isMonster ? 0.10 : 0.05) * e
+      scaleX = 1 + (isMonster ? 0.16 : 0) * e
     } else {
-      // 未选中侧: 等比缩小0.92 + 半透明(alpha降到0.6)
+      // 未选中侧: 怪物 高0.92/宽0.86, 其他等比0.92 + 半透明
       scale = 1 - 0.08 * e
+      scaleX = 1 - (isMonster ? 0.14 : 0) * e
       alpha = 1 - 0.4 * e
     }
   } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
