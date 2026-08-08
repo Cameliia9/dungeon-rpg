@@ -129,7 +129,11 @@ function touch(x, y) {
       sy = 1 + bigH2 * e; sx = 1 + bigW2 * e
       if (at2 === 'merchant') sy = 1  // 商人内容不缩放(布局已加大)
     }
-    else { sy = 1 - 0.08 * e; sx = 1 - shrW2 * e }
+    else {
+      // 未选中侧: 内容与卡片宽度同步(scale*scaleX), 等比不变形
+      sy = (1 - 0.08 * e) * (1 - shrW2 * e)
+      sx = (1 - 0.08 * e) * (1 - shrW2 * e)
+    }
     cwX = w * sx
   } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
     const t = Math.min(1, (Date.now() - cardAnim.start) / 450)
@@ -475,9 +479,10 @@ function drawCard(x, y, w, h, side, slideIn) {
   roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), isActive ? COLORS.goldBright : COLORS.cardBorder, isActive ? 2 : 1.5)
   if (isActive) ctx.restore()
 
-  // 内容随卡片缩放: 选中侧放大(信息显示更全), 未选中侧缩小; 商人内容布局已加大不缩放
+  // 内容随卡片缩放: 选中侧按高度(scale), 未选中侧跟随卡片宽度(scale*scaleX)同步缩小
   const zoomContent = cardAnim.phase === 'expand' && !(cardAnim.side === side && ((cardAnim.side === 'left' ? leftEvent : rightEvent) || {}).type === 'merchant')
-  if (zoomContent) { ctx.save(); ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy) }
+  const zoomVal = cardAnim.side === side ? scale : scale * scaleX
+  if (zoomContent) { ctx.save(); ctx.translate(cx, cy); ctx.scale(zoomVal, zoomVal); ctx.translate(-cx, -cy) }
 
   if (state === 'door') {
     if (evt && evt.type === 'stairs') {
