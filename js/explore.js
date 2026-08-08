@@ -157,7 +157,7 @@ function touch(x, y) {
       }
     } else if (state === 'monster') {
       // 战斗/逃跑按钮(上下排, 放大后同步)
-      const mbw = w * 0.72
+      const mbw = w * 0.76
       if (y > cy + 22 && y < cy + 52) {
         if (x > cx - mbw / 2 && x < cx + mbw / 2) startBattle(side, false)
       } else if (y > cy + 56 && y < cy + 86) {
@@ -533,16 +533,15 @@ function drawResultCard(cx, cy, evt, w) {
 
 function drawMonsterCard(cx, cy, m, w) {
   const ctx = S.ctx
-  // 对齐原版怪物卡(战斗/逃跑上下排, 内容放大)
-  text(ctx, m.icon, cx, cy - 58, 36)
+  // 对齐原版怪物卡(战斗/逃跑上下排, 再放大: 去暴闪行腾空间)
+  text(ctx, m.icon, cx, cy - 60, 40)
   // 名字 + Lv(橙色小字)
-  text(ctx, m.name, cx, cy - 28, 16, COLORS.gold, 'center', true)
-  text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 16) / 2 + 14, cy - 28, 12, '#ffaa00')
-  // 属性
-  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy - 2, 12, COLORS.textDim)
-  text(ctx, '⚡' + m.critPercent + '%暴  💨' + m.dodgePercent + '%闪', cx, cy + 14, 11, '#7a7a8a')
-  // 战斗/逃跑按钮（上下排, 加宽加长, 间距4px）
-  const bw = w * 0.72
+  text(ctx, m.name, cx, cy - 30, 18, COLORS.gold, 'center', true)
+  text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 18) / 2 + 16, cy - 30, 13, '#ffaa00')
+  // 属性(暴击/闪避在战斗界面显示)
+  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy - 4, 13, COLORS.textDim)
+  // 战斗/逃跑按钮（上下排, 间距4px, 宽0.76w）
+  const bw = w * 0.76
   const side = activeSide || 'left'
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 22, bw, 30, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 56, bw, 30, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
