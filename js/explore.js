@@ -104,14 +104,14 @@ function touch(x, y) {
     const bw = S.LW * 0.42, bh = 40
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.53
     // 第一行: 商店 / 背包
-    const by1 = fy + 170
+    const by1 = fy + 176
     if (y > by1 && y < by1 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('shop')
       else if (x > bx2 && x < bx2 + bw) openPanel('inventory')
       return
     }
     // 第二行: 铁匠铺 / 退出
-    const by2 = fy + 220
+    const by2 = fy + 226
     if (y > by2 && y < by2 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('forge')
       else if (x > bx2 && x < bx2 + bw) exitExplore()
@@ -606,9 +606,9 @@ function altarOffer(side, type, evt) {
   if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
 }
 
-// 状态栏高度: 固定167px(≈页面25%), 展开时显示全部, 收起时折叠按钮区
+// 状态栏高度: 展开279px(全部), 收起160px(血条+名称+属性, 不显示按钮)
 function footerH() {
-  return footerExpanded ? 279 : 66
+  return footerExpanded ? 279 : 160
 }
 
 function drawFooter() {
@@ -622,7 +622,7 @@ function drawFooter() {
   // 顶部居中向下小三角
   text(ctx, footerExpanded ? '▾' : '▴', S.LW / 2, y + 16, 18, '#8a8a9a')
 
-  // 第一行: 左侧角色头像 + 白色文字「名字·Lv.X」
+  // 第一行: 左侧角色头像 + 白色文字「名字·Lv.X」(图案x18与血条金币对齐)
   text(ctx, '🧝', 18, y + 44, 22)
   text(ctx, p.name + ' · Lv.' + p.level, 46, y + 44, 14, '#ffffff', 'left', true)
 
@@ -635,29 +635,29 @@ function drawFooter() {
   const ratio = Math.max(0, Math.min(1, p.hp / p.totalMaxHp))
   if (ratio > 0) roundRect(ctx, barX, y + 64, barW * ratio, 12, 6, '#e74c3c')
 
+  // 属性两行(始终显示, 原版组合格式, 整行左对齐)
+  text(ctx, '⚔️ ' + p.totalAttack + '攻  🛡️ ' + p.totalDefense + '防', 18, y + 96, 12, '#ffffff', 'left')
+  text(ctx, '⚡ ' + Math.round(p.totalCrit * 100) + '%暴  💨 ' + Math.round(p.totalDodge * 100) + '%闪', 18, y + 120, 12, '#ffffff', 'left')
+
+  // 资源行: 金币金色 + 经验黄色 (始终显示)
+  text(ctx, '💰', 18, y + 144, 12)
+  text(ctx, '' + p.gold, 34, y + 144, 12, '#f0c040', 'left', true)
+  text(ctx, '⭐', 110, y + 144, 12)
+  text(ctx, '' + p.exp + ' / ' + p.expToLevel(), 126, y + 144, 12, '#ffe080', 'left', true)
+
+  // 2x2 功能按钮: 仅展开时显示 (商店黄/背包红/铁匠橙/退出深灰蓝, 文字放大15px)
   if (footerExpanded) {
-    // 属性两行(原版组合格式, 整行左对齐)
-    text(ctx, '⚔️ ' + p.totalAttack + '攻  🛡️ ' + p.totalDefense + '防', 18, y + 96, 12, '#ffffff', 'left')
-    text(ctx, '⚡ ' + Math.round(p.totalCrit * 100) + '%暴  💨 ' + Math.round(p.totalDodge * 100) + '%闪', 18, y + 120, 12, '#ffffff', 'left')
-
-    // 资源行: 金币金色 + 经验黄色
-    text(ctx, '💰', 18, y + 144, 12)
-    text(ctx, '' + p.gold, 34, y + 144, 12, '#f0c040', 'left', true)
-    text(ctx, '⭐', 110, y + 144, 12)
-    text(ctx, '' + p.exp + ' / ' + p.expToLevel(), 126, y + 144, 12, '#ffe080', 'left', true)
-
-    // 2x2 功能按钮: 商店黄/背包红/铁匠橙/退出深灰蓝 (白色文字, 均等)
     const bw = S.LW * 0.42, bh = 40
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.53
-    const by1 = y + 170, by2 = y + 220
+    const by1 = y + 176, by2 = y + 226
     // 左上: 黄色商店
-    drawBtn(ctx, makeBtn(bx1, by1, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 12 }))
+    drawBtn(ctx, makeBtn(bx1, by1, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 15 }))
     // 右上: 红色背包
-    drawBtn(ctx, makeBtn(bx2, by1, bw, bh, '🎒 背包 (' + p.inventory.length + ')', null, { ...ui.BTN.primary, size: 12 }))
+    drawBtn(ctx, makeBtn(bx2, by1, bw, bh, '🎒 背包 (' + p.inventory.length + ')', null, { ...ui.BTN.primary, size: 15 }))
     // 左下: 橙色铁匠铺
-    drawBtn(ctx, makeBtn(bx1, by2, bw, bh, '⚒️ 铁匠铺', null, { ...ui.BTN.forge, size: 12 }))
+    drawBtn(ctx, makeBtn(bx1, by2, bw, bh, '⚒️ 铁匠铺', null, { ...ui.BTN.forge, size: 15 }))
     // 右下: 深灰蓝退出
-    drawBtn(ctx, makeBtn(bx2, by2, bw, bh, '🚪 退出', null, { ...ui.BTN.secondary, size: 12 }))
+    drawBtn(ctx, makeBtn(bx2, by2, bw, bh, '🚪 退出', null, { ...ui.BTN.secondary, size: 15 }))
   }
 }
 
