@@ -16,6 +16,7 @@ let layout = []     // 预计算布局 [{kind:'header'|'item', text/item, y}]
 let contentH = 0    // 内容总高
 let shopTier = 1
 let themeName = ''
+let enterTime = Date.now()  // 面板打开时间(渐显动画)
 let touchStartY = null  // 拖动滚动状态
 let touchStartX = 0
 let dragged = false
@@ -28,6 +29,7 @@ function create(name, shared) {
   type = name
   scroll = 0
   btns = []
+  enterTime = Date.now()
   build()
   return this
 }
@@ -215,6 +217,9 @@ function close() {
 function draw() {
   const ctx = S.ctx
   const p = S.player
+  // 打开渐显动画(300ms)
+  const fade = ui.animProgress(enterTime, 0, 300)
+  ctx.globalAlpha = fade
   // 背景: 探索页同款#0f0f1a
   ctx.fillStyle = '#0f0f1a'
   ctx.fillRect(0, 0, S.LW, S.LH)
@@ -279,6 +284,7 @@ function draw() {
 
   // ===== 底部返回按钮(对齐原版 ↩️ 返回) =====
   drawBtn(ctx, makeBtn(M, S.LH - 60, PW(), 44, '↩️ 返回', null, ui.BTN.secondary))
+  ctx.globalAlpha = 1
 }
 
 // 装备项(商店/背包/铁匠铺, 4行舒展布局, 卡片不顶两边)
