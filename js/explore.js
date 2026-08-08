@@ -481,8 +481,8 @@ function draw() {
   const cardTop = 214 + 15
   const cardH = S.LH - FOOTER_H_EXPAND - 15 - cardTop
   const cardW = S.LW * 0.43
-  const pL = ui.animProgress(enterTime, 100, 600)
-  const pR = ui.animProgress(enterTime, 200, 600)
+  const pL = ui.animProgress(enterTime, 100, 900)
+  const pR = ui.animProgress(enterTime, 200, 900)
   drawCard(leftX(), cardTop, cardW, cardH, 'left', (1 - pL) * 36)
   drawCard(rightX(), cardTop, cardW, cardH, 'right', (1 - pR) * 36)
 

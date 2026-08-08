@@ -95,7 +95,7 @@ function drawMenu() {
   ctx.fillRect(0, 0, LW, LH)
 
   // 入场动画: 交错 fadeSlideUp (对齐原版 delay)
-  const dur = 650, dist = 28
+  const dur = 900, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 80, dur)
   // ⚔️大号emoji用手动居中(真机textAlign center对emoji宽度测量偏差导致偏左)
@@ -170,10 +170,10 @@ function drawGame() {
   ctx.fillRect(0, 0, LW, LH)
 
   // 入场动画(交错淡入): 标题卡 -> 状态卡 -> 按钮
-  const dur = 650
+  const dur = 900
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
-  const p2 = ui.animProgress(sceneEnterTime, 90, dur)
-  const p3 = ui.animProgress(sceneEnterTime, 180, dur)
+  const p2 = ui.animProgress(sceneEnterTime, 120, dur)
+  const p3 = ui.animProgress(sceneEnterTime, 240, dur)
 
   // 标题卡(下移+放大)
   ctx.globalAlpha = p1
@@ -215,7 +215,7 @@ function drawDifficulty() {
   ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
-  const dur = 650, dist = 28
+  const dur = 900, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 60, dur)
   text(ctx, '选择难度', LW / 2, LH * 0.14 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
