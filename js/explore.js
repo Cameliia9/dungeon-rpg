@@ -435,7 +435,7 @@ function draw() {
   // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
   const theme = Data.getThemeForFloor(p.floor)
   const infoY = 118, infoH = 96
-  roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
+  roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, ui.cardFill(ctx, 16, infoY, S.LW - 32, infoH), 'rgba(255,255,255,0.06)', 1)
   // 第一行(整体居中): 🏰紧贴字 + 金色「地牢第X层」 + 主题图案紧贴名称
   const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
   const seg2 = theme.icon + ' ' + theme.name
