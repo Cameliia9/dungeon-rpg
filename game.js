@@ -86,7 +86,6 @@ function buildDifficulty() {
   btns = []
   const bw = 220, bh = 56, cx = LW / 2
   let y = LH * 0.22
-  text(null, '', 0, 0, 0)
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟢 简单  HP100 · 敌人×1.0', () => startNew('easy'), { ...ui.BTN.primary, size: 14 })); y += bh + 12
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🟡 困难  HP95 · 敌人×1.25', () => startNew('hard'), { ...ui.BTN.secondary, size: 14 })); y += bh + 12
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🔴 噩梦  HP90 · 敌人×1.5', () => startNew('nightmare'), { ...ui.BTN.danger, size: 14 })); y += bh + 24
