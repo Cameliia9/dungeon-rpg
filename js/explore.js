@@ -130,9 +130,14 @@ function buttons() { return [] }
 function touch(x, y) {
   const fh = footerH()
   const fy = S.LH - fh
-  // 状态栏折叠箭头（顶部居中箭头区域）
+  // 状态栏折叠箭头（顶部居中箭头区域, 带平滑动画）
   if (y > fy && y < fy + 22) {
     footerExpanded = !footerExpanded
+    footerAnim = {
+      start: Date.now(), dur: 300,
+      from: footerH(),
+      to: footerExpanded ? FOOTER_H_EXPAND : FOOTER_H_COLLAPSE
+    }
     return
   }
   // 面板按钮（仅展开时, y+122 和 y+152 两行）
@@ -714,7 +719,15 @@ function altarOffer(side, type, evt) {
 // 状态栏高度常量: 展开279px(全部), 收起160px(血条+名称+属性, 不显示按钮)
 const FOOTER_H_EXPAND = 279
 const FOOTER_H_COLLAPSE = 160
+let footerAnim = null  // 状态栏折叠动画 { start, dur, from, to }
 function footerH() {
+  if (footerAnim) {
+    const t = Math.min(1, (Date.now() - footerAnim.start) / footerAnim.dur)
+    const e = ui.easeOut(t)
+    const h = footerAnim.from + (footerAnim.to - footerAnim.from) * e
+    if (t >= 1) footerAnim = null
+    return h
+  }
   return footerExpanded ? FOOTER_H_EXPAND : FOOTER_H_COLLAPSE
 }
 
