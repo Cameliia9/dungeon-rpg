@@ -30,7 +30,7 @@ function start(shared, m, boss, done) {
 }
 
 // 按钮纵向布局: 攻击/防御/逃跑(非Boss), 宽约原一半居中, 间距大
-const BTN_W = 220
+const BTN_W = 230
 const BTN_H = 44
 const BTN_GAP = 22
 function btnX() { return (S.LW - BTN_W) / 2 }
@@ -66,10 +66,9 @@ function touch(x, y) {
     if (y > L.btn2 && y < L.btn2 + BTN_H) { defend(); return }
     if (!isBoss && y > L.btn3 && y < L.btn3 + BTN_H) { flee(); return }
   } else {
-    // 结果卡: 返回探索/重新开始按钮
-    const ry = L.btn1 - 30
+    // 结果信息在按钮卡内: 返回按钮 = 原逃跑按钮位置
     const bx = btnX()
-    if (y > ry + 150 && y < ry + 190 && x > bx && x < bx + BTN_W) {
+    if (y > L.btn3 && y < L.btn3 + BTN_H && x > bx && x < bx + BTN_W) {
       if (result === 'defeat') {
         S.player = null
         S.switchScene('menu')
@@ -264,26 +263,25 @@ function draw() {
       drawBtn(ctx, makeBtn(bx, btn3, BTN_W, BTN_H, '🏃 逃跑（' + fleePct + '%成功率）', null, ui.BTN.danger))
     }
   } else {
-    // 结果卡 (对齐原版: 图标40px + 标题 + 副标题 + 按钮)
-    const ry = btn1 - 30
-    const rh = 190
-    roundRect(ctx, cxp, ry, cw, rh, 12, ui.cardFill(ctx, cxp, ry, cw, rh), COLORS.cardBorder, 1.5)
+    // 结果信息显示在按钮卡片内(三按钮消失, 卡片原位显示)
+    roundRect(ctx, cxp, btnCardY, cw, btnCardH, 12, ui.cardFill(ctx, cxp, btnCardY, cw, btnCardH), COLORS.cardBorder, 1.5)
+    const rc = btnCardY
     if (result === 'victory') {
-      text(ctx, '🎉', cx, ry + 40, 40)
-      text(ctx, '胜利！', cx, ry + 74, 20, COLORS.gold, 'center', true)
-      text(ctx, '获得 ' + S.lastReward.gold + ' 金币', cx, ry + 102, 13, '#f0c040')
-      text(ctx, '获得 ' + S.lastReward.exp + ' 经验', cx, ry + 124, 13, COLORS.blue)
-      if (S.lastReward.leveled) text(ctx, '🎊 升级到 Lv.' + p.level + '！', cx, ry + 146, 13, COLORS.goldBright)
+      text(ctx, '🎉', cx, rc + 44, 40)
+      text(ctx, '胜利！', cx, rc + 78, 20, COLORS.gold, 'center', true)
+      text(ctx, '获得 ' + S.lastReward.gold + ' 金币', cx, rc + 106, 13, '#f0c040')
+      text(ctx, '获得 ' + S.lastReward.exp + ' 经验', cx, rc + 128, 13, COLORS.blue)
+      if (S.lastReward.leveled) text(ctx, '🎊 升级到 Lv.' + p.level + '！', cx, rc + 150, 13, COLORS.goldBright)
     } else if (result === 'fled') {
-      text(ctx, '🏃', cx, ry + 40, 40)
-      text(ctx, '逃脱成功！', cx, ry + 74, 20, COLORS.green, 'center', true)
-      text(ctx, '暂时远离了危险', cx, ry + 102, 13, COLORS.textDim)
+      text(ctx, '🏃', cx, rc + 44, 40)
+      text(ctx, '逃脱成功！', cx, rc + 78, 20, COLORS.green, 'center', true)
+      text(ctx, '暂时远离了危险', cx, rc + 102, 13, COLORS.textDim)
     } else if (result === 'defeat') {
-      text(ctx, '💀', cx, ry + 40, 40)
-      text(ctx, '你被打倒了...', cx, ry + 74, 20, COLORS.red, 'center', true)
-      text(ctx, '冒险到此结束，一切重来', cx, ry + 102, 13, COLORS.textDim)
+      text(ctx, '💀', cx, rc + 44, 40)
+      text(ctx, '你被打倒了...', cx, rc + 78, 20, COLORS.red, 'center', true)
+      text(ctx, '冒险到此结束，一切重来', cx, rc + 102, 13, COLORS.textDim)
     }
-    drawBtn(ctx, makeBtn(btnX(), ry + 150, BTN_W, 40, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
+    drawBtn(ctx, makeBtn(btnX(), btn3, BTN_W, BTN_H, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
   }
 
   // ============ 4. 战斗日志(可上下滑动) ============
