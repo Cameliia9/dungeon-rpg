@@ -2,7 +2,7 @@
 <view class="container">
   <!-- 怪物信息 -->
   <view class="card {{isBoss ? 'boss-card' : ''}}" style="text-align: center;">
-    <text style="font-size: 48px; display: block;">{{isBoss ? '👑' : '👹'}}</text>
+    <text style="font-size: 48px; display: block;">{{monster.icon || (isBoss ? '👑' : '👹')}}</text>
     <text wx:if="{{isBoss}}" style="display: block; font-size: 11px; color: #ff4444; font-weight: bold; letter-spacing: 4px; margin-bottom: 4px;">⚠️ BOSS ⚠️</text>
     <text class="title" style="color: {{isBoss ? '#ff5555' : ''}};">{{monster.name}}</text>
     <text class="subtitle">Lv.{{monster.level}} {{isBoss && monster.loot ? '· 掉落：' + monster.loot.name : ''}}</text>

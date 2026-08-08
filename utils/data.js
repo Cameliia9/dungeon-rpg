@@ -64,47 +64,47 @@ function getThemeForFloor(floor) {
 const monsters = {
   // ---- 1-5层 黏液沼泽 ----
   slime: [
-    { name: '小史莱姆', hp: 45, attack: 14, defense: 2, exp: 16, gold: 4, level: 1, critChance: 0.05, dodgeChance: 0.05, desc: '一滩会动的绿色黏液' },
-    { name: '大史莱姆', hp: 70, attack: 18, defense: 4, exp: 28, gold: 7, level: 2, critChance: 0.06, dodgeChance: 0.04, desc: '体型庞大的黏稠怪物' },
-    { name: '毒液史莱姆', hp: 60, attack: 22, defense: 5, exp: 34, gold: 9, level: 3, critChance: 0.12, dodgeChance: 0.08, desc: '体表泛着危险紫光的剧毒史莱姆' },
-    { name: '黏土怪', hp: 90, attack: 24, defense: 10, exp: 40, gold: 11, level: 3, critChance: 0.05, dodgeChance: 0, desc: '由沼泽淤泥凝聚成的怪物，皮糙肉厚' },
-    { name: '巨鼠', hp: 80, attack: 26, defense: 5, exp: 44, gold: 12, level: 4, critChance: 0.10, dodgeChance: 0.15, desc: '沼泽边长大的巨型老鼠，动作敏捷' }
+    { name: '小史莱姆', hp: 45, attack: 14, defense: 2, exp: 16, gold: 4, level: 1, critChance: 0.05, dodgeChance: 0.05, desc: '一滩会动的绿色黏液', icon: '🟢' },
+    { name: '大史莱姆', hp: 70, attack: 18, defense: 4, exp: 28, gold: 7, level: 2, critChance: 0.06, dodgeChance: 0.04, desc: '体型庞大的黏稠怪物', icon: '🟩' },
+    { name: '毒液史莱姆', hp: 60, attack: 22, defense: 5, exp: 34, gold: 9, level: 3, critChance: 0.12, dodgeChance: 0.08, desc: '体表泛着危险紫光的剧毒史莱姆', icon: '🟣' },
+    { name: '黏土怪', hp: 90, attack: 24, defense: 10, exp: 40, gold: 11, level: 3, critChance: 0.05, dodgeChance: 0, desc: '由沼泽淤泥凝聚成的怪物，皮糙肉厚', icon: '🟤' },
+    { name: '巨鼠', hp: 80, attack: 26, defense: 5, exp: 44, gold: 12, level: 4, critChance: 0.10, dodgeChance: 0.15, desc: '沼泽边长大的巨型老鼠，动作敏捷', icon: '🐀' }
   ],
 
   // ---- 6-10层 骸骨墓穴 ----
   bone: [
-    { name: '骷髅兵', hp: 90, attack: 30, defense: 8, exp: 50, gold: 14, level: 6, critChance: 0.08, dodgeChance: 0.02, desc: '死去冒险者的遗骸，挥剑有力' },
-    { name: '骷髅射手', hp: 80, attack: 34, defense: 6, exp: 56, gold: 16, level: 6, critChance: 0.15, dodgeChance: 0.08, desc: '弓弦崩响，骨箭破空而来' },
-    { name: '腐尸', hp: 120, attack: 32, defense: 12, exp: 60, gold: 17, level: 7, critChance: 0.05, dodgeChance: 0, desc: '散发着恶臭的不死生物，动作迟缓' },
-    { name: '食尸鬼', hp: 100, attack: 38, defense: 8, exp: 66, gold: 19, level: 8, critChance: 0.12, dodgeChance: 0.10, desc: '饥渴的食尸者，扑食速度极快' },
-    { name: '墓穴僵尸', hp: 150, attack: 36, defense: 14, exp: 72, gold: 21, level: 9, critChance: 0.05, dodgeChance: 0, desc: '被墓穴诅咒复活的巨型僵尸' }
+    { name: '骷髅兵', hp: 90, attack: 30, defense: 8, exp: 50, gold: 14, level: 6, critChance: 0.08, dodgeChance: 0.02, desc: '死去冒险者的遗骸，挥剑有力', icon: '💀' },
+    { name: '骷髅射手', hp: 80, attack: 34, defense: 6, exp: 56, gold: 16, level: 6, critChance: 0.15, dodgeChance: 0.08, desc: '弓弦崩响，骨箭破空而来', icon: '🏹' },
+    { name: '腐尸', hp: 120, attack: 32, defense: 12, exp: 60, gold: 17, level: 7, critChance: 0.05, dodgeChance: 0, desc: '散发着恶臭的不死生物，动作迟缓', icon: '🧟' },
+    { name: '食尸鬼', hp: 100, attack: 38, defense: 8, exp: 66, gold: 19, level: 8, critChance: 0.12, dodgeChance: 0.10, desc: '饥渴的食尸者，扑食速度极快', icon: '👺' },
+    { name: '墓穴僵尸', hp: 150, attack: 36, defense: 14, exp: 72, gold: 21, level: 9, critChance: 0.05, dodgeChance: 0, desc: '被墓穴诅咒复活的巨型僵尸', icon: '🧟♂️' }
   ],
 
   // ---- 11-15层 暗影回廊 ----
   shadow: [
-    { name: '暗影蝙蝠', hp: 90, attack: 44, defense: 6, exp: 76, gold: 22, level: 10, critChance: 0.12, dodgeChance: 0.28, desc: '在黑暗中飞行的吸血蝙蝠，极难命中' },
-    { name: '暗影刺客', hp: 110, attack: 50, defense: 8, exp: 84, gold: 25, level: 11, critChance: 0.25, dodgeChance: 0.22, desc: '来去无踪的暗杀者，暴击极高' },
-    { name: '怨灵', hp: 100, attack: 48, defense: 5, exp: 80, gold: 24, level: 11, critChance: 0.15, dodgeChance: 0.25, desc: '虚幻的亡灵，刀剑难以触及' },
-    { name: '暗影狼', hp: 140, attack: 54, defense: 10, exp: 90, gold: 27, level: 12, critChance: 0.15, dodgeChance: 0.12, desc: '由暗影凝成的狼群猎手' },
-    { name: '夜魔', hp: 170, attack: 58, defense: 14, exp: 98, gold: 30, level: 13, critChance: 0.18, dodgeChance: 0.08, desc: '暗影回廊的巡逻者，双目血红' }
+    { name: '暗影蝙蝠', hp: 90, attack: 44, defense: 6, exp: 76, gold: 22, level: 10, critChance: 0.12, dodgeChance: 0.28, desc: '在黑暗中飞行的吸血蝙蝠，极难命中', icon: '🦇' },
+    { name: '暗影刺客', hp: 110, attack: 50, defense: 8, exp: 84, gold: 25, level: 11, critChance: 0.25, dodgeChance: 0.22, desc: '来去无踪的暗杀者，暴击极高', icon: '🥷' },
+    { name: '怨灵', hp: 100, attack: 48, defense: 5, exp: 80, gold: 24, level: 11, critChance: 0.15, dodgeChance: 0.25, desc: '虚幻的亡灵，刀剑难以触及', icon: '👻' },
+    { name: '暗影狼', hp: 140, attack: 54, defense: 10, exp: 90, gold: 27, level: 12, critChance: 0.15, dodgeChance: 0.12, desc: '由暗影凝成的狼群猎手', icon: '🐺' },
+    { name: '夜魔', hp: 170, attack: 58, defense: 14, exp: 98, gold: 30, level: 13, critChance: 0.18, dodgeChance: 0.08, desc: '暗影回廊的巡逻者，双目血红', icon: '👿' }
   ],
 
   // ---- 16-20层 深渊火狱 ----
   abyss: [
-    { name: '小恶魔', hp: 150, attack: 60, defense: 12, exp: 104, gold: 32, level: 14, critChance: 0.12, dodgeChance: 0.10, desc: '尖牙利爪的深渊幼魔' },
-    { name: '地狱犬', hp: 180, attack: 64, defense: 14, exp: 112, gold: 35, level: 15, critChance: 0.15, dodgeChance: 0.10, desc: '三头燃火的深渊猎犬' },
-    { name: '熔岩怪', hp: 240, attack: 62, defense: 22, exp: 118, gold: 37, level: 16, critChance: 0.08, dodgeChance: 0, desc: '由滚烫熔岩构成的庞然大物' },
-    { name: '火元素', hp: 190, attack: 70, defense: 16, exp: 126, gold: 40, level: 17, critChance: 0.18, dodgeChance: 0.05, desc: '纯粹火焰构成的元素生物' },
-    { name: '炎魔', hp: 260, attack: 76, defense: 20, exp: 140, gold: 45, level: 18, critChance: 0.20, dodgeChance: 0.03, desc: '来自深渊的火焰恶魔' }
+    { name: '小恶魔', hp: 150, attack: 60, defense: 12, exp: 104, gold: 32, level: 14, critChance: 0.12, dodgeChance: 0.10, desc: '尖牙利爪的深渊幼魔', icon: '😈' },
+    { name: '地狱犬', hp: 180, attack: 64, defense: 14, exp: 112, gold: 35, level: 15, critChance: 0.15, dodgeChance: 0.10, desc: '三头燃火的深渊猎犬', icon: '🐕' },
+    { name: '熔岩怪', hp: 240, attack: 62, defense: 22, exp: 118, gold: 37, level: 16, critChance: 0.08, dodgeChance: 0, desc: '由滚烫熔岩构成的庞然大物', icon: '🌋' },
+    { name: '火元素', hp: 190, attack: 70, defense: 16, exp: 126, gold: 40, level: 17, critChance: 0.18, dodgeChance: 0.05, desc: '纯粹火焰构成的元素生物', icon: '🔥' },
+    { name: '炎魔', hp: 260, attack: 76, defense: 20, exp: 140, gold: 45, level: 18, critChance: 0.20, dodgeChance: 0.03, desc: '来自深渊的火焰恶魔', icon: '👹' }
   ],
 
   // ---- 21-25层 龙之巢穴 ----
   dragon: [
-    { name: '幼龙', hp: 220, attack: 76, defense: 18, exp: 148, gold: 48, level: 19, critChance: 0.15, dodgeChance: 0.10, desc: '尚未成年的小龙，已具龙威' },
-    { name: '龙人战士', hp: 260, attack: 82, defense: 22, exp: 160, gold: 52, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士' },
-    { name: '龙人法师', hp: 240, attack: 88, defense: 18, exp: 168, gold: 55, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者' },
-    { name: '亚龙', hp: 320, attack: 86, defense: 24, exp: 176, gold: 58, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙' },
-    { name: '精英龙裔', hp: 280, attack: 92, defense: 20, exp: 190, gold: 62, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士' }
+    { name: '幼龙', hp: 220, attack: 76, defense: 18, exp: 148, gold: 48, level: 19, critChance: 0.15, dodgeChance: 0.10, desc: '尚未成年的小龙，已具龙威', icon: '🐲' },
+    { name: '龙人战士', hp: 260, attack: 82, defense: 22, exp: 160, gold: 52, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士', icon: '🐉' },
+    { name: '龙人法师', hp: 240, attack: 88, defense: 18, exp: 168, gold: 55, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者', icon: '🧙' },
+    { name: '亚龙', hp: 320, attack: 86, defense: 24, exp: 176, gold: 58, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙', icon: '🦖' },
+    { name: '精英龙裔', hp: 280, attack: 92, defense: 20, exp: 190, gold: 62, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
   ]
 }
 
@@ -116,7 +116,7 @@ const bosses = [
     level: 5,
     floorOfAppearance: 5,
     critChance: 0.15, dodgeChance: 0.08,
-    desc: '黏液沼泽的统治者，通体翠绿的巨型史莱姆',
+    desc: '黏液沼泽的统治者，通体翠绿的巨型史莱姆', icon: '🐸',
     skills: [
       { type: 'heavy', name: '黏液重压', multiplier: 1.6 },
       { type: 'drain', name: '分裂再生', percent: 0.35 }
@@ -132,7 +132,7 @@ const bosses = [
     level: 8,
     floorOfAppearance: 10,
     critChance: 0.12, dodgeChance: 0.03,
-    desc: '骸骨墓穴的主宰，统御着无数亡灵',
+    desc: '骸骨墓穴的主宰，统御着无数亡灵', icon: '🦴',
     skills: [
       { type: 'heavy', name: '骸骨冲击', multiplier: 1.8 },
       { type: 'rage', name: '亡灵狂怒', multiplier: 1.3 }
@@ -148,7 +148,7 @@ const bosses = [
     level: 11,
     floorOfAppearance: 15,
     critChance: 0.18, dodgeChance: 0.08,
-    desc: '操控亡灵的黑暗法师，法术能汲取你的生命力',
+    desc: '操控亡灵的黑暗法师，法术能汲取你的生命力', icon: '🪄',
     skills: [
       { type: 'drain', name: '死亡汲取', percent: 0.5 }
     ],
@@ -163,7 +163,7 @@ const bosses = [
     level: 14,
     floorOfAppearance: 20,
     critChance: 0.22, dodgeChance: 0.05,
-    desc: '来自深渊的火焰恶魔，是第二十层的绝对主宰',
+    desc: '来自深渊的火焰恶魔，是第二十层的绝对主宰', icon: '👹',
     skills: [
       { type: 'heavy', name: '烈焰吐息', multiplier: 2.0 },
       { type: 'rage', name: '恶魔狂暴', multiplier: 1.3 }
@@ -179,7 +179,7 @@ const bosses = [
     level: 18,
     floorOfAppearance: 25,
     critChance: 0.20, dodgeChance: 0.15,
-    desc: '地牢最深处的远古巨龙，龙息足以毁灭一切',
+    desc: '地牢最深处的远古巨龙，龙息足以毁灭一切', icon: '🐉',
     skills: [
       { type: 'heavy', name: '毁灭龙息', multiplier: 2.5 },
       { type: 'drain', name: '龙血汲取', percent: 0.4 },

@@ -223,6 +223,7 @@ class Player {
 class Monster {
   constructor(template) {
     this.name = template.name
+    this.icon = template.icon || '👹'  // 怪物图案（默认魔鬼）
     this.hp = template.hp
     this.maxHp = template.hp
     this.attack = template.attack

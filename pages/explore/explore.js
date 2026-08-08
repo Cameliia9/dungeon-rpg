@@ -329,7 +329,7 @@ Page({
     if (!m) return
 
     app.globalData.currentMonsterData = {
-      name: m.name, hp: m.maxHp,
+      name: m.name, icon: m.icon || '👹', hp: m.maxHp,
       attack: m.attack, defense: m.defense,
       exp: m.exp, gold: m.gold,
       desc: m.desc, level: m.level,

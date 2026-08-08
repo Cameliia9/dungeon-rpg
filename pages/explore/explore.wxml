@@ -67,7 +67,8 @@
 
       <!-- 怪物 -->
       <block wx:if="{{leftState === 'monster'}}">
-        <text style="font-size: 30px; display: block;">👹</text>
+        
+        <text style="font-size: 30px; display: block;">{{leftEvent.monster.icon}}</text>
         <text style="font-size: 15px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{leftEvent.monster.name}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 1px 0;">{{leftEvent.monster.desc}}</text>
         <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}  ⚔️{{leftEvent.monster.attack}}  🛡️{{leftEvent.monster.defense}}</text>
@@ -126,7 +127,8 @@
 
       <!-- 营地遇怪 -->
       <block wx:if="{{leftState === 'camp_ambush'}}">
-        <text style="font-size: 30px; display: block;">👹</text>
+        
+        <text style="font-size: 30px; display: block;">{{leftEvent.monster.icon}}</text>
         <text style="font-size: 14px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{leftEvent.monster.name}}突袭！</text>
         <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{leftEvent.monster.hp}}  ⚔️{{leftEvent.monster.attack}}  ⚡{{leftEvent.monster.critPercent}}%暴</text>
         <button class="btn-sm btn-sm-primary" bindtap="goBattleLeft">⚔️ 战斗</button>
@@ -190,7 +192,8 @@
 
       <!-- 怪物 -->
       <block wx:if="{{rightState === 'monster'}}">
-        <text style="font-size: 30px; display: block;">👹</text>
+        
+        <text style="font-size: 30px; display: block;">{{rightEvent.monster.icon}}</text>
         <text style="font-size: 15px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{rightEvent.monster.name}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 1px 0;">{{rightEvent.monster.desc}}</text>
         <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}  ⚔️{{rightEvent.monster.attack}}  🛡️{{rightEvent.monster.defense}}</text>
@@ -249,7 +252,8 @@
 
       <!-- 营地遇怪 -->
       <block wx:if="{{rightState === 'camp_ambush'}}">
-        <text style="font-size: 30px; display: block;">👹</text>
+        
+        <text style="font-size: 30px; display: block;">{{rightEvent.monster.icon}}</text>
         <text style="font-size: 14px; font-weight: bold; color: #e0c080; margin: 2px 0;">{{rightEvent.monster.name}}突袭！</text>
         <text style="font-size: 12px; color: #8a8a9a; margin: 3px 0;">❤️{{rightEvent.monster.hp}}  ⚔️{{rightEvent.monster.attack}}  ⚡{{rightEvent.monster.critPercent}}%暴</text>
         <button class="btn-sm btn-sm-primary" bindtap="goBattleRight">⚔️ 战斗</button>
