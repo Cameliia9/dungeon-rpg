@@ -217,9 +217,9 @@ function close() {
 function draw() {
   const ctx = S.ctx
   const p = S.player
-  // 打开渐显动画(300ms)
-  const fade = ui.animProgress(enterTime, 0, 300)
-  ctx.globalAlpha = fade
+  // 打开渐显动画: 标题卡先淡入, 然后卡片逐个交错出现(对齐难度按钮风格)
+  const p0 = ui.animProgress(enterTime, 0, 400)
+  ctx.globalAlpha = p0
   // 背景: 探索页同款#0f0f1a
   ctx.fillStyle = '#0f0f1a'
   ctx.fillRect(0, 0, S.LW, S.LH)
@@ -243,6 +243,7 @@ function draw() {
     text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, headY + 48, 12, COLORS.goldBright)
     text(ctx, '本层强化上限：+' + p.maxEnhanceLevel + '（每过5层解锁+1）', S.LW / 2, headY + 70, 11, '#6a6a7a')
   }
+  ctx.globalAlpha = 1
 
   // ===== 列表区(可滚动, 裁剪) =====
   const topY = headY + th + 10
@@ -251,9 +252,13 @@ function draw() {
   ctx.beginPath()
   ctx.rect(M, topY, PW(), bottomY - topY)
   ctx.clip()
+  let elIdx = 0
   for (const el of layout) {
     const ey = el.y - scroll
     if (ey < topY - 80 || ey > bottomY + 10) continue
+    // 每个卡片逐个淡入(80ms递增, 400ms完成, 对齐难度按钮)
+    const elFade = ui.animProgress(enterTime, 80 + elIdx * 70, 400)
+    ctx.globalAlpha = elFade
     if (el.kind === 'header' || el.kind === 'eqHeader' || el.kind === 'invHeader') {
       // 分类卡片背景(对齐原版 .card 渐变, 包住标题+其下内容)
       const cardH2 = el.endY - el.y + 8
@@ -266,10 +271,13 @@ function draw() {
     } else if (el.kind === 'invEmpty') {
       text(ctx, '背包空空如也，去地牢冒险获取装备吧！', S.LW / 2, ey, 12, '#666666')
     }
+    ctx.globalAlpha = 1
+    elIdx++
   }
   ctx.restore()
 
-  // 右侧滚动条 + ↑↓ 滚动按钮
+  // 右侧滚动条 + ↑↓ 滚动按钮(淡入)
+  ctx.globalAlpha = ui.animProgress(enterTime, 500, 400)
   const maxS = Math.max(0, contentH - (bottomY - topY))
   if (maxS > 0) {
     const barH = Math.max(22, (bottomY - topY) * (bottomY - topY) / contentH)
@@ -282,7 +290,8 @@ function draw() {
     text(ctx, '↓', S.LW - 30, midY + 16, 14, COLORS.text, 'center', true)
   }
 
-  // ===== 底部返回按钮(对齐原版 ↩️ 返回) =====
+  // ===== 底部返回按钮(对齐原版 ↩️ 返回, 最后淡入) =====
+  ctx.globalAlpha = ui.animProgress(enterTime, 600, 400)
   drawBtn(ctx, makeBtn(M, S.LH - 60, PW(), 44, '↩️ 返回', null, ui.BTN.secondary))
   ctx.globalAlpha = 1
 }
