@@ -181,7 +181,9 @@ function handleItem(it) {
       S.savePlayer()
       wx.showToast({ title: '使用 ' + it.name, icon: 'success' })
     } else {
-      p.equip(it)
+      // 用背包原对象equip(副本===匹配不上, 会导致装备后不移除)
+      const orig = p.inventory[it.invIdx]
+      if (orig) p.equip(orig)
       S.savePlayer()
       wx.showToast({ title: '装备 ' + it.name, icon: 'success' })
     }
