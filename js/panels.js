@@ -83,10 +83,16 @@ function build() {
     layout[invHi].endY = y - 6
     contentH = y
   } else if (type === 'forge') {
+    // 对齐原版: 武器/护甲/饰品三分类卡
     list = ['weapon', 'armor', 'accessory'].map(slot => ({ slot, item: p[slot] }))
-    let y = 212
-    for (const it of list) {
-      layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
+    const titles = ['🗡️ 武器', '🛡️ 护甲', '💍 饰品']
+    let y = 208
+    for (let si = 0; si < list.length; si++) {
+      const hi = layout.length
+      layout.push({ kind: 'header', text: titles[si], y, endY: 0 }); y += 30
+      layout.push({ kind: 'item', item: list[si], y, h: 86 }); y += 86
+      layout[hi].endY = y - 6
+      if (si < list.length - 1) y += 20  // 分类间距(对齐商店)
     }
     contentH = y
   }
@@ -217,7 +223,7 @@ function draw() {
   text(ctx, '✕', S.LW - M - 22, M + 22, 22, COLORS.red, 'center', true)
 
   // ===== 标题卡(下移到✕下方, 对齐原版: 标题+金币+区域/阶数) =====
-  const th = type === 'shop' ? 100 : 58
+  const th = (type === 'shop' || type === 'forge') ? 100 : 58
   const headY = 80
   roundRect(ctx, M, headY, PW(), th, 12, ui.cardFill(ctx, M, headY, PW(), th), COLORS.goldBright, 1.5)
   if (type === 'shop') {
@@ -229,7 +235,8 @@ function draw() {
     text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, headY + 44, 12, COLORS.goldBright)
   } else {
     text(ctx, '⚒️ 铁匠铺', S.LW / 2, headY + 24, 20, COLORS.gold, 'center', true)
-    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, headY + 44, 12, COLORS.goldBright)
+    text(ctx, '金币：' + p.gold + ' 💰', S.LW / 2, headY + 48, 12, COLORS.goldBright)
+    text(ctx, '本层强化上限：+' + p.maxEnhanceLevel + '（每过5层解锁+1）', S.LW / 2, headY + 70, 11, '#6a6a7a')
   }
 
   // ===== 列表区(可滚动, 裁剪) =====
@@ -332,20 +339,29 @@ function drawItemRow(ctx, it, y, h) {
     text(ctx, desc, x + subW2 + 6, y + 55, 11, '#666666', 'left')
     drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, it.type === 'potion' ? '使用' : '装备', null, it.type === 'potion' ? ui.BTN.gold : ui.BTN.primary))
   } else {
-    // forge
-    const slotName = it.slot === 'weapon' ? '🗡️ 武器' : it.slot === 'armor' ? '🛡️ 护甲' : '💍 饰品'
+    // forge (对齐原版: 名称+强化等级 / 主属性彩色 / 当前强化行 + 强化按钮)
     if (it.item) {
       const it2 = it.item
-      let name = slotName + ' ' + it2.name + (it2.enhanceLevel ? ' +' + it2.enhanceLevel : '')
-      while (name.length > 2 && ui.textWidth(ctx, name, 15) > rightEdge - x) name = name.slice(0, -1)
-      text(ctx, name, x, y + 22, 15, COLORS.text, 'left', true)
-      const stat = it.slot === 'weapon' ? '攻+' + (it2.attack + (it2.enhanceLevel || 0) * 3) : it.slot === 'armor' ? '防+' + (it2.defense + (it2.enhanceLevel || 0) * 3) : '血+' + (it2.hp + (it2.enhanceLevel || 0) * 15)
-      text(ctx, stat + '  (' + (it2.enhanceLevel || 0) + '/' + p.maxEnhanceLevel + ')', x, y + 46, 13, COLORS.textDim, 'left')
+      let name = it2.name
+      while (name.length > 1 && ui.textWidth(ctx, name, 15) > rightEdge - x) name = name.slice(0, -1)
+      text(ctx, name, x, y + 18, 15, COLORS.text, 'left', true)
+      if (it2.enhanceLevel) text(ctx, '+' + it2.enhanceLevel, x + ui.textWidth(ctx, name, 15) + 6, y + 18, 13, '#ffaa00', 'left', true)
+      // 主属性(攻红/防蓝/血绿)
+      let stat = '', statColor = COLORS.textDim
+      if (it.slot === 'weapon') { stat = '攻击 +' + (it2.attack + (it2.enhanceLevel || 0) * 3); statColor = '#e74c3c' }
+      else if (it.slot === 'armor') { stat = '防御 +' + (it2.defense + (it2.enhanceLevel || 0) * 3); statColor = '#3498db' }
+      else { stat = '生命上限 +' + (it2.hp + (it2.enhanceLevel || 0) * 15); statColor = '#2ecc71' }
+      text(ctx, stat, x, y + 38, 13, statColor, 'left', true)
+      // 当前强化
+      text(ctx, '当前强化：+' + (it2.enhanceLevel || 0) + ' / +' + p.maxEnhanceLevel, x, y + 55, 11, '#8a8a9a', 'left')
+      // 强化按钮
       const cost = p.getEnhanceCost(it2)
       const canUp = (it2.enhanceLevel || 0) < p.maxEnhanceLevel
-      drawBtn(ctx, makeBtn(btnX, y + 28, btnW, 34, canUp ? '💰' + cost : '已满级', null, canUp ? ui.BTN.forge : ui.BTN.secondary))
+      drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, canUp ? '💰 ' + cost + ' 强化' : '已满级', null, canUp ? ui.BTN.forge : ui.BTN.secondary))
     } else {
-      text(ctx, slotName + ': 未装备', x, y + 30, 14, COLORS.textDark, 'left')
+      // 未装备(对齐原版: 居中灰字)
+      const slotName = it.slot === 'weapon' ? '武器' : it.slot === 'armor' ? '护甲' : '饰品'
+      text(ctx, '未装备' + slotName, S.LW / 2, y + 32, 13, '#555555')
     }
   }
 }
