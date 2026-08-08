@@ -53,6 +53,7 @@ function switchScene(name) {
   sceneEnterTime = Date.now()
   if (name === 'menu') buildMenu()
   else if (name === 'difficulty') buildDifficulty()
+  else if (name === 'game') buildGame()
   else if (name === 'explore') buildExplore()
   else if (name === 'battle') {
     if (!battle) battle = require('./js/battle')
@@ -67,7 +68,7 @@ function buildMenu() {
   let y = LH * 0.42
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🆕 新游戏', () => switchScene('difficulty'), ui.BTN.primary)); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, savedGame ? '▶️ 继续游戏' : '▶️ 继续游戏（无存档）', () => {
-    if (savedGame) { loadGame(); switchScene('explore') }
+    if (savedGame) { loadGame(); switchScene('game') }
   }, ui.BTN.primary)); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '⚙️ 设置', () => wx.showToast({ title: '暂无设置项', icon: 'none' }), ui.BTN.secondary)); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🚪 退出', () => wx.exitMiniProgram(), ui.BTN.secondary))
@@ -113,7 +114,52 @@ function startNew(difficulty) {
   if (difficulty === 'hard') { player.maxHp = 95; player.hp = 95; player.baseAttack = 11; player.gold = 35 }
   if (difficulty === 'nightmare') { player.maxHp = 90; player.hp = 90; player.baseAttack = 10; player.gold = 20 }
   savePlayer()
-  switchScene('explore')
+  switchScene('game')
+}
+
+// ==================== 游戏主页 (对齐原版 screen='game') ====================
+function buildGame() {
+  btns = []
+  const bw = Math.min(220, LW * 0.7), bh = 50, cx = LW / 2
+  let y = LH * 0.44
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏰 探索地牢', () => switchScene('explore'), ui.BTN.primary)); y += bh + 14
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🎒 背包 (' + player.inventory.length + '件)', () => wx.showToast({ title: '背包', icon: 'none' }), ui.BTN.secondary)); y += bh + 14
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🏪 商店', () => wx.showToast({ title: '商店', icon: 'none' }), ui.BTN.gold)); y += bh + 18
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '↩️ 返回菜单', () => switchScene('menu'), ui.BTN.secondary))
+}
+
+function drawGame() {
+  const g = ctx.createLinearGradient(0, 0, 0, LH)
+  g.addColorStop(0, COLORS.bgTop)
+  g.addColorStop(1, COLORS.bgBottom)
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, LW, LH)
+
+  // 标题卡
+  roundRect(ctx, 16, 16, LW - 32, 64, 12, ui.cardFill(ctx, 16, 16, LW - 32, 64), COLORS.cardBorder, 1.5)
+  text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 36, 18, COLORS.gold, 'center', true)
+  text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 60, 12, COLORS.textDim)
+
+  // 角色状态卡
+  const cy = 96
+  roundRect(ctx, 16, cy, LW - 32, 170, 12, ui.cardFill(ctx, 16, cy, LW - 32, 170), COLORS.cardBorder, 1.5)
+  text(ctx, '🧝 ' + player.name, LW / 2, cy + 18, 15, COLORS.text, 'center', true)
+  // 血量
+  text(ctx, '❤️ 生命值', 32, cy + 42, 12, COLORS.textDim, 'left')
+  text(ctx, player.hp + ' / ' + player.totalMaxHp, LW - 32, cy + 42, 12, COLORS.gold, 'right', true)
+  hpBar(ctx, 32, cy + 52, LW - 64, 8, player.hp / player.totalMaxHp)
+  // 经验
+  text(ctx, '✨ 经验值', 32, cy + 74, 12, COLORS.textDim, 'left')
+  text(ctx, player.exp + ' / ' + player.expToLevel(), LW - 32, cy + 74, 12, COLORS.gold, 'right', true)
+  // 攻防暴闪
+  text(ctx, '⚔️ 攻击 ' + player.totalAttack + '   🛡️ 防御 ' + player.totalDefense, 32, cy + 98, 12, COLORS.textDim, 'left')
+  text(ctx, '⚡ 暴击 ' + Math.round(player.totalCrit * 100) + '%   💨 闪避 ' + Math.round(player.totalDodge * 100) + '%', 32, cy + 116, 12, COLORS.textDim, 'left')
+  // 金币/击杀
+  text(ctx, '💰 金币 ' + player.gold + '   💀 击杀 ' + player.kills, 32, cy + 134, 12, COLORS.textDim, 'left')
+  // 装备一览
+  text(ctx, '🗡️ 武器：' + (player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'), 32, cy + 154, 11, '#a080ff', 'left')
+
+  for (const b of btns) drawBtn(ctx, b)
 }
 
 function savePlayer() {
@@ -162,6 +208,7 @@ function draw() {
   if (panels) { panels.draw(); return }
   if (scene === 'menu') drawMenu()
   else if (scene === 'difficulty') drawDifficulty()
+  else if (scene === 'game') drawGame()
   else if (scene === 'explore' && explore) explore.draw()
   else if (scene === 'battle' && battle) battle.draw()
 }
