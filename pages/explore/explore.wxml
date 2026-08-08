@@ -82,16 +82,16 @@
         <text style="font-size: 36px; display: block;">{{leftEvent.merchantIcon || '🧙'}}</text>
         <text class="title" style="font-size: 16px;">{{leftEvent.merchantName || '神秘商人'}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 2px 0;">来自【{{leftEvent.themeName}}】的游商</text>
-        <view wx:for="{{leftEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 6px; background: #1a1a2e; border-radius: 6px; width: 100%;">
-          <view class="flex-between">
-            <view style="flex: 1; margin-right: 4px;">
-              <text style="color: #e0c080; font-size: 12px;">{{item.name}}</text>
-              <text style="display: block; font-size: 10px; color: #8a8a9a;">{{item.desc}}</text>
+        <view wx:for="{{leftEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 8px; background: #1a1a2e; border-radius: 6px; width: 100%;">
+          <view style="display: flex; justify-content: space-between; align-items: center;">
+            <view style="flex: 1; margin-right: 6px;">
+              <text style="color: #e0c080; font-size: 13px;">{{item.name}}</text>
+              <text style="display: block; font-size: 10px; color: #8a8a9a; margin-top: 2px;">{{item.desc}}</text>
             </view>
-            <view>
-              <text style="color: #f0c040; font-size: 11px;">💰{{item.price}}</text>
-              <button class="btn-sm btn-sm-gold" style="padding: 2px 8px; font-size: 11px; margin-left: 4px;" bindtap="buyItemLeft" data-index="{{index}}">买</button>
-            </view>
+          </view>
+          <view style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+            <text style="color: #f0c040; font-size: 13px;">💰 {{item.price}}</text>
+            <button class="btn-sm btn-sm-gold" style="padding: 4px 16px; font-size: 12px; margin: 0;" bindtap="buyItemLeft" data-index="{{index}}">购买</button>
           </view>
         </view>
         <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishLeft">离开</button>
@@ -207,16 +207,16 @@
         <text style="font-size: 36px; display: block;">{{rightEvent.merchantIcon || '🧙'}}</text>
         <text class="title" style="font-size: 16px;">{{rightEvent.merchantName || '神秘商人'}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 2px 0;">来自【{{rightEvent.themeName}}】的游商</text>
-        <view wx:for="{{rightEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 6px; background: #1a1a2e; border-radius: 6px; width: 100%;">
-          <view class="flex-between">
-            <view style="flex: 1; margin-right: 4px;">
-              <text style="color: #e0c080; font-size: 12px;">{{item.name}}</text>
-              <text style="display: block; font-size: 10px; color: #8a8a9a;">{{item.desc}}</text>
+        <view wx:for="{{rightEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 8px; background: #1a1a2e; border-radius: 6px; width: 100%;">
+          <view style="display: flex; justify-content: space-between; align-items: center;">
+            <view style="flex: 1; margin-right: 6px;">
+              <text style="color: #e0c080; font-size: 13px;">{{item.name}}</text>
+              <text style="display: block; font-size: 10px; color: #8a8a9a; margin-top: 2px;">{{item.desc}}</text>
             </view>
-            <view>
-              <text style="color: #f0c040; font-size: 11px;">💰{{item.price}}</text>
-              <button class="btn-sm btn-sm-gold" style="padding: 2px 8px; font-size: 11px; margin-left: 4px;" bindtap="buyItemRight" data-index="{{index}}">买</button>
-            </view>
+          </view>
+          <view style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+            <text style="color: #f0c040; font-size: 13px;">💰 {{item.price}}</text>
+            <button class="btn-sm btn-sm-gold" style="padding: 4px 16px; font-size: 12px; margin: 0;" bindtap="buyItemRight" data-index="{{index}}">购买</button>
           </view>
         </view>
         <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishRight">离开</button>
