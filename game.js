@@ -9,14 +9,16 @@ const GE = require('./utils/game-engine')
 const Data = require('./utils/data')
 
 // ==================== 画布 ====================
-// 主 canvas 自动全屏(物理像素=逻辑×DPR)，只做 scale，不手动设置尺寸
-// 触摸事件坐标是逻辑像素(clientX/clientY)，与 windowWidth 同坐标系
+// 显式设置 canvas 物理尺寸 = 逻辑尺寸 × DPR，再 scale(DPR)
+// 不显式设置时部分环境下主 canvas 尺寸异常 → 黑屏
 const sysInfo = wx.getSystemInfoSync()
 const DPR = sysInfo.pixelRatio || 2
 const LW = sysInfo.windowWidth    // 逻辑宽(如375)
 const LH = sysInfo.windowHeight   // 逻辑高(如667)
 
 const canvas = wx.createCanvas()
+canvas.width = LW * DPR
+canvas.height = LH * DPR
 const ctx = canvas.getContext('2d')
 ctx.scale(DPR, DPR)
 
