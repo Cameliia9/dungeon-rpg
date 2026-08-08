@@ -7,25 +7,25 @@
   <!-- ==================== 1. 主菜单 ==================== -->
   <view wx:if="{{screen === 'menu'}}" style="display: flex; flex-direction: column; align-items: center; padding-top: 80px;">
 
-    <text style="font-size: 48px; display: block; margin-bottom: 8px;">⚔️</text>
-    <text style="font-size: 28px; font-weight: bold; color: #e0c080; margin-bottom: 40px;">地牢冒险</text>
+    <text class="anim-card" style="animation-delay: 0s; font-size: 48px; display: block; margin-bottom: 8px;">⚔️</text>
+    <text class="anim-card" style="animation-delay: 0.08s; font-size: 28px; font-weight: bold; color: #e0c080; margin-bottom: 40px;">地牢冒险</text>
 
-    <button class="btn btn-primary" style="width: 220px; margin-bottom: 16px;" bindtap="newGame">
+    <button class="btn btn-primary anim-card" style="animation-delay: 0.16s; width: 220px; margin-bottom: 16px;" bindtap="newGame">
       🆕 新游戏
     </button>
 
-    <button class="btn btn-primary" style="width: 220px; margin-bottom: 16px;"
+    <button class="btn btn-primary anim-card" style="animation-delay: 0.24s; width: 220px; margin-bottom: 16px;"
       bindtap="continueGame"
       disabled="{{!hasSavedGame}}">
       ▶️ 继续游戏
       <text wx:if="{{!hasSavedGame}}" style="font-size: 11px; color: #666; display: block;">（无存档）</text>
     </button>
 
-    <button class="btn btn-secondary" style="width: 220px; margin-bottom: 16px;" bindtap="openSettings">
+    <button class="btn btn-secondary anim-card" style="animation-delay: 0.32s; width: 220px; margin-bottom: 16px;" bindtap="openSettings">
       ⚙️ 设置
     </button>
 
-    <button class="btn btn-secondary" style="width: 220px;" bindtap="exitGame">
+    <button class="btn btn-secondary anim-card" style="animation-delay: 0.4s; width: 220px;" bindtap="exitGame">
       🚪 退出
     </button>
 
