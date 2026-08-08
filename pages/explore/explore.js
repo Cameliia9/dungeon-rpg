@@ -18,7 +18,8 @@ Page({
     roomsPerFloor: 15,
 
     leftOut: false,
-    rightOut: false
+    rightOut: false,
+    footerExpanded: true   // 底部状态栏是否展开（收起时只显示名字+血条+图案）
   },
 
   onLoad() {
@@ -517,6 +518,11 @@ Page({
   // 游戏中随时打开铁匠铺
   openForge() {
     wx.navigateTo({ url: '/pages/forge/forge' })
+  },
+
+  // 底部状态栏展开/收起（渐变切换）
+  toggleFooter() {
+    this.setData({ footerExpanded: !this.data.footerExpanded })
   },
 
   exitExplore() {

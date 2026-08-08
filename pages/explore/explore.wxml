@@ -82,18 +82,21 @@
         <text style="font-size: 36px; display: block;">{{leftEvent.merchantIcon || '🧙'}}</text>
         <text class="title" style="font-size: 16px;">{{leftEvent.merchantName || '神秘商人'}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 2px 0;">来自【{{leftEvent.themeName}}】的游商</text>
-        <view wx:for="{{leftEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 8px; background: #1a1a2e; border-radius: 6px; width: 100%;">
-          <view style="display: flex; justify-content: space-between; align-items: center;">
-            <view style="flex: 1; margin-right: 6px;">
-              <text style="color: #e0c080; font-size: 13px;">{{item.name}}</text>
-              <text style="display: block; font-size: 10px; color: #8a8a9a; margin-top: 2px;">{{item.desc}}</text>
+        <!-- 商品列表可滚动，防止卡片溢出屏幕导致离开按钮点不到 -->
+        <scroll-view scroll-y style="max-height: 150px; width: 100%;">
+          <view wx:for="{{leftEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 8px; background: #1a1a2e; border-radius: 6px; width: 100%;">
+            <view style="display: flex; justify-content: space-between; align-items: center;">
+              <view style="flex: 1; margin-right: 6px;">
+                <text style="color: #e0c080; font-size: 13px;">{{item.name}}</text>
+                <text style="display: block; font-size: 10px; color: #8a8a9a; margin-top: 2px;">{{item.desc}}</text>
+              </view>
+            </view>
+            <view style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+              <text style="color: #f0c040; font-size: 13px;">💰 {{item.price}}</text>
+              <button class="btn-sm btn-sm-gold" style="padding: 4px 16px; font-size: 12px; margin: 0;" bindtap="buyItemLeft" data-index="{{index}}">购买</button>
             </view>
           </view>
-          <view style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-            <text style="color: #f0c040; font-size: 13px;">💰 {{item.price}}</text>
-            <button class="btn-sm btn-sm-gold" style="padding: 4px 16px; font-size: 12px; margin: 0;" bindtap="buyItemLeft" data-index="{{index}}">购买</button>
-          </view>
-        </view>
+        </scroll-view>
         <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishLeft">离开</button>
       </block>
 
@@ -207,18 +210,21 @@
         <text style="font-size: 36px; display: block;">{{rightEvent.merchantIcon || '🧙'}}</text>
         <text class="title" style="font-size: 16px;">{{rightEvent.merchantName || '神秘商人'}}</text>
         <text style="font-size: 11px; color: #8a8a9a; margin: 2px 0;">来自【{{rightEvent.themeName}}】的游商</text>
-        <view wx:for="{{rightEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 8px; background: #1a1a2e; border-radius: 6px; width: 100%;">
-          <view style="display: flex; justify-content: space-between; align-items: center;">
-            <view style="flex: 1; margin-right: 6px;">
-              <text style="color: #e0c080; font-size: 13px;">{{item.name}}</text>
-              <text style="display: block; font-size: 10px; color: #8a8a9a; margin-top: 2px;">{{item.desc}}</text>
+        <!-- 商品列表可滚动，防止卡片溢出屏幕导致离开按钮点不到 -->
+        <scroll-view scroll-y style="max-height: 150px; width: 100%;">
+          <view wx:for="{{rightEvent.items}}" wx:key="name" style="margin: 4px 0; padding: 8px; background: #1a1a2e; border-radius: 6px; width: 100%;">
+            <view style="display: flex; justify-content: space-between; align-items: center;">
+              <view style="flex: 1; margin-right: 6px;">
+                <text style="color: #e0c080; font-size: 13px;">{{item.name}}</text>
+                <text style="display: block; font-size: 10px; color: #8a8a9a; margin-top: 2px;">{{item.desc}}</text>
+              </view>
+            </view>
+            <view style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+              <text style="color: #f0c040; font-size: 13px;">💰 {{item.price}}</text>
+              <button class="btn-sm btn-sm-gold" style="padding: 4px 16px; font-size: 12px; margin: 0;" bindtap="buyItemRight" data-index="{{index}}">购买</button>
             </view>
           </view>
-          <view style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-            <text style="color: #f0c040; font-size: 13px;">💰 {{item.price}}</text>
-            <button class="btn-sm btn-sm-gold" style="padding: 4px 16px; font-size: 12px; margin: 0;" bindtap="buyItemRight" data-index="{{index}}">购买</button>
-          </view>
-        </view>
+        </scroll-view>
         <button class="btn-sm btn-sm-secondary" style="width: 80%; margin-top: 6px;" bindtap="finishRight">离开</button>
       </block>
 
@@ -266,27 +272,35 @@
   </view>
 
   <!-- ========== 底部状态栏 ========== -->
-  <view class="card" style="position: fixed; bottom: 0; left: 0; right: 0; margin: 0; border-radius: 12px 12px 0 0; padding: 12px 16px; z-index: 100;">
+  <view class="card" style="position: fixed; bottom: 0; left: 0; right: 0; margin: 0; border-radius: 12px 12px 0 0; padding: 10px 16px; z-index: 100;">
 
-    <!-- 状态栏信息：先上滑出现 -->
-    <view class="anim-footer" style="flex: 1;">
-      <view class="stat-row"><text class="stat-label">🧝 {{player.name}}</text></view>
-      <view class="stat-row"><text class="stat-label">❤️ {{player.hp}} / {{totalMaxHp}}</text></view>
-      <view class="hp-bar-wrap" style="margin: 4px 0;"><view class="hp-bar-fill" style="width: {{player.hp / totalMaxHp * 100}}%"></view></view>
-      <view class="stat-row"><text class="stat-label">⚔️ {{totalAttack}}攻  🛡️ {{totalDefense}}防</text></view>
-      <view class="stat-row"><text class="stat-label">⚡ {{totalCritPercent}}%暴  💨 {{totalDodgePercent}}%闪</text></view>
-      <view class="stat-row" style="margin-top: 2px;"><text class="stat-label">💰 {{player.gold}}金币  ⭐ {{player.exp}} / {{expToLevel}}经验</text></view>
+    <!-- 收起行：名字 + 血条 + 图案 + 箭头（始终可见，点击展开/收起） -->
+    <view style="display: flex; align-items: center;" bindtap="toggleFooter">
+      <text style="font-size: 22px; margin-right: 8px;">🧝</text>
+      <view style="flex: 1;">
+        <view class="stat-row"><text class="stat-label" style="font-size: 13px;">{{player.name}} · Lv.{{player.level}}</text></view>
+        <view class="hp-bar-wrap" style="margin: 2px 0 0 0;"><view class="hp-bar-fill" style="width: {{player.hp / totalMaxHp * 100}}%"></view></view>
+        <view class="stat-row"><text class="stat-label" style="font-size: 12px; color: #ff6b6b;">❤️ {{player.hp}} / {{totalMaxHp}}</text></view>
+      </view>
+      <text style="font-size: 20px; color: #8a8a9a; margin-left: 8px; padding: 8px;">{{footerExpanded ? '▾' : '▴'}}</text>
     </view>
 
-    <!-- 2x2 按钮网格：延迟后一起上滑 -->
-    <view class="anim-footer" style="animation-delay: 0.4s; display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 10px;">
-      <button class="btn-sm btn-sm-gold" style="width: 48%; margin: 0 0 8px 0; padding: 10px 0; font-size: 14px;" bindtap="openShop">🏪 商店</button>
-      <button class="btn-sm btn-sm-primary" style="width: 48%; margin: 0 0 8px 0; padding: 10px 0; font-size: 14px;" bindtap="openInventory">🎒 背包 ({{player.inventory.length}})</button>
-      <button class="btn-sm btn-sm-forge" style="width: 48%; margin: 0; padding: 10px 0; font-size: 14px;" bindtap="openForge">⚒️ 铁匠铺</button>
-      <button class="btn-sm btn-sm-secondary" style="width: 48%; margin: 0; padding: 10px 0; font-size: 14px;" bindtap="exitExplore">🚪 退出</button>
+    <!-- 展开区：详细属性 + 2x2 按钮（渐变展开/收起） -->
+    <view class="{{footerExpanded ? 'footer-expand' : 'footer-collapse'}}">
+      <view style="flex: 1; margin-top: 6px;">
+        <view class="stat-row"><text class="stat-label">⚔️ {{totalAttack}}攻  🛡️ {{totalDefense}}防</text></view>
+        <view class="stat-row"><text class="stat-label">⚡ {{totalCritPercent}}%暴  💨 {{totalDodgePercent}}%闪</text></view>
+        <view class="stat-row" style="margin-top: 2px;"><text class="stat-label">💰 {{player.gold}}金币  ⭐ {{player.exp}} / {{expToLevel}}经验</text></view>
+      </view>
+      <view style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 8px;">
+        <button class="btn-sm btn-sm-gold" style="width: 48%; margin: 0 0 8px 0; padding: 9px 0; font-size: 13px;" bindtap="openShop">🏪 商店</button>
+        <button class="btn-sm btn-sm-primary" style="width: 48%; margin: 0 0 8px 0; padding: 9px 0; font-size: 13px;" bindtap="openInventory">🎒 背包 ({{player.inventory.length}})</button>
+        <button class="btn-sm btn-sm-forge" style="width: 48%; margin: 0; padding: 9px 0; font-size: 13px;" bindtap="openForge">⚒️ 铁匠铺</button>
+        <button class="btn-sm btn-sm-secondary" style="width: 48%; margin: 0; padding: 9px 0; font-size: 13px;" bindtap="exitExplore">🚪 退出</button>
+      </view>
     </view>
   </view>
 
-  <view style="height: 170px;"></view>
+  <view style="height: 100px;"></view>
 
 </view>

@@ -230,6 +230,21 @@ page {
   opacity: 0.75;
 }
 
+/* 底部状态栏展开/收起渐变 */
+.footer-collapse {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.45s ease, opacity 0.4s ease;
+}
+
+.footer-expand {
+  max-height: 260px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.45s ease, opacity 0.4s ease;
+}
+
 /* 小按钮（探索卡片内用） */
 .btn-sm {
   display: block;
