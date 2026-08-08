@@ -30,7 +30,7 @@ function start(shared, m, boss, done) {
 }
 
 // 按钮纵向布局: 攻击/防御/逃跑(非Boss), 宽约原一半居中, 间距大
-const BTN_W = 160
+const BTN_W = 220
 const BTN_H = 44
 const BTN_GAP = 22
 function btnX() { return (S.LW - BTN_W) / 2 }
@@ -41,7 +41,7 @@ function layoutY() {
   const gap = 32
   const py = my + mh + gap
   const ph = 140
-  const btn1 = py + ph + 20
+  const btn1 = py + ph + 32
   const btn2 = btn1 + BTN_H + BTN_GAP
   const btn3 = btn2 + BTN_H + BTN_GAP
   // 按钮卡片(三按钮在内, 加高)
