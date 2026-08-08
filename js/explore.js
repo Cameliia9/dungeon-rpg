@@ -104,14 +104,14 @@ function touch(x, y) {
     const bw = S.LW * 0.43, bh = 26
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.52
     // 第一行: 商店 / 背包
-    const by1 = fy + 132
+    const by1 = fy + 150
     if (y > by1 && y < by1 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('shop')
       else if (x > bx2 && x < bx2 + bw) openPanel('inventory')
       return
     }
     // 第二行: 铁匠铺 / 退出
-    const by2 = fy + 160
+    const by2 = fy + 190
     if (y > by2 && y < by2 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('forge')
       else if (x > bx2 && x < bx2 + bw) exitExplore()
@@ -121,7 +121,7 @@ function touch(x, y) {
 
   // 卡片区：根据状态分发（坐标与绘制一致）
   const cardTop = 174
-  const cardH = 296
+  const cardH = 260
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
     const side = isLeft ? 'left' : 'right'
@@ -368,7 +368,7 @@ function draw() {
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 174
-  const cardH = 296
+  const cardH = 260
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
@@ -603,7 +603,7 @@ function altarOffer(side, type, evt) {
 
 // 状态栏高度: 固定167px(≈页面25%), 展开时显示全部, 收起时折叠按钮区
 function footerH() {
-  return footerExpanded ? 190 : 66
+  return footerExpanded ? 222 : 66
 }
 
 function drawFooter() {
@@ -615,42 +615,42 @@ function drawFooter() {
   roundRect(ctx, 0, y, S.LW, fh, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
 
   // 顶部居中向下小三角
-  text(ctx, footerExpanded ? '▾' : '▴', S.LW / 2, y + 12, 18, '#8a8a9a')
+  text(ctx, footerExpanded ? '▾' : '▴', S.LW / 2, y + 14, 18, '#8a8a9a')
 
   // 第一行: 左侧角色头像 + 白色文字「名字·Lv.X」
-  text(ctx, '🧝', 18, y + 32, 22)
-  text(ctx, p.name + ' · Lv.' + p.level, 46, y + 32, 14, '#ffffff', 'left', true)
+  text(ctx, '🧝', 18, y + 38, 22)
+  text(ctx, p.name + ' · Lv.' + p.level, 46, y + 38, 14, '#ffffff', 'left', true)
 
   // 第二行: 左侧红心+红色数值, 右侧红色进度条(底深灰)
-  text(ctx, '❤️', 18, y + 54, 12)
-  text(ctx, p.hp + '/' + p.totalMaxHp, 34, y + 54, 12, '#ff6b6b', 'left', true)
+  text(ctx, '❤️', 18, y + 62, 12)
+  text(ctx, p.hp + '/' + p.totalMaxHp, 34, y + 62, 12, '#ff6b6b', 'left', true)
   // 红色进度条(右侧, 底色深灰)
   const barX = 96, barW = S.LW - 96 - 16
-  roundRect(ctx, barX, y + 48, barW, 12, 6, '#2a2a3a')
+  roundRect(ctx, barX, y + 56, barW, 12, 6, '#2a2a3a')
   const ratio = Math.max(0, Math.min(1, p.hp / p.totalMaxHp))
-  if (ratio > 0) roundRect(ctx, barX, y + 48, barW * ratio, 12, 6, '#e74c3c')
+  if (ratio > 0) roundRect(ctx, barX, y + 56, barW * ratio, 12, 6, '#e74c3c')
 
   if (footerExpanded) {
     // 属性两行(带图标+白色文字)
-    text(ctx, '⚔️ 攻击', 18, y + 72, 12, '#ffffff', 'left')
-    text(ctx, '' + p.totalAttack, 78, y + 72, 12, '#ffffff', 'left', true)
-    text(ctx, '🛡️ 防御', 140, y + 72, 12, '#ffffff', 'left')
-    text(ctx, '' + p.totalDefense, 200, y + 72, 12, '#ffffff', 'left', true)
-    text(ctx, '⚡ 暴击', 18, y + 92, 12, '#ffffff', 'left')
-    text(ctx, '' + Math.round(p.totalCrit * 100) + '%', 78, y + 92, 12, '#ffffff', 'left', true)
-    text(ctx, '💨 闪避', 140, y + 92, 12, '#ffffff', 'left')
-    text(ctx, '' + Math.round(p.totalDodge * 100) + '%', 200, y + 92, 12, '#ffffff', 'left', true)
+    text(ctx, '⚔️ 攻击', 18, y + 84, 12, '#ffffff', 'left')
+    text(ctx, '' + p.totalAttack, 78, y + 84, 12, '#ffffff', 'left', true)
+    text(ctx, '🛡️ 防御', 140, y + 84, 12, '#ffffff', 'left')
+    text(ctx, '' + p.totalDefense, 200, y + 84, 12, '#ffffff', 'left', true)
+    text(ctx, '⚡ 暴击', 18, y + 106, 12, '#ffffff', 'left')
+    text(ctx, '' + Math.round(p.totalCrit * 100) + '%', 78, y + 106, 12, '#ffffff', 'left', true)
+    text(ctx, '💨 闪避', 140, y + 106, 12, '#ffffff', 'left')
+    text(ctx, '' + Math.round(p.totalDodge * 100) + '%', 200, y + 106, 12, '#ffffff', 'left', true)
 
     // 资源行: 金币金色 + 经验黄色
-    text(ctx, '💰', 18, y + 112, 12)
-    text(ctx, '' + p.gold, 34, y + 112, 12, '#f0c040', 'left', true)
-    text(ctx, '⭐', 110, y + 112, 12)
-    text(ctx, '' + p.exp + ' / ' + p.expToLevel(), 126, y + 112, 12, '#ffe080', 'left', true)
+    text(ctx, '💰', 18, y + 128, 12)
+    text(ctx, '' + p.gold, 34, y + 128, 12, '#f0c040', 'left', true)
+    text(ctx, '⭐', 110, y + 128, 12)
+    text(ctx, '' + p.exp + ' / ' + p.expToLevel(), 126, y + 128, 12, '#ffe080', 'left', true)
 
     // 2x2 功能按钮: 商店黄/背包红/铁匠橙/退出深灰蓝 (白色文字, 均等)
     const bw = S.LW * 0.43, bh = 26
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.52
-    const by1 = y + 132, by2 = y + 160
+    const by1 = y + 150, by2 = y + 190
     // 左上: 黄色商店
     drawBtn(ctx, makeBtn(bx1, by1, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 12 }))
     // 右上: 红色背包
