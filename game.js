@@ -83,7 +83,7 @@ function drawMenu() {
   ctx.fillRect(0, 0, LW, LH)
 
   // 入场动画: 交错 fadeSlideUp (对齐原版 delay)
-  const dur = 450, dist = 28
+  const dur = 650, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 80, dur)
   // ⚔️大号emoji用手动居中(真机textAlign center对emoji宽度测量偏差导致偏左)
@@ -160,14 +160,23 @@ function drawGame() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, LW, LH)
 
+  // 入场动画(交错淡入): 标题卡 -> 状态卡 -> 按钮
+  const dur = 650
+  const p1 = ui.animProgress(sceneEnterTime, 0, dur)
+  const p2 = ui.animProgress(sceneEnterTime, 90, dur)
+  const p3 = ui.animProgress(sceneEnterTime, 180, dur)
+
   // 标题卡(下移+放大)
+  ctx.globalAlpha = p1
   roundRect(ctx, 16, 120, LW - 32, 74, 12, ui.cardFill(ctx, 16, 120, LW - 32, 74), COLORS.cardBorder, 1.5)
   text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 148, 22, COLORS.gold, 'center', true)
   text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 176, 13, COLORS.textDim)
+  ctx.globalAlpha = 1
 
   // 角色状态卡(高度随屏幕动态, 上限240; 字号加大)
   const cy = 206
   const cardH2 = Math.min(240, LH * 0.62 - 14 - cy)
+  ctx.globalAlpha = p2
   roundRect(ctx, 16, cy, LW - 32, cardH2, 12, ui.cardFill(ctx, 16, cy, LW - 32, cardH2), COLORS.cardBorder, 1.5)
   text(ctx, '🧝 ' + player.name, LW / 2, cy + 22, 17, COLORS.text, 'center', true)
   // 血量
@@ -184,8 +193,9 @@ function drawGame() {
   text(ctx, '💰 金币 ' + player.gold + '   💀 击杀 ' + player.kills, 32, cy + 158, 14, COLORS.textDim, 'left')
   // 装备一览
   text(ctx, '🗡️ 武器：' + (player.weapon ? player.weapon.name + ' (+' + player.weapon.attack + '攻)' : '无'), 32, cy + 182, 13, '#a080ff', 'left')
+  ctx.globalAlpha = 1
 
-  for (const b of btns) drawBtn(ctx, b)
+  for (const b of btns) drawBtn(ctx, b, null, p3)
 }
 
 function savePlayer() {
@@ -199,7 +209,7 @@ function drawDifficulty() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, LW, LH)
 
-  const dur = 450, dist = 28
+  const dur = 650, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 60, dur)
   text(ctx, '选择难度', LW / 2, LH * 0.14 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
