@@ -104,7 +104,8 @@ function handleItem(idx) {
 }
 
 function close() {
-  S.panels = null
+  if (S.setPanels) S.setPanels(null)
+  else S.panels = null
 }
 
 function draw() {

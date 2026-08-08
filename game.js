@@ -9,15 +9,15 @@ const GE = require('./utils/game-engine')
 const Data = require('./utils/data')
 
 // ==================== 画布 ====================
+// 小游戏主 canvas 自动全屏(物理像素), 用系统信息取逻辑尺寸
+const sysInfo = wx.getSystemInfoSync()
+const DPR = sysInfo.pixelRatio || 2
+const LW = sysInfo.windowWidth    // 逻辑宽(如375)
+const LH = sysInfo.windowHeight   // 逻辑高(如667)
+
 const canvas = wx.createCanvas()
 const ctx = canvas.getContext('2d')
-const W = canvas.width
-const H = canvas.height
-const DPR = wx.getSystemInfoSync().pixelRatio || 2
-// 逻辑分辨率按像素比缩放
 ctx.scale(DPR, DPR)
-const LW = W / DPR  // 逻辑宽
-const LH = H / DPR  // 逻辑高
 
 // ==================== 全局状态 ====================
 let player = null          // 当前玩家
@@ -124,7 +124,11 @@ let battle = null
 function buildExplore() {
   // 延迟加载避免循环依赖
   if (!explore) explore = require('./js/explore')
-  explore.init({ player, savePlayer, switchScene, canvas, ctx, LW, LH, getPlayer: () => player, setPlayer: (p) => { player = p } })
+  explore.init({
+    player, savePlayer, switchScene, canvas, ctx, LW, LH,
+    getPlayer: () => player, setPlayer: (p) => { player = p },
+    setPanels: (p) => { panels = p }, getPanels: () => panels
+  })
   btns = explore.buttons()
 }
 
@@ -142,6 +146,7 @@ function draw() {
 wx.onTouchStart((e) => {
   const t = e.touches[0]
   if (!t) return
+  // 小游戏触摸坐标 = 逻辑像素(与 windowWidth 同坐标系)
   const x = t.clientX, y = t.clientY
 
   // 面板层优先
@@ -163,8 +168,13 @@ wx.onTouchStart((e) => {
 if (loadGame()) savedGame = true
 switchScene('menu')
 
+// 渲染循环带异常保护，避免单帧错误卡死
 function loop() {
-  draw()
+  try {
+    draw()
+  } catch (err) {
+    console.error('draw error:', err)
+  }
   requestAnimationFrame(loop)
 }
 requestAnimationFrame(loop)

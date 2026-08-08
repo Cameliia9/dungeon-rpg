@@ -149,7 +149,8 @@ function cardW() { return S.LW * 0.46 }
 
 function openPanel(name) {
   const panels = require('./panels')
-  S.panels = panels.create(name, S)
+  const p = panels.create(name, S)
+  if (S.setPanels) S.setPanels(p)
 }
 
 function exitExplore() {
