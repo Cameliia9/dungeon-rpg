@@ -428,9 +428,16 @@ function draw() {
 
   // ============ 顶部区域(≈25%: 0~167) ============
   // 左上角白色返回箭头
-  text(ctx, '←', 26, 60, 22, '#ffffff', 'center', true)
-  // 顶部居中白色标题「探索地牢」
-  text(ctx, '探索地牢', S.LW / 2, 60, 20, '#ffffff', 'center', true)
+  text(ctx, '←', 26, 72, 22, '#ffffff', 'center', true)
+  // 顶部居中白色标题「探索地牢」(下移)
+  text(ctx, '探索地牢', S.LW / 2, 72, 20, '#ffffff', 'center', true)
+  // 分割线(对齐mini-rpg: 1px #1a1a2e)
+  ctx.strokeStyle = '#1a1a2e'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(16, 90)
+  ctx.lineTo(S.LW - 16, 90)
+  ctx.stroke()
 
   // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
   const theme = Data.getThemeForFloor(p.floor)
