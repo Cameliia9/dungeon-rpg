@@ -77,7 +77,7 @@ function build() {
       y += 60
     } else {
       for (const it of list) {
-        layout.push({ kind: 'item', item: it, y, h: 140 }); y += 140
+        layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
       }
     }
     layout[invHi].endY = y - 6
@@ -307,7 +307,7 @@ function drawItemRow(ctx, it, y, h) {
     const icon = it.type === 'weapon' ? '🗡️' : it.type === 'armor' ? '🛡️' : it.type === 'accessory' ? '💍' : '🧪'
     let name = icon + ' ' + it.name
     while (name.length > 2 && ui.textWidth(ctx, name, 15) > rightEdge - x) name = name.slice(0, -1)
-    text(ctx, name, x, y + 28, 16, COLORS.text, 'left', true)
+    text(ctx, name, x, y + 18, 15, COLORS.text, 'left', true)
     let prop = ''
     if (it.type === 'potion') prop = '治疗'
     else {
@@ -315,19 +315,20 @@ function drawItemRow(ctx, it, y, h) {
       if (it.defense) prop += '防御+' + it.defense + ' '
       if (it.hp) prop += '生命+' + it.hp
     }
-    text(ctx, prop, x, y + 58, 14, '#8a8a9a', 'left')
+    text(ctx, prop, x, y + 38, 13, '#8a8a9a', 'left')
+    // 行3: 副属性(暴击黄/闪避蓝) + 描述紧随同行
     let sub2 = ''
     if (it.type === 'potion') sub2 = it.desc || ''
     else {
       if (it.critChance) sub2 += '⚡暴击+' + Math.round(it.critChance * 100) + '% '
       if (it.dodgeChance) sub2 += '💨闪避+' + Math.round(it.dodgeChance * 100) + '%'
     }
-    while (sub2.length > 1 && ui.textWidth(ctx, sub2, 12) > rightEdge - x) sub2 = sub2.slice(0, -1)
-    text(ctx, sub2, x, y + 84, 12, '#ffaa00', 'left')
+    const subW2 = ui.textWidth(ctx, sub2, 11)
     let desc = it.desc || ''
-    while (desc.length > 1 && ui.textWidth(ctx, desc, 12) > rightEdge - x) desc = desc.slice(0, -1)
-    text(ctx, desc, x, y + 110, 12, '#666666', 'left')
-    drawBtn(ctx, makeBtn(btnX, y + 53, btnW, 36, it.type === 'potion' ? '使用' : '装备', null, it.type === 'potion' ? ui.BTN.gold : ui.BTN.primary))
+    while (desc.length > 1 && ui.textWidth(ctx, sub2 + desc, 11) > rightEdge - x) desc = desc.slice(0, -1)
+    text(ctx, sub2, x, y + 55, 11, '#ffaa00', 'left')
+    text(ctx, desc, x + subW2 + 6, y + 55, 11, '#666666', 'left')
+    drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, it.type === 'potion' ? '使用' : '装备', null, it.type === 'potion' ? ui.BTN.gold : ui.BTN.primary))
   } else {
     // forge
     const slotName = it.slot === 'weapon' ? '🗡️ 武器' : it.slot === 'armor' ? '🛡️ 护甲' : '💍 饰品'
