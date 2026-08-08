@@ -235,7 +235,7 @@ wx.onTouchStart((e) => {
     panels.touch(x, y)
     return
   }
-  if (scene === 'menu' || scene === 'difficulty') {
+  if (scene === 'menu' || scene === 'difficulty' || scene === 'game') {
     const b = hitBtn(btns, x, y)
     if (b) b.cb()
   } else if (scene === 'explore' && explore) {
