@@ -40,8 +40,10 @@ function build() {
 }
 
 function touch(x, y) {
-  // 返回按钮
-  if (x > S.LW - 70 && y > 14 && y < 50) { close(); return }
+  // ✕ 关闭按钮(面板右上角, 面板垂直居中所以用相对坐标)
+  const pw = S.LW * 0.92, ph = S.LH * 0.9
+  const px = (S.LW - pw) / 2, py = (S.LH - ph) / 2
+  if (x > px + pw - 60 && x < px + pw - 6 && y > py + 8 && y < py + 52) { close(); return }
   // 滚动
   if (y > 60 && y < S.LH - 80) {
     if (y < 90) { scroll = Math.max(0, scroll - 1); return }
