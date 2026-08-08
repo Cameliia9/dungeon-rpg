@@ -95,12 +95,18 @@ function touch(x, y) {
   if (x > S.LW - 60 && y > M && y < M + 50) { close(); return }
   // 底部返回按钮(对齐原版 ↩️ 返回)
   if (y > S.LH - 60 && y < S.LH - 16 && x > M && x < M + PW()) { close(); return }
-  // 列表区: 顶部/底部点按滚动兜底, 中部记录拖动起点(点击在touchEnd判定)
+  // 列表区: ↑↓按钮/顶部底部点按滚动, 中部记录拖动起点(点击在touchEnd判定)
   const th = type === 'shop' ? 100 : 58
   const topY = 80 + th + 10
   const bottomY = S.LH - 70
   const maxS = Math.max(0, contentH - (bottomY - topY))
   if (y > topY && y < bottomY) {
+    // ↑↓ 滚动按钮(右侧, 点击滚动一屏)
+    const midY = topY + (bottomY - topY) / 2
+    if (x > S.LW - 44 && x < S.LW - 16) {
+      if (y > midY - 32 && y < midY - 4) { scroll = Math.max(0, scroll - 120); return }
+      if (y > midY + 4 && y < midY + 32) { scroll = Math.min(maxS, scroll + 120); return }
+    }
     if (y < topY + 22) { scroll = Math.max(0, scroll - 60); return }
     if (y > bottomY - 22) { scroll = Math.min(maxS, scroll + 60); return }
     touchStartY = y
@@ -133,7 +139,7 @@ function touchEnd() {
         break
       }
       if (el.kind === 'eqRow' && cy > el.y && cy < el.y + el.h) {
-        const cx0 = M + 10, cw = PW() - 20
+        const cx0 = M + 15, cw = PW() - 30
         if (el.item && touchStartX > cx0 + cw - 76 && touchStartX < cx0 + cw - 12) { unequipSlot(el.slot); break }
       }
     }
@@ -247,13 +253,17 @@ function draw() {
   }
   ctx.restore()
 
-  // 右侧滚动条
+  // 右侧滚动条 + ↑↓ 滚动按钮
   const maxS = Math.max(0, contentH - (bottomY - topY))
   if (maxS > 0) {
     const barH = Math.max(22, (bottomY - topY) * (bottomY - topY) / contentH)
     const barY = topY + (bottomY - topY - barH) * (scroll / maxS)
     roundRect(ctx, S.LW - 10, barY, 4, barH, 2, 'rgba(255,255,255,0.45)')
-    text(ctx, '↑ 拖动 ↓', S.LW / 2, bottomY + 8, 10, COLORS.textDark)
+    const midY = topY + (bottomY - topY) / 2
+    roundRect(ctx, S.LW - 44, midY - 34, 28, 28, 6, '#1a1a2e', '#2a2a4a', 1)
+    roundRect(ctx, S.LW - 44, midY + 2, 28, 28, 6, '#1a1a2e', '#2a2a4a', 1)
+    text(ctx, '↑', S.LW - 30, midY - 20, 14, COLORS.text, 'center', true)
+    text(ctx, '↓', S.LW - 30, midY + 16, 14, COLORS.text, 'center', true)
   }
 
   // ===== 底部返回按钮(对齐原版 ↩️ 返回) =====
@@ -263,7 +273,7 @@ function draw() {
 // 装备项(商店/背包/铁匠铺, 4行舒展布局, 卡片不顶两边)
 function drawItemRow(ctx, it, y, h) {
   // 原版: 背景#141428 边框#2a2a4a 圆角8; 卡内缩进10px不顶两边
-  const cx0 = M + 10, cw = PW() - 20
+  const cx0 = M + 15, cw = PW() - 30
   roundRect(ctx, cx0, y, cw, h - 10, 8, '#141428', '#2a2a4a', 1)
   const x = cx0 + 14
   const btnW = type === 'shop' ? 80 : 72
@@ -329,7 +339,7 @@ function drawItemRow(ctx, it, y, h) {
 
 // 背包当前装备行(对齐原版: 紫色槽位名 + 名称(+X) + 卸下按钮)
 function drawEquipRow(ctx, el, y) {
-  const cx0 = M + 10, cw = PW() - 20
+  const cx0 = M + 15, cw = PW() - 30
   roundRect(ctx, cx0, y, cw, el.h - 4, 8, '#1a1a3e')
   const x = cx0 + 14
   const slotName = el.slot === 'weapon' ? '🗡️ 武器' : el.slot === 'armor' ? '🛡️ 护甲' : '💍 饰品'
