@@ -283,6 +283,7 @@ function draw() {
 
 // 装备项(商店/背包/铁匠铺, 4行舒展布局, 卡片不顶两边)
 function drawItemRow(ctx, it, y, h) {
+  const p = S.player  // forge分支需要(漏了会导致ReferenceError, 铁匠铺画不全)
   // 原版: 背景#141428 边框#2a2a4a 圆角8; 卡内缩进10px不顶两边
   const cx0 = M + 15, cw = PW() - 30
   roundRect(ctx, cx0, y, cw, h - 10, 8, '#141428', '#2a2a4a', 1)
