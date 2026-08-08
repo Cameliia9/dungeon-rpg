@@ -120,8 +120,8 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（坐标与绘制一致）
-  const cardTop = 244
-  const cardH = 132
+  const cardTop = 214
+  const cardH = 166
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
     const side = isLeft ? 'left' : 'right'
@@ -355,7 +355,7 @@ function draw() {
 
   // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
   const theme = Data.getThemeForFloor(p.floor)
-  const infoY = 118, infoH = 100
+  const infoY = 118, infoH = 86
   roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
   // 第一行(整体居中): 🏰紧贴字 + 金色「地牢第X层」 + 主题图案紧贴名称
   const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
@@ -372,8 +372,8 @@ function draw() {
   text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 94, 13, '#8a8a9a', 'center')
 
   // ============ 中间探索区(≈50%: 167~500) ============
-  const cardTop = 244
-  const cardH = 132
+  const cardTop = 214
+  const cardH = 166
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
