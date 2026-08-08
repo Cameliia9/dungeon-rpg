@@ -94,7 +94,7 @@ function buildSimpleEvent(type) {
   const p = S.player
   const floor = p.floor
   switch (type) {
-    case 'treasure': return { type, gold: Math.floor((15 + floor * 8 + Math.random() * floor * 15) * 0.5) }  // 宝箱金币-50%
+    case 'treasure': return { type, gold: Math.floor((15 + floor * 8 + Math.random() * floor * 15) * 0.6) }  // 宝箱金币-40%
     case 'coins': return { type, gold: Math.floor(10 + floor * 3 + Math.random() * floor * 8) }
     case 'spring': return { type, heal: Math.max(1, Math.floor((p.totalMaxHp - p.hp) * 0.3)) }
     case 'trap': return { type, damage: Math.max(1, Math.floor(p.hp * 0.15)), dodgeChance: 0.15 }
