@@ -104,14 +104,14 @@ function touch(x, y) {
     const bw = S.LW * 0.43, bh = 26
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.52
     // 第一行: 商店 / 背包
-    const by1 = fy + 122
+    const by1 = fy + 132
     if (y > by1 && y < by1 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('shop')
       else if (x > bx2 && x < bx2 + bw) openPanel('inventory')
       return
     }
     // 第二行: 铁匠铺 / 退出
-    const by2 = fy + 152
+    const by2 = fy + 160
     if (y > by2 && y < by2 + bh) {
       if (x > bx1 && x < bx1 + bw) openPanel('forge')
       else if (x > bx2 && x < bx2 + bw) exitExplore()
@@ -120,8 +120,8 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（坐标与绘制一致）
-  const cardTop = 178
-  const cardH = 300
+  const cardTop = 174
+  const cardH = 296
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
     const side = isLeft ? 'left' : 'right'
@@ -349,13 +349,13 @@ function draw() {
 
   // ============ 顶部区域(≈25%: 0~167) ============
   // 左上角白色返回箭头
-  text(ctx, '←', 26, 30, 22, '#ffffff', 'center', true)
+  text(ctx, '←', 26, 44, 22, '#ffffff', 'center', true)
   // 顶部居中白色标题「探索地牢」
-  text(ctx, '探索地牢', S.LW / 2, 30, 20, '#ffffff', 'center', true)
+  text(ctx, '探索地牢', S.LW / 2, 44, 20, '#ffffff', 'center', true)
 
   // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距)
   const theme = Data.getThemeForFloor(p.floor)
-  const infoY = 52, infoH = 104
+  const infoY = 64, infoH = 98
   roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
   // 第一行: 左侧🏰+金色「地牢第X层」, 右侧绿色圆点+白色主题名
   text(ctx, '🏰 地牢第 ' + p.floor + ' 层', 36, infoY + 28, 17, '#e0c080', 'left', true)
@@ -367,8 +367,8 @@ function draw() {
   text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', 36, infoY + 82, 11, '#8a8a9a', 'left')
 
   // ============ 中间探索区(≈50%: 167~500) ============
-  const cardTop = 178
-  const cardH = 300
+  const cardTop = 174
+  const cardH = 296
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
@@ -603,7 +603,7 @@ function altarOffer(side, type, evt) {
 
 // 状态栏高度: 固定167px(≈页面25%), 展开时显示全部, 收起时折叠按钮区
 function footerH() {
-  return footerExpanded ? 167 : 66
+  return footerExpanded ? 190 : 66
 }
 
 function drawFooter() {
@@ -650,7 +650,7 @@ function drawFooter() {
     // 2x2 功能按钮: 商店黄/背包红/铁匠橙/退出深灰蓝 (白色文字, 均等)
     const bw = S.LW * 0.43, bh = 26
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.52
-    const by1 = y + 122, by2 = y + 152
+    const by1 = y + 132, by2 = y + 160
     // 左上: 黄色商店
     drawBtn(ctx, makeBtn(bx1, by1, bw, bh, '🏪 商店', null, { ...ui.BTN.gold, size: 12 }))
     // 右上: 红色背包
