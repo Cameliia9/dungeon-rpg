@@ -78,12 +78,19 @@ function buildMenu() {
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🚪 退出', () => wx.exitMiniProgram(), ui.BTN.secondary))
 }
 
+let bgGrad = null  // 背景渐变缓存(每帧重建开销大)
+function bgGradient() {
+  if (!bgGrad) {
+    bgGrad = ctx.createLinearGradient(0, 0, 0, LH)
+    bgGrad.addColorStop(0, COLORS.bgTop)
+    bgGrad.addColorStop(1, COLORS.bgBottom)
+  }
+  return bgGrad
+}
+
 function drawMenu() {
-  // 背景渐变
-  const g = ctx.createLinearGradient(0, 0, 0, LH)
-  g.addColorStop(0, COLORS.bgTop)
-  g.addColorStop(1, COLORS.bgBottom)
-  ctx.fillStyle = g
+  // 背景渐变(缓存)
+  ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
   // 入场动画: 交错 fadeSlideUp (对齐原版 delay)
@@ -158,10 +165,7 @@ function buildGame() {
 }
 
 function drawGame() {
-  const g = ctx.createLinearGradient(0, 0, 0, LH)
-  g.addColorStop(0, COLORS.bgTop)
-  g.addColorStop(1, COLORS.bgBottom)
-  ctx.fillStyle = g
+  ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
   // 入场动画(交错淡入): 标题卡 -> 状态卡 -> 按钮
@@ -207,10 +211,7 @@ function savePlayer() {
 }
 
 function drawDifficulty() {
-  const g = ctx.createLinearGradient(0, 0, 0, LH)
-  g.addColorStop(0, COLORS.bgTop)
-  g.addColorStop(1, COLORS.bgBottom)
-  ctx.fillStyle = g
+  ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
   const dur = 650, dist = 28
@@ -316,7 +317,12 @@ switchScene('menu')
 
 // 渲染循环带异常保护，避免单帧错误卡死
 // 双保险: requestAnimationFrame + setInterval(部分开发者工具环境 rAF 不触发)
+// 节流: rAF 正常(16ms)时 interval(33ms)触发的重复帧直接跳过, 真机不再双倍绘制
+let lastDraw = 0
 function loop() {
+  const now = Date.now()
+  if (now - lastDraw < 30) return
+  lastDraw = now
   try {
     draw()
   } catch (err) {

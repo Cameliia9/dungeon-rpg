@@ -27,12 +27,18 @@ function textWidth(ctx, str, size) {
   return ctx.measureText ? ctx.measureText(str).width : str.length * size * 0.6
 }
 
+// 渐变缓存: 卡片位置固定, 同参数复用渐变对象, 避免每帧 createLinearGradient
+let _gradCache = {}
 /** 卡片渐变背景(对齐原版 .card: linear-gradient 135deg #1a1a2e→#16213e) */
 function cardFill(ctx, x, y, w, h) {
-  const g = ctx.createLinearGradient(x, y, x + w, y + h)
-  g.addColorStop(0, '#1a1a2e')
-  g.addColorStop(1, '#16213e')
-  return g
+  const key = x + ',' + y + ',' + w + ',' + h
+  if (!_gradCache[key]) {
+    const g = ctx.createLinearGradient(x, y, x + w, y + h)
+    g.addColorStop(0, '#1a1a2e')
+    g.addColorStop(1, '#16213e')
+    _gradCache[key] = g
+  }
+  return _gradCache[key]
 }
 
 /** 圆角矩形; shadow=极淡阴影(小游戏暗黑风格) */
