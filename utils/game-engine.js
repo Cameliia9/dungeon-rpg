@@ -519,13 +519,29 @@ function generateRoomEvent(player) {
   return buildEvent(EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)], player, player.floor)
 }
 
-// 根据层数获取随机怪物（按主题过滤 + 词缀 + 难度缩放）
+// 根据层数获取随机怪物（按主题过滤 + 层数加权 + 词缀 + 难度缩放）
 function getRandomMonster(floor, difficulty) {
   const d = DIFFICULTY_MULT[difficulty] || DIFFICULTY_MULT.easy
-  // 按主题取怪物池
+  // 按主题取怪物池（不修改原数组）
   const theme = GameData.getThemeForFloor(floor)
-  const pool = GameData.monsters[theme.id] || GameData.monsters.slime
-  const template = pool[Math.floor(Math.random() * pool.length)]
+  const pool = [...(GameData.monsters[theme.id] || GameData.monsters.slime)].sort((a, b) => a.level - b.level)
+
+  // ---- 层数加权：同主题内，弱怪在浅层占比高，越深强怪越多 ----
+  // 主题内层数 1-5（如 1-5层=主题第1-5层, 6-10层=第1-5层）
+  const floorInTheme = ((floor - 1) % 5) + 1
+  // 权重：怪物强度位置(1-5)越接近当前层数权重越高
+  const weights = pool.map((m, i) => {
+    const dist = Math.abs((i + 1) - floorInTheme)
+    return Math.max(0.15, 1 - dist * 0.35)
+  })
+  const totalW = weights.reduce((s, w) => s + w, 0)
+  let roll = Math.random() * totalW
+  let template = pool[pool.length - 1]
+  for (let i = 0; i < pool.length; i++) {
+    roll -= weights[i]
+    if (roll <= 0) { template = pool[i]; break }
+  }
+
   const scaled = { ...template }
   if (floor > template.level) {
     const scale = 1 + (floor - template.level) * 0.3
