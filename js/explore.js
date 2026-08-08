@@ -109,8 +109,7 @@ function touch(x, y) {
 
   // 卡片区：根据状态分发（商人/祭坛内容超出卡片, 命中区向下扩展）
   const cardTop = 214 + 15
-  // 商人特例: 高度增加(内容多), 状态栏自动收起让位
-  const cardH = (leftState === 'merchant' || rightState === 'merchant') ? Math.max(S.LH - FOOTER_H_EXPAND - 15 - cardTop, 300) : S.LH - FOOTER_H_EXPAND - 15 - cardTop
+  const cardH = S.LH - FOOTER_H_EXPAND - 15 - cardTop
   const isLeft = x < S.LW / 2
   const side = isLeft ? 'left' : 'right'
   const state = side === 'left' ? leftState : rightState
@@ -260,7 +259,6 @@ function pickSide(side) {
       break
     case 'merchant':
       setState(side, evt.type)
-      footerExpanded = false  // 商人内容多, 自动收起状态栏让位
       break
     case 'buffStone':
       p.tempAttackBuff = (p.tempAttackBuff || 0) + evt.attackBonus
@@ -301,7 +299,6 @@ function doFinishSide(side) {
   const p = S.player
   p.roomsExplored++
   activeSide = null
-  footerExpanded = true  // 事件完成恢复状态栏展开
   S.savePlayer()
 
   // 本层完成 → 楼梯/Boss
@@ -401,8 +398,7 @@ function draw() {
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 214 + 15
-  // 商人特例: 高度增加(内容多), 状态栏自动收起让位
-  const cardH = (leftState === 'merchant' || rightState === 'merchant') ? Math.max(S.LH - FOOTER_H_EXPAND - 15 - cardTop, 300) : S.LH - FOOTER_H_EXPAND - 15 - cardTop
+  const cardH = S.LH - FOOTER_H_EXPAND - 15 - cardTop
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
