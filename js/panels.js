@@ -43,7 +43,7 @@ function build() {
       { title: '🛡️ 护甲', items: Data.equipment.armor.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'armor' })) },
       { title: '💍 饰品', items: Data.equipment.accessory.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'accessory' })) }
     ]
-    let y = 132  // 与标题卡留距离
+    let y = 144  // 与标题卡间距20px(卡顶136)
     for (let si = 0; si < sections.length; si++) {
       const sec = sections[si]
       const hi = layout.length
@@ -52,20 +52,20 @@ function build() {
         layout.push({ kind: 'item', item: it, y, h: 66 }); y += 66
       }
       layout[hi].endY = y - 6
-      if (si < sections.length - 1) y += 8  // 分类间距8px
+      if (si < sections.length - 1) y += 20  // 分类间距20px
     }
     contentH = y
   } else if (type === 'inventory') {
     // 对齐原版: 当前装备区 + 物品列表
     list = p.inventory.map((it, i) => ({ ...it, invIdx: i }))
-    layout.push({ kind: 'eqHeader', y: 96, endY: 0 })
-    let y = 96 + 42
+    layout.push({ kind: 'eqHeader', y: 104, endY: 0 })
+    let y = 104 + 42
     layout.push({ kind: 'eqRow', slot: 'weapon', item: p.weapon, y, h: 40 }); y += 40
     layout.push({ kind: 'eqRow', slot: 'armor', item: p.armor, y, h: 40 }); y += 40
     layout.push({ kind: 'eqRow', slot: 'accessory', item: p.accessory, y, h: 40 }); y += 40
     layout[0].endY = y - 2
     const invHi = layout.length
-    layout.push({ kind: 'invHeader', count: list.length, y: y + 14, endY: 0 }); y += 34
+    layout.push({ kind: 'invHeader', count: list.length, y: y + 26, endY: 0 }); y += 34
     if (list.length === 0) {
       layout.push({ kind: 'invEmpty', y: y + 24 })
       y += 60
