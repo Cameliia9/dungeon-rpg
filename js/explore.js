@@ -19,7 +19,7 @@ let enterTime = Date.now()   // 探索页入场时间(动画)
 // ---- 卡片交互动画状态机 ----
 // phase: 'idle'(两卡相等) | 'expand'(选中放大/另一侧缩小) | 'flyout'(完成向右上旋出)
 let cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
-// 各事件类型的选中放大比例(神秘商人最大)
+// 各事件类型的选中横向放大比例(宽度倍数, 神秘商人最长)
 function expandScale(type) {
   switch (type) {
     case 'merchant': return 1.14
@@ -135,21 +135,32 @@ function touch(x, y) {
   if (y > cardTop && y < hitBottom) {
 
     if (state === 'door') {
+      // 另一侧事件进行中(怪物/商人/祭坛/结果)时, 本侧门不可点
+      const otherState = side === 'left' ? rightState : leftState
+      const busyOther = otherState === 'monster' || otherState === 'merchant' || otherState === 'altar' || otherState === 'result'
       if (evt && evt.type === 'stairs') {
-        // 楼梯按钮 cy+23~cy+57 (绘制 cy+40 高34)
-        if (y > cy + 38 && y < cy + 76) descend()
+        if (y > cy + 38 && y < cy + 76) {
+          if (busyOther) { wx.showToast({ title: '请先完成当前事件', icon: 'none' }); return }
+          descend()
+        }
       } else if (evt && evt.type === 'boss') {
-        // Boss按钮 cy+25~cy+59 (绘制 cy+42 高34)
-        if (y > cy + 38 && y < cy + 76) startBattle(side, true)
+        if (y > cy + 38 && y < cy + 76) {
+          if (busyOther) { wx.showToast({ title: '请先完成当前事件', icon: 'none' }); return }
+          startBattle(side, true)
+        }
       } else {
-        // 前进按钮 cy+13~cy+47 (绘制 cy+30 高34: cy+30~cy+64)
-        if (y > cy + 32 && y < cy + 76) pickSide(side)
+        if (y > cy + 32 && y < cy + 76) {
+          if (busyOther) { wx.showToast({ title: '请先完成当前事件', icon: 'none' }); return }
+          pickSide(side)
+        }
       }
     } else if (state === 'monster') {
-      // 战斗/逃跑按钮(并排, cy+52)
-      if (y > cy + 45 && y < cy + 77) {
-        if (x > cx - w * 0.36 - 4 && x < cx - 4) startBattle(side, false)
-        else if (x > cx + 4 && x < cx + w * 0.36 + 4) fleeMonster(side)
+      // 战斗/逃跑按钮(上下排)
+      const mbw = w * 0.6
+      if (y > cy + 22 && y < cy + 48) {
+        if (x > cx - mbw / 2 && x < cx + mbw / 2) startBattle(side, false)
+      } else if (y > cy + 50 && y < cy + 76) {
+        if (x > cx - mbw / 2 && x < cx + mbw / 2) fleeMonster(side)
       }
     } else if (state === 'result') {
       // 好的按钮(红色80%, cy+34)
@@ -293,20 +304,17 @@ function doFinishSide(side) {
     return
   }
 
-  // 滑动: 完成侧换新事件
+  // 原地生成新事件(另一侧保持原位不动)
   if (side === 'left') {
-    leftEvent = rightEvent
-    leftState = rightState
-    rightEvent = genEvent()
-    rightState = 'door'
-    // 避免同类型
+    leftEvent = genEvent()
+    leftState = 'door'
     let guard = 0
-    while (rightEvent.type === leftEvent.type && guard++ < 10) rightEvent = genEvent()
+    while (rightEvent && leftEvent.type === rightEvent.type && guard++ < 10) leftEvent = genEvent()
   } else {
     rightEvent = genEvent()
     rightState = 'door'
     let guard = 0
-    while (rightEvent.type === leftEvent.type && guard++ < 10) rightEvent = genEvent()
+    while (leftEvent && rightEvent.type === leftEvent.type && guard++ < 10) rightEvent = genEvent()
   }
 }
 
@@ -404,11 +412,10 @@ function drawCard(x, y, w, h, side, slideIn) {
     const t = Math.min(1, (now - cardAnim.start) / cardAnim.dur)
     const e = ui.easeOut(t)
     if (cardAnim.side === side) {
-      // 选中侧: 放大到事件类型比例
-      const target = expandScale(evtType)
-      scale = 1 + (target - 1) * e
+      // 选中侧: 横向放大(宽度变长, 高度不变), 商人最宽
+      scaleX = 1 + (expandScale(evtType) - 1) * e
     } else {
-      // 未选中侧: 缩小 + 横向压缩
+      // 未选中侧: 宽度变小 + 内容整体缩小
       scale = 1 + (SHRINK_SCALE - 1) * e
       scaleX = 1 + (0.82 - 1) * e
     }
@@ -440,6 +447,10 @@ function drawCard(x, y, w, h, side, slideIn) {
 
   // 卡片渐变背景(对齐原版 .card)
   roundRect(ctx, cx - cw / 2, cy - ch / 2, cw, ch, 12, ui.cardFill(ctx, cx - cw / 2, cy - ch / 2, cw, ch), cardAnim.side === side && cardAnim.phase !== 'flyout' ? COLORS.goldBright : COLORS.cardBorder, cardAnim.side === side && cardAnim.phase !== 'flyout' ? 2 : 1.5)
+
+  // 未选中侧内容随卡片缩小(按钮/文字一起变小)
+  const shrink = cardAnim.phase === 'expand' && cardAnim.side !== side
+  if (shrink) { ctx.save(); ctx.translate(cx, cy); ctx.scale(scale * scaleX, scale); ctx.translate(-cx, -cy) }
 
   if (state === 'door') {
     if (evt && evt.type === 'stairs') {
@@ -478,6 +489,8 @@ function drawCard(x, y, w, h, side, slideIn) {
     drawAltarCard(cx, cy, evt, side, w)
   }
 
+  // 恢复内容缩放
+  if (shrink) ctx.restore()
   // 恢复旋转/透明度
   if (rot !== 0) ctx.restore()
   ctx.globalAlpha = 1
@@ -510,21 +523,19 @@ function drawResultCard(cx, cy, evt, w) {
 
 function drawMonsterCard(cx, cy, m, w) {
   const ctx = S.ctx
-  // 对齐原版怪物卡
-  text(ctx, m.icon, cx, cy - 62, 30)
+  // 对齐原版怪物卡(战斗/逃跑上下排)
+  text(ctx, m.icon, cx, cy - 58, 28)
   // 名字 + Lv(橙色小字)
-  text(ctx, m.name, cx, cy - 36, 15, COLORS.gold, 'center', true)
-  text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 15) / 2 + 14, cy - 36, 12, '#ffaa00')
-  // 描述
-  text(ctx, m.desc || '', cx, cy - 12, 11, COLORS.textDim)
+  text(ctx, m.name, cx, cy - 30, 14, COLORS.gold, 'center', true)
+  text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 14) / 2 + 12, cy - 30, 11, '#ffaa00')
   // 属性
-  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy + 12, 12, COLORS.textDim)
-  text(ctx, '⚡' + m.critPercent + '%暴  💨' + m.dodgePercent + '%闪', cx, cy + 30, 11, '#7a7a8a')
-  // 战斗/逃跑按钮（并排）
-  const bw = w * 0.36
+  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy - 6, 11, COLORS.textDim)
+  text(ctx, '⚡' + m.critPercent + '%暴  💨' + m.dodgePercent + '%闪', cx, cy + 10, 10, '#7a7a8a')
+  // 战斗/逃跑按钮（上下排, 居中整宽）
+  const bw = w * 0.6
   const side = activeSide || 'left'
-  drawBtn(ctx, makeBtn(cx - bw - 4, cy + 45, bw, 32, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
-  drawBtn(ctx, makeBtn(cx + 4, cy + 45, bw, 32, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 22, bw, 26, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 50, bw, 26, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
 }
 
 function fleeMonster(side) {
