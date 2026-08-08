@@ -715,7 +715,7 @@ function drawFooter() {
   const fh = footerH()
   const y = S.LH - fh
   // 状态栏面板: 深蓝纯色, 大圆角顶部
-  roundRect(ctx, 0, y, S.LW, fh, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
+  roundRect(ctx, 0, y, S.LW, fh, 20, ui.cardFill(ctx, 0, y, S.LW, fh), 'rgba(255,255,255,0.06)', 1)
 
   // 顶部居中向下小三角
   text(ctx, footerExpanded ? '▾' : '▴', S.LW / 2, y + 16, 18, '#8a8a9a')
