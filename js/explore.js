@@ -621,7 +621,7 @@ function drawResultCard(cx, cy, evt, w) {
 function drawMonsterCard(cx, cy, m, w) {
   const ctx = S.ctx
   // 居中布局(大一点但不满): 图标44/名字20/属性14, 按钮0.8w
-  text(ctx, m.icon, cx, cy - 62, 44)
+  text(ctx, m.icon, cx, cy - 68, 44)
   // 名字 + Lv(橙色小字)
   text(ctx, m.name, cx, cy - 32, 20, COLORS.gold, 'center', true)
   text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 20) / 2 + 18, cy - 32, 14, '#ffaa00')
