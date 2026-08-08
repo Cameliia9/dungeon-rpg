@@ -303,8 +303,14 @@ function pickSide(side) {
       if (!dodged) { dmg = evt.damage; p.hp = Math.max(0, p.hp - dmg) }
       trapResult = { dodged, damage: dmg }
       setState(side, 'result')
+      // 先查死亡再存档: 陷阱致死不能把0血存档留下(否则继续游戏0血)
+      if (p.isDead()) {
+        clearExploreState()
+        try { wx.removeStorageSync('dungeon_save') } catch (e) {}
+        S.switchScene('menu')
+        return
+      }
       S.savePlayer()
-      if (p.isDead()) { S.switchScene('menu'); return }
       break
     }
     case 'deadend':

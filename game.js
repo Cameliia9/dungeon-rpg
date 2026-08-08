@@ -35,7 +35,8 @@ const SAVE_KEY = 'dungeon_save'
 // ==================== 存档 ====================
 function loadGame() {
   const data = wx.getStorageSync(SAVE_KEY)
-  if (data && data.name) {
+  // 0血存档视为无效(历史bug留下), 防止继续游戏0血
+  if (data && data.name && data.hp > 0) {
     player = GE.loadPlayer(data)
     savedGame = true
     return true
@@ -64,8 +65,9 @@ function switchScene(name) {
 // ==================== 主菜单 ====================
 // 对齐小程序原版: 居中, ⚔️48px 标题28px, 按钮220px 交错动画 0/0.08/0.16/0.24/0.32/0.4s
 function buildMenu() {
-  // 实时检查存档(死亡/清档后按钮状态同步)
-  savedGame = !!wx.getStorageSync(SAVE_KEY)
+  // 实时检查存档(死亡/清档后按钮状态同步; 0血存档视为无效)
+  const saveData = wx.getStorageSync(SAVE_KEY)
+  savedGame = !!(saveData && saveData.name && saveData.hp > 0)
   btns = []
   const bw = Math.min(220, LW * 0.7), bh = 48, cx = LW / 2
   let y = LH * 0.48
