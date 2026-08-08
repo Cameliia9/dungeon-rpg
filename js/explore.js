@@ -425,45 +425,57 @@ function startBattle(side, isBoss) {
 }
 
 // ==================== 绘制 ====================
+// ===== 离屏缓存: 背景+标题+分割线+楼层信息卡(静态头部) =====
+let staticCanvas = null
+let staticKey = ''
+const STATIC_H = 229  // 静态区高(0 ~ 信息卡底214 + 15空隙)
+
+function buildStatic(p) {
+  try {
+    if (!staticCanvas) staticCanvas = wx.createCanvas()
+    staticCanvas.width = S.LW
+    staticCanvas.height = STATIC_H
+    const c = staticCanvas.getContext('2d')
+    // 背景
+    c.fillStyle = '#0f0f1a'
+    c.fillRect(0, 0, S.LW, STATIC_H)
+    roundRect(c, 0, 0, S.LW, 90, 0, ui.cardFill(c, 0, 0, S.LW, 90))
+    // 顶部: 返回箭头 + 标题
+    text(c, '←', 26, 72, 22, '#ffffff', 'center', true)
+    text(c, '探索地牢', S.LW / 2, 72, 20, '#ffffff', 'center', true)
+    // 分割线(白色1px, 画满全宽)
+    c.strokeStyle = '#ffffff'
+    c.lineWidth = 1
+    c.beginPath()
+    c.moveTo(0, 90)
+    c.lineTo(S.LW, 90)
+    c.stroke()
+    // 楼层信息卡
+    const theme = Data.getThemeForFloor(p.floor)
+    const infoY = 118, infoH = 96
+    roundRect(c, 16, infoY, S.LW - 32, infoH, 20, ui.cardFill(c, 16, infoY, S.LW - 32, infoH), 'rgba(255,255,255,0.06)', 1)
+    const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
+    const seg2 = theme.icon + ' ' + theme.name
+    const w1 = ui.textWidth(c, seg1, 18)
+    const w2 = ui.textWidth(c, seg2, 14)
+    const lineW = w1 + 16 + w2
+    const lx = (S.LW - lineW) / 2
+    text(c, seg1, lx + w1 / 2, infoY + 28, 18, '#e0c080', 'center', true)
+    text(c, seg2, lx + w1 + 16 + w2 / 2, infoY + 28, 14, '#ffffff', 'center', true)
+    text(c, theme.desc || '', S.LW / 2, infoY + 56, 13, '#8a8a9a', 'center')
+    text(c, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 78, 11, '#8a8a9a', 'center')
+  } catch (e) {
+    staticCanvas = null
+  }
+}
+
 function draw() {
   const ctx = S.ctx
   const p = S.player
-  // 背景: 纯净深藏蓝纯色(无渐变, 暗黑简约地牢风)
-  // 背景: 分割线以上用卡片渐变, 以下用mini-rpg背景色(#0f0f1a)
-  ctx.fillStyle = '#0f0f1a'
-  ctx.fillRect(0, 0, S.LW, S.LH)
-  roundRect(ctx, 0, 0, S.LW, 90, 0, ui.cardFill(ctx, 0, 0, S.LW, 90))
-
-  // ============ 顶部区域(≈25%: 0~167) ============
-  // 左上角白色返回箭头
-  text(ctx, '←', 26, 72, 22, '#ffffff', 'center', true)
-  // 顶部居中白色标题「探索地牢」(下移)
-  text(ctx, '探索地牢', S.LW / 2, 72, 20, '#ffffff', 'center', true)
-  // 分割线(白色1px, 画满全宽)
-  ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = 1
-  ctx.beginPath()
-  ctx.moveTo(0, 90)
-  ctx.lineTo(S.LW, 90)
-  ctx.stroke()
-
-  // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
-  const theme = Data.getThemeForFloor(p.floor)
-  const infoY = 118, infoH = 96
-  roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, ui.cardFill(ctx, 16, infoY, S.LW - 32, infoH), 'rgba(255,255,255,0.06)', 1)
-  // 第一行(整体居中): 🏰紧贴字 + 金色「地牢第X层」 + 主题图案紧贴名称
-  const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
-  const seg2 = theme.icon + ' ' + theme.name
-  const w1 = ui.textWidth(ctx, seg1, 18)
-  const w2 = ui.textWidth(ctx, seg2, 14)
-  const lineW = w1 + 16 + w2
-  let lx = (S.LW - lineW) / 2
-  text(ctx, seg1, lx + w1 / 2, infoY + 28, 18, '#e0c080', 'center', true)
-  text(ctx, seg2, lx + w1 + 16 + w2 / 2, infoY + 28, 14, '#ffffff', 'center', true)
-  // 第二行(居中): 浅灰描述
-  text(ctx, theme.desc || '', S.LW / 2, infoY + 56, 13, '#8a8a9a', 'center')
-  // 第三行(居中): 浅灰进度
-  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 78, 11, '#8a8a9a', 'center')
+  // 静态头部: 楼层/房间变化时重建, 平时drawImage合成(省每帧重绘)
+  const key = p.floor + '|' + p.roomsExplored
+  if (staticKey !== key) { staticKey = key; buildStatic(p) }
+  if (staticCanvas) ctx.drawImage(staticCanvas, 0, 0, S.LW, STATIC_H, 0, 0, S.LW, STATIC_H)
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 214 + 15
