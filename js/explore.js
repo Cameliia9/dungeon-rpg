@@ -21,11 +21,58 @@ let enterTime = Date.now()   // 探索页入场时间(动画)
 let cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
 // 点击门后动画: 选中侧放大1.05+金色发光, 未选中侧缩小0.92+半透明
 
+// ---- 探索状态持久化(防退出重进刷门/逃课) ----
+const EXPLORE_KEY = 'explore_state'
+function saveExploreState() {
+  const p = S ? S.player : null
+  if (!p) return
+  try {
+    wx.setStorageSync(EXPLORE_KEY, {
+      floor: p.floor,
+      leftEvent, rightEvent,
+      leftState, rightState,
+      trapResult,
+      footerExpanded
+    })
+  } catch (e) {}
+}
+function restoreExploreState() {
+  const p = S ? S.player : null
+  if (!p) return false
+  try {
+    const st = wx.getStorageSync(EXPLORE_KEY)
+    // 层数匹配且有事件才恢复(楼梯/Boss场景另一侧可为null)
+    if (st && st.floor === p.floor && (st.leftEvent || st.rightEvent)) {
+      leftEvent = st.leftEvent || null
+      rightEvent = st.rightEvent || null
+      leftState = st.leftState || 'door'
+      rightState = st.rightState || 'door'
+      trapResult = st.trapResult || null
+      if (typeof st.footerExpanded === 'boolean') footerExpanded = st.footerExpanded
+      activeSide = leftState !== 'door' ? 'left' : (rightState !== 'door' ? 'right' : null)
+      cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
+      return true
+    }
+  } catch (e) {}
+  return false
+}
+function clearExploreState() {
+  try { wx.removeStorageSync(EXPLORE_KEY) } catch (e) {}
+}
+
 function init(shared) {
   S = shared
   enterTime = Date.now()
-  if (!skipRegen) generateEvents()
-  else skipRegen = false
+  if (!skipRegen) {
+    // 优先恢复现场(防逃课), 无存档才重新随机
+    if (!restoreExploreState()) {
+      generateEvents()
+      saveExploreState()
+    }
+  } else {
+    skipRegen = false
+    saveExploreState()
+  }
 }
 
 let skipRegen = false
@@ -75,6 +122,7 @@ function generateEvents() {
   trapResult = null
   cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
   roomsPerFloor = GE.getRoomsPerFloor(S.player.floor)
+  saveExploreState()
 }
 
 function buttons() { return [] }
@@ -279,13 +327,22 @@ function pickSide(side) {
       setState(side, 'altar')
       break
   }
+  saveExploreState()
 }
 
-// 封锁死路一侧（该侧不可再点击）
+// 封锁死路一侧（该侧不可再点击; 死路永久封锁）
 function blockSide(side) {
   setState(side, 'blocked')
   activeSide = null
   S.savePlayer()
+  // 两侧都封锁时强制重开(防卡死, 死路惩罚=白走+房间数)
+  const otherState = side === 'left' ? rightState : leftState
+  if (otherState === 'blocked') {
+    generateEvents()
+    saveExploreState()
+    return
+  }
+  saveExploreState()
 }
 
 // 事件完成: 先播扑克牌飞出动画, 动画结束后推进逻辑
@@ -314,15 +371,7 @@ function doFinishSide(side) {
     return
   }
 
-  // 另一侧是死路/封锁 → 重新生成两侧
-  const other = side === 'left' ? 'right' : 'left'
-  const otherState = other === 'left' ? leftState : rightState
-  if (otherState === 'deadend') {
-    generateEvents()
-    return
-  }
-
-  // 原地生成新事件(另一侧保持原位不动)
+  // 死路永久封锁: 另一侧保持原样, 完成侧原地生成新事件
   if (side === 'left') {
     leftEvent = genEvent()
     leftState = 'door'
@@ -334,6 +383,7 @@ function doFinishSide(side) {
     let guard = 0
     while (leftEvent && rightEvent.type === leftEvent.type && guard++ < 10) rightEvent = genEvent()
   }
+  saveExploreState()
 }
 
 function descend() {
@@ -647,6 +697,7 @@ function altarOffer(side, type, evt) {
   else p.baseDefense = (p.baseDefense || 0) + 1
   evt.altarCount++
   S.savePlayer()
+  saveExploreState()
   wx.showToast({ title: '献祭成功！', icon: 'success' })
   if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
 }

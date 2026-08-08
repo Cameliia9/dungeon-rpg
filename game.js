@@ -114,6 +114,7 @@ function startNew(difficulty) {
   if (difficulty === 'hard') { player.maxHp = 95; player.hp = 95; player.baseAttack = 11; player.gold = 35 }
   if (difficulty === 'nightmare') { player.maxHp = 90; player.hp = 90; player.baseAttack = 10; player.gold = 20 }
   savePlayer()
+  try { wx.removeStorageSync('explore_state') } catch (e) {}  // 新游戏清除探索存档
   switchScene('game')
 }
 

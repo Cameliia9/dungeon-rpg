@@ -201,6 +201,7 @@ function defeat() {
   result = 'defeat'
   logs.push('💀 你被打倒了...')
   wx.removeStorageSync('dungeon_save')
+  try { wx.removeStorageSync('explore_state') } catch (e) {}  // 死亡清除探索存档
 }
 
 function finish() {
