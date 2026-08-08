@@ -21,10 +21,12 @@ function start(shared, m, boss, done) {
   onDone = done
   result = 'fighting'
   logs = []
+  battleLogs = []
   S.lastReward = null
   enterTime = Date.now()
   battle = new GE.Battle(S.player, m)
   logs.push(isBoss ? '👑 ' + m.name + ' 拦住了去路！' : m.icon + ' ' + m.name + ' 出现了！')
+  syncLogs()
 }
 
 // 全宽按钮纵向布局(对齐原版): 攻击/防御/逃跑(非Boss)
@@ -56,6 +58,14 @@ function touch(x, y) {
   }
 }
 
+// 同步引擎战斗日志到界面(伤害/暴击/闪避/中毒/技能)
+function syncLogs() {
+  if (battle && battle.logs) {
+    battleLogs = battle.logs.slice()
+    logs = battle.logs.map(l => l.msg || l)
+  }
+}
+
 function attack() {
   // 中毒结算
   const poisonDmg = battle.tickPoison()
@@ -63,17 +73,37 @@ function attack() {
     if (battle.player.isDead()) { defeat(); return }
   }
   const r1 = battle.playerAttack()
+  syncLogs()
   if (r1 === 'victory') { victory(); return }
   const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
+  syncLogs()
   if (r2 === 'defeat') { defeat(); return }
 }
 
 function defend() {
-  // 防御: 本回合怪物伤害减半
-  const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
-  // 简化: 防御无特殊处理(小游戏版)
-  if (r2 === 'defeat') { defeat(); return }
+  // 防御: 本回合怪物伤害减半(对齐原版)
+  const p = battle.player
+  const m = battle.monster
+  // 玩家闪避判定
+  if (Math.random() < p.totalDodge) {
+    battle.log('你侧身躲开了 ' + m.name + ' 的攻击！', 'dodge')
+    syncLogs()
+    return
+  }
+  // 基础伤害(防御姿态减半)
+  let base = m.dealDamage(p.totalDefense)
+  const isCrit = Math.random() < m.critChance
+  if (isCrit) base = Math.floor(base * 1.5)
+  const dmg = Math.max(1, Math.floor(base / 2))
+  p.hp = Math.max(0, p.hp - dmg)
+  battle.log(isCrit
+    ? '你进入防御姿态，' + m.name + ' 暴击造成 ' + dmg + ' 点伤害'
+    : '你进入防御姿态，' + m.name + ' 造成 ' + dmg + ' 点伤害', isCrit ? 'crit' : 'info')
+  syncLogs()
+  if (p.isDead()) { defeat(); return }
+  // 防御后玩家反击
   const r1 = battle.playerAttack()
+  syncLogs()
   if (r1 === 'victory') { victory(); return }
 }
 
@@ -89,7 +119,9 @@ function flee() {
   } else {
     p.fleeFails++
     logs.push('逃跑失败！下次成功率 ' + Math.min(0.9, chance + 0.1) * 100 + '%')
+    syncLogs()
     const r2 = battle.monsterAttack()
+    syncLogs()
     if (r2 === 'defeat') { defeat(); return }
   }
 }
@@ -103,8 +135,10 @@ function usePotion() {
   p.inventory.splice(idx, 1)
   p.heal(Math.floor(p.totalMaxHp * (potion.healPercent || 0.3)))
   logs.push('使用' + potion.name + '，回复生命！')
+  syncLogs()
   // 怪物反击
   const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
+  syncLogs()
   if (r2 === 'defeat') { defeat(); return }
 }
 
@@ -215,14 +249,28 @@ function draw() {
     drawBtn(ctx, makeBtn(BTN_X, ry + 150, BTN_W, 40, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
   }
 
-  // ============ 4. 战斗日志(逃跑按钮下方, 60高) ============
-  const ly = 600
-  roundRect(ctx, cxp, ly, cw, 60, 12, '#101024', '#2a2a4a', 1.5)
-  text(ctx, '战斗日志：', cxp + 14, ly + 16, 12, COLORS.gold, 'left', true)
-  const show = logs.slice(-2)
+  // ============ 4. 战斗日志(底部, 保留类型着色) ============
+  // 保留类型信息: syncLogs 时转存 battleLogs(对象数组)
+  const ly = S.LH - 76
+  roundRect(ctx, cxp, ly, cw, 64, 12, '#101024', '#2a2a4a', 1.5)
+  text(ctx, '战斗日志：', cxp + 14, ly + 14, 12, COLORS.gold, 'left', true)
+  const show = battleLogs.slice(-3)
   for (let i = 0; i < show.length; i++) {
-    text(ctx, show[i], cxp + 14, ly + 36 + i * 14, 10, COLORS.textDim, 'left')
+    const item = show[i]
+    const msg = typeof item === 'string' ? item : item.msg
+    const type = typeof item === 'string' ? '' : (item.type || '')
+    let color = COLORS.textDim
+    if (type === 'dodge') color = COLORS.blue
+    else if (type === 'crit') color = '#ffaa00'
+    else if (type === 'poison') color = COLORS.purple
+    else if (type === 'skill') color = COLORS.red
+    else if (type === 'loot') color = COLORS.goldBright
+    else if (type === 'info') color = COLORS.textDim
+    text(ctx, msg, cxp + 14, ly + 34 + i * 14, 10, color, 'left')
   }
 }
+
+// 引擎战斗日志(含类型)
+let battleLogs = []
 
 module.exports = { start, draw, touch }
