@@ -631,15 +631,19 @@ function drawFooter() {
   if (ratio > 0) roundRect(ctx, barX, y + 64, barW * ratio, 12, 6, '#e74c3c')
 
   if (footerExpanded) {
-    // 属性两行(带图标+白色文字)
-    text(ctx, '⚔️ 攻击', 18, y + 96, 12, '#ffffff', 'left')
-    text(ctx, '' + p.totalAttack, 78, y + 96, 12, '#ffffff', 'left', true)
-    text(ctx, '🛡️ 防御', 140, y + 96, 12, '#ffffff', 'left')
-    text(ctx, '' + p.totalDefense, 200, y + 96, 12, '#ffffff', 'left', true)
-    text(ctx, '⚡ 暴击', 18, y + 120, 12, '#ffffff', 'left')
-    text(ctx, '' + Math.round(p.totalCrit * 100) + '%', 78, y + 120, 12, '#ffffff', 'left', true)
-    text(ctx, '💨 闪避', 140, y + 120, 12, '#ffffff', 'left')
-    text(ctx, '' + Math.round(p.totalDodge * 100) + '%', 200, y + 120, 12, '#ffffff', 'left', true)
+    // 属性两行: 图标x=18 数值x=34 与血条/金币列对齐
+    text(ctx, '⚔️', 18, y + 96, 12)
+    text(ctx, '' + p.totalAttack, 34, y + 96, 12, '#ffffff', 'left', true)
+    text(ctx, '攻击', 78, y + 96, 11, '#8a8a9a', 'left')
+    text(ctx, '🛡️', 140, y + 96, 12)
+    text(ctx, '' + p.totalDefense, 156, y + 96, 12, '#ffffff', 'left', true)
+    text(ctx, '防御', 200, y + 96, 11, '#8a8a9a', 'left')
+    text(ctx, '⚡', 18, y + 120, 12)
+    text(ctx, '' + Math.round(p.totalCrit * 100) + '%', 34, y + 120, 12, '#ffffff', 'left', true)
+    text(ctx, '暴击', 78, y + 120, 11, '#8a8a9a', 'left')
+    text(ctx, '💨', 140, y + 120, 12)
+    text(ctx, '' + Math.round(p.totalDodge * 100) + '%', 156, y + 120, 12, '#ffffff', 'left', true)
+    text(ctx, '闪避', 200, y + 120, 11, '#8a8a9a', 'left')
 
     // 资源行: 金币金色 + 经验黄色
     text(ctx, '💰', 18, y + 144, 12)
