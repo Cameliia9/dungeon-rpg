@@ -248,6 +248,10 @@ function draw() {
 
   // ============ 3. 操作/结果区 ============
   if (result === 'fighting') {
+    // 三个按钮共用一个卡片背景
+    const btnCardY = btn1 - 12
+    const btnCardH = btn3 + BTN_H - btn1 + 24
+    roundRect(ctx, cxp, btnCardY, cw, btnCardH, 12, ui.cardFill(ctx, cxp, btnCardY, cw, btnCardH), COLORS.cardBorder, 1.5)
     // 全宽大按钮(对齐原版 .btn): 攻击/防御(带说明)/逃跑(带成功率,非Boss)
     drawBtn(ctx, makeBtn(BTN_X, btn1, BTN_W, BTN_H, '⚔️ 攻击', null, ui.BTN.primary))
     drawBtn(ctx, makeBtn(BTN_X, btn2, BTN_W, BTN_H, '🛡️ 防御（减少50%伤害，本回合）', null, ui.BTN.secondary))
