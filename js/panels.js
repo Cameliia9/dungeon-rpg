@@ -64,18 +64,18 @@ function build() {
     list = p.inventory.map((it, i) => ({ ...it, invIdx: i }))
     layout.push({ kind: 'eqHeader', y: 168, endY: 0 })
     let y = 168 + 42
-    layout.push({ kind: 'eqRow', slot: 'weapon', item: p.weapon, y, h: 40 }); y += 40
-    layout.push({ kind: 'eqRow', slot: 'armor', item: p.armor, y, h: 40 }); y += 40
-    layout.push({ kind: 'eqRow', slot: 'accessory', item: p.accessory, y, h: 40 }); y += 40
-    layout[0].endY = y - 2
+    layout.push({ kind: 'eqRow', slot: 'weapon', item: p.weapon, y, h: 46 }); y += 46
+    layout.push({ kind: 'eqRow', slot: 'armor', item: p.armor, y, h: 46 }); y += 46
+    layout.push({ kind: 'eqRow', slot: 'accessory', item: p.accessory, y, h: 46 }); y += 46
+    layout[0].endY = y + 12  // 饰品行下方留白, 卡片加高
     const invHi = layout.length
-    layout.push({ kind: 'invHeader', count: list.length, y: y + 26, endY: 0 }); y += 34
+    layout.push({ kind: 'invHeader', count: list.length, y: y + 52, endY: 0 }); y += 34
     if (list.length === 0) {
       layout.push({ kind: 'invEmpty', y: y + 24 })
       y += 60
     } else {
       for (const it of list) {
-        layout.push({ kind: 'item', item: it, y, h: 100 }); y += 100
+        layout.push({ kind: 'item', item: it, y, h: 140 }); y += 140
       }
     }
     layout[invHi].endY = y - 6
@@ -305,7 +305,7 @@ function drawItemRow(ctx, it, y, h) {
     const icon = it.type === 'weapon' ? '🗡️' : it.type === 'armor' ? '🛡️' : it.type === 'accessory' ? '💍' : '🧪'
     let name = icon + ' ' + it.name
     while (name.length > 2 && ui.textWidth(ctx, name, 15) > rightEdge - x) name = name.slice(0, -1)
-    text(ctx, name, x, y + 24, 15, COLORS.text, 'left', true)
+    text(ctx, name, x, y + 28, 16, COLORS.text, 'left', true)
     let prop = ''
     if (it.type === 'potion') prop = '治疗'
     else {
@@ -313,11 +313,19 @@ function drawItemRow(ctx, it, y, h) {
       if (it.defense) prop += '防御+' + it.defense + ' '
       if (it.hp) prop += '生命+' + it.hp
     }
-    text(ctx, prop, x, y + 50, 13, '#8a8a9a', 'left')
+    text(ctx, prop, x, y + 58, 14, '#8a8a9a', 'left')
+    let sub2 = ''
+    if (it.type === 'potion') sub2 = it.desc || ''
+    else {
+      if (it.critChance) sub2 += '⚡暴击+' + Math.round(it.critChance * 100) + '% '
+      if (it.dodgeChance) sub2 += '💨闪避+' + Math.round(it.dodgeChance * 100) + '%'
+    }
+    while (sub2.length > 1 && ui.textWidth(ctx, sub2, 12) > rightEdge - x) sub2 = sub2.slice(0, -1)
+    text(ctx, sub2, x, y + 84, 12, '#ffaa00', 'left')
     let desc = it.desc || ''
-    while (desc.length > 1 && ui.textWidth(ctx, desc, 11) > rightEdge - x) desc = desc.slice(0, -1)
-    text(ctx, desc, x, y + 72, 11, '#666666', 'left')
-    drawBtn(ctx, makeBtn(btnX, y + 33, btnW, 34, it.type === 'potion' ? '使用' : '装备', null, it.type === 'potion' ? ui.BTN.gold : ui.BTN.primary))
+    while (desc.length > 1 && ui.textWidth(ctx, desc, 12) > rightEdge - x) desc = desc.slice(0, -1)
+    text(ctx, desc, x, y + 110, 12, '#666666', 'left')
+    drawBtn(ctx, makeBtn(btnX, y + 53, btnW, 36, it.type === 'potion' ? '使用' : '装备', null, it.type === 'potion' ? ui.BTN.gold : ui.BTN.primary))
   } else {
     // forge
     const slotName = it.slot === 'weapon' ? '🗡️ 武器' : it.slot === 'armor' ? '🛡️ 护甲' : '💍 饰品'
