@@ -44,8 +44,9 @@ function layoutY() {
   const btn1 = py + ph + 20
   const btn2 = btn1 + BTN_H + BTN_GAP
   const btn3 = btn2 + BTN_H + BTN_GAP
-  const logY = btn3 + BTN_H + 10
-  const logH = Math.min(100, Math.max(50, S.LH - logY - 10))  // 日志缩小(上限100)
+  // 日志贴屏幕底部, 高度上限100
+  const logH = Math.min(100, Math.max(0, S.LH - btn3 - BTN_H - 22))
+  const logY = S.LH - logH - 10
   return { my, mh, py, ph, btn1, btn2, btn3, logY, logH }
 }
 // 日志滑动状态
@@ -81,7 +82,7 @@ function touchMove(x, y) {
   if (y < L.logY || y > L.logY + L.logH) { dragY = null; return }
   if (dragY === null) { dragY = y; dragScroll = logScroll }
   const lineH = 14
-  const viewLines = Math.max(1, Math.floor((L.logH - 28) / lineH))
+  const viewLines = Math.max(0, Math.floor((L.logH - 30) / lineH))
   const maxScroll = Math.max(0, Math.max(0, battleLogs.length - viewLines) * lineH)
   logScroll = Math.max(0, Math.min(maxScroll, dragScroll - (y - dragY)))
 }
@@ -281,7 +282,7 @@ function draw() {
   roundRect(ctx, cxp, logY, cw, logH, 12, '#101024', '#2a2a4a', 1.5)
   text(ctx, '战斗日志：', cxp + 14, logY + 14, 12, COLORS.gold, 'left', true)
   const lineH = 14
-  const viewLines = Math.max(1, Math.floor((logH - 28) / lineH))
+  const viewLines = Math.max(0, Math.floor((logH - 30) / lineH))
   const total = battleLogs.length
   const maxScroll = Math.max(0, Math.max(0, total - viewLines) * lineH)
   logScroll = Math.max(0, Math.min(maxScroll, logScroll))
