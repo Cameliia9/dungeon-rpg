@@ -65,7 +65,7 @@ function switchScene(name) {
 function buildMenu() {
   btns = []
   const bw = Math.min(220, LW * 0.7), bh = 48, cx = LW / 2
-  let y = LH * 0.42
+  let y = LH * 0.48
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🆕 新游戏', () => switchScene('difficulty'), ui.BTN.primary)); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, savedGame ? '▶️ 继续游戏' : '▶️ 继续游戏（无存档）', () => {
     if (savedGame) { loadGame(); switchScene('game') }
@@ -86,8 +86,8 @@ function drawMenu() {
   const dur = 450, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 80, dur)
-  text(ctx, '⚔️', LW / 2, LH * 0.16 + (1 - p1) * dist, 48, COLORS.gold, 'center', false, p1)
-  text(ctx, '地牢冒险', LW / 2, LH * 0.24 + (1 - p2) * dist, 28, COLORS.gold, 'center', true, p2)
+  text(ctx, '⚔️', LW / 2, LH * 0.20 + (1 - p1) * dist, 60, COLORS.gold, 'center', false, p1)
+  text(ctx, '地牢冒险', LW / 2, LH * 0.30 + (1 - p2) * dist, 36, COLORS.gold, 'center', true, p2)
 
   const delays = [160, 240, 320, 400]
   for (let i = 0; i < btns.length; i++) {
