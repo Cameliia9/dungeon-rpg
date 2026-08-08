@@ -121,7 +121,7 @@ function touch(x, y) {
 
   // 卡片区：根据状态分发（坐标与绘制一致）
   const cardTop = 244
-  const cardH = 152
+  const cardH = 136
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
     const side = isLeft ? 'left' : 'right'
@@ -373,7 +373,7 @@ function draw() {
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 244
-  const cardH = 152
+  const cardH = 136
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
@@ -608,7 +608,7 @@ function altarOffer(side, type, evt) {
 
 // 状态栏高度: 固定167px(≈页面25%), 展开时显示全部, 收起时折叠按钮区
 function footerH() {
-  return footerExpanded ? 267 : 66
+  return footerExpanded ? 279 : 66
 }
 
 function drawFooter() {
