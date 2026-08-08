@@ -35,8 +35,13 @@ function cardFill(ctx, x, y, w, h) {
   return g
 }
 
-/** 圆角矩形 */
-function roundRect(ctx, x, y, w, h, r, fill, stroke, lineW) {
+/** 圆角矩形; shadow=极淡阴影(小游戏暗黑风格) */
+function roundRect(ctx, x, y, w, h, r, fill, stroke, lineW, shadow) {
+  if (shadow) {
+    ctx.shadowColor = 'rgba(0,0,0,0.25)'
+    ctx.shadowBlur = 8
+    ctx.shadowOffsetY = 3
+  }
   ctx.beginPath()
   ctx.moveTo(x + r, y)
   ctx.lineTo(x + w - r, y)
@@ -50,6 +55,11 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke, lineW) {
   ctx.closePath()
   if (fill) { ctx.fillStyle = fill; ctx.fill() }
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineW || 2; ctx.stroke() }
+  if (shadow) {
+    ctx.shadowColor = 'transparent'
+    ctx.shadowBlur = 0
+    ctx.shadowOffsetY = 0
+  }
 }
 
 /** 文本（居中/左对齐）；可选动画：alpha 透明度, offsetY 上滑偏移 */
