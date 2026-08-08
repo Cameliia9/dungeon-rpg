@@ -250,6 +250,7 @@ function draw() {
   const a4 = ui.animProgress(enterTime, 420, dur)
 
   // ============ 1. 怪物卡 (对齐原版: icon 48px 居中 + 名字 + Lv掉落 + 生命值 + 血条 + 攻防暴闪) ============
+  ctx.globalAlpha = a1
   roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : COLORS.cardBorder, isBoss ? 2 : 1.5)
   text(ctx, monster.icon || '👹', cx, my + 44, 48)
   if (isBoss) text(ctx, '⚠️ BOSS ⚠️', cx, my + 82, 11, '#ff4444', 'center', true)
