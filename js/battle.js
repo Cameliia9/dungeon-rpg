@@ -29,11 +29,11 @@ function start(shared, m, boss, done) {
   syncLogs()
 }
 
-// 全宽按钮纵向布局(对齐原版): 攻击/防御/逃跑(非Boss)
-const BTN_X = 32
-const BTN_W = 311  // LW-64
-const BTN_H = 42
-const BTN_GAP = 9
+// 按钮纵向布局: 攻击/防御/逃跑(非Boss), 宽约原一半居中, 间距大
+const BTN_W = 160
+const BTN_H = 44
+const BTN_GAP = 22
+function btnX() { return (S.LW - BTN_W) / 2 }
 // 动态布局: 怪卡与玩家卡间距大(32), 玩家卡加高(140), 按钮下移, 日志区加高
 function layoutY() {
   const my = 80
@@ -44,10 +44,13 @@ function layoutY() {
   const btn1 = py + ph + 20
   const btn2 = btn1 + BTN_H + BTN_GAP
   const btn3 = btn2 + BTN_H + BTN_GAP
+  // 按钮卡片(三按钮在内, 加高)
+  const btnCardY = btn1 - 16
+  const btnCardH = btn3 + BTN_H - btn1 + 32
   // 日志贴屏幕底部, 高度上限100
   const logH = Math.min(100, Math.max(0, S.LH - btn3 - BTN_H - 22))
   const logY = S.LH - logH - 10
-  return { my, mh, py, ph, btn1, btn2, btn3, logY, logH }
+  return { my, mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH }
 }
 // 日志滑动状态
 let logScroll = 0
@@ -57,14 +60,16 @@ let dragScroll = 0
 function touch(x, y) {
   const L = layoutY()
   if (result === 'fighting') {
-    if (x < BTN_X || x > BTN_X + BTN_W) return
+    const bx = btnX()
+    if (x < bx || x > bx + BTN_W) return
     if (y > L.btn1 && y < L.btn1 + BTN_H) { attack(); return }
     if (y > L.btn2 && y < L.btn2 + BTN_H) { defend(); return }
     if (!isBoss && y > L.btn3 && y < L.btn3 + BTN_H) { flee(); return }
   } else {
     // 结果卡: 返回探索/重新开始按钮
     const ry = L.btn1 - 30
-    if (y > ry + 150 && y < ry + 190 && x > BTN_X && x < BTN_X + BTN_W) {
+    const bx = btnX()
+    if (y > ry + 150 && y < ry + 190 && x > bx && x < bx + BTN_W) {
       if (result === 'defeat') {
         S.player = null
         S.switchScene('menu')
@@ -216,7 +221,7 @@ function draw() {
   const cx = S.LW / 2
   const cxp = 16         // 卡片x
   const L = layoutY()
-  const { my, mh, py, ph, btn1, btn2, btn3, logY, logH } = L
+  const { my, mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
 
   // ============ 1. 怪物卡 (对齐原版: icon 48px 居中 + 名字 + Lv掉落 + 生命值 + 血条 + 攻防暴闪) ============
   roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : COLORS.cardBorder, isBoss ? 2 : 1.5)
@@ -248,16 +253,15 @@ function draw() {
 
   // ============ 3. 操作/结果区 ============
   if (result === 'fighting') {
-    // 三个按钮共用一个卡片背景
-    const btnCardY = btn1 - 12
-    const btnCardH = btn3 + BTN_H - btn1 + 24
+    // 三个按钮共用一个卡片背景(加高)
     roundRect(ctx, cxp, btnCardY, cw, btnCardH, 12, ui.cardFill(ctx, cxp, btnCardY, cw, btnCardH), COLORS.cardBorder, 1.5)
-    // 全宽大按钮(对齐原版 .btn): 攻击/防御(带说明)/逃跑(带成功率,非Boss)
-    drawBtn(ctx, makeBtn(BTN_X, btn1, BTN_W, BTN_H, '⚔️ 攻击', null, ui.BTN.primary))
-    drawBtn(ctx, makeBtn(BTN_X, btn2, BTN_W, BTN_H, '🛡️ 防御（减少50%伤害，本回合）', null, ui.BTN.secondary))
+    // 按钮居中(宽约原一半), 间距大
+    const bx = btnX()
+    drawBtn(ctx, makeBtn(bx, btn1, BTN_W, BTN_H, '⚔️ 攻击', null, ui.BTN.primary))
+    drawBtn(ctx, makeBtn(bx, btn2, BTN_W, BTN_H, '🛡️ 防御（减少50%伤害，本回合）', null, ui.BTN.secondary))
     if (!isBoss) {
       const fleePct = Math.round(Math.min(0.9, 0.2 + p.fleeFails * 0.1) * 100)
-      drawBtn(ctx, makeBtn(BTN_X, btn3, BTN_W, BTN_H, '🏃 逃跑（' + fleePct + '%成功率）', null, ui.BTN.danger))
+      drawBtn(ctx, makeBtn(bx, btn3, BTN_W, BTN_H, '🏃 逃跑（' + fleePct + '%成功率）', null, ui.BTN.danger))
     }
   } else {
     // 结果卡 (对齐原版: 图标40px + 标题 + 副标题 + 按钮)
@@ -279,7 +283,7 @@ function draw() {
       text(ctx, '你被打倒了...', cx, ry + 74, 20, COLORS.red, 'center', true)
       text(ctx, '冒险到此结束，一切重来', cx, ry + 102, 13, COLORS.textDim)
     }
-    drawBtn(ctx, makeBtn(BTN_X, ry + 150, BTN_W, 40, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
+    drawBtn(ctx, makeBtn(btnX(), ry + 150, BTN_W, 40, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
   }
 
   // ============ 4. 战斗日志(可上下滑动) ============
