@@ -270,6 +270,7 @@
 
     <!-- 状态栏信息：先上滑出现 -->
     <view class="anim-footer" style="flex: 1;">
+      <view class="stat-row"><text class="stat-label">🧝♂️ {{player.name}}</text></view>
       <view class="stat-row"><text class="stat-label">❤️ {{player.hp}} / {{totalMaxHp}}</text></view>
       <view class="hp-bar-wrap" style="margin: 4px 0;"><view class="hp-bar-fill" style="width: {{player.hp / totalMaxHp * 100}}%"></view></view>
       <view class="stat-row"><text class="stat-label">⚔️ {{totalAttack}}攻  🛡️ {{totalDefense}}防</text></view>
