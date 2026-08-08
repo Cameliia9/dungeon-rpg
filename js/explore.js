@@ -166,7 +166,7 @@ function touch(x, y) {
     } else if (state === 'monster') {
       // 战斗/逃跑按钮(上下排, 放大后同步)
       const mbw = w * 0.8
-      if (yy > cy + 22 && yy < cy + 52) {
+      if (yy > cy + 16 && yy < cy + 46) {
         if (xx > cx - mbw / 2 && xx < cx + mbw / 2) startBattle(side, false)
       } else if (yy > cy + 56 && yy < cy + 86) {
         if (xx > cx - mbw / 2 && xx < cx + mbw / 2) fleeMonster(side)
@@ -555,7 +555,7 @@ function drawMonsterCard(cx, cy, m, w) {
   // 战斗/逃跑按钮（上下排, 间距4px, 宽0.8w）
   const bw = w * 0.8
   const side = activeSide || 'left'
-  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 22, bw, 30, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 16, bw, 30, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 56, bw, 30, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
 }
 
