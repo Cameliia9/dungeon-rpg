@@ -274,7 +274,7 @@
     <view style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 10px;">
       <button class="btn-sm btn-sm-gold" style="width: 48%; margin: 0 0 8px 0; padding: 10px 0; font-size: 14px;" bindtap="openShop">🏪 商店</button>
       <button class="btn-sm btn-sm-primary" style="width: 48%; margin: 0 0 8px 0; padding: 10px 0; font-size: 14px;" bindtap="openInventory">🎒 背包 ({{player.inventory.length}})</button>
-      <button class="btn-sm btn-sm-secondary" style="width: 48%; margin: 0; padding: 10px 0; font-size: 14px;" bindtap="openForge">⚒️ 铁匠铺</button>
+      <button class="btn-sm btn-sm-forge" style="width: 48%; margin: 0; padding: 10px 0; font-size: 14px;" bindtap="openForge">⚒️ 铁匠铺</button>
       <button class="btn-sm btn-sm-secondary" style="width: 48%; margin: 0; padding: 10px 0; font-size: 14px;" bindtap="exitExplore">🚪 退出</button>
     </view>
   </view>

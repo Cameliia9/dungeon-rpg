@@ -230,3 +230,4 @@ page {
 .btn-sm-secondary { background: linear-gradient(135deg, #2c3e50, #34495e); color: #ccc; }
 .btn-sm-gold { background: linear-gradient(135deg, #d4a017, #f0c040); color: #1a1a2e; }
 .btn-sm-danger { background: linear-gradient(135deg, #8b0000, #ff4444); color: white; }
+.btn-sm-forge { background: linear-gradient(135deg, #b34700, #ff8c1a); color: white; }
