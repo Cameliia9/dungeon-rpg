@@ -9,13 +9,17 @@ const GE = require('./utils/game-engine')
 const Data = require('./utils/data')
 
 // ==================== 画布 ====================
-// 小游戏主 canvas 自动全屏(物理像素), 用系统信息取逻辑尺寸
+// 微信官方标准: 显式设置 canvas 物理尺寸 = 逻辑尺寸 × DPR，再 scale(DPR)
+// 不显式设置时主 canvas 默认 750x1334(物理), 若 DPR=1 则逻辑区域 750x1334,
+// 按 375x667 绘制只占左上角 → 看起来空白
 const sysInfo = wx.getSystemInfoSync()
 const DPR = sysInfo.pixelRatio || 2
 const LW = sysInfo.windowWidth    // 逻辑宽(如375)
 const LH = sysInfo.windowHeight   // 逻辑高(如667)
 
 const canvas = wx.createCanvas()
+canvas.width = LW * DPR
+canvas.height = LH * DPR
 const ctx = canvas.getContext('2d')
 ctx.scale(DPR, DPR)
 
@@ -168,6 +172,7 @@ if (loadGame()) savedGame = true
 switchScene('menu')
 
 // 渲染循环带异常保护，避免单帧错误卡死
+// 双保险: requestAnimationFrame + setInterval(部分开发者工具环境 rAF 不触发)
 function loop() {
   try {
     draw()
@@ -177,3 +182,4 @@ function loop() {
   requestAnimationFrame(loop)
 }
 requestAnimationFrame(loop)
+setInterval(loop, 33) // 30fps 兜底，确保画面一定刷新
