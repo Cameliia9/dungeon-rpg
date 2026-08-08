@@ -21,27 +21,38 @@ function start(shared, m, boss, done) {
   onDone = done
   result = 'fighting'
   logs = []
+  S.lastReward = null
   enterTime = Date.now()
   battle = new GE.Battle(S.player, m)
   logs.push(isBoss ? '👑 ' + m.name + ' 拦住了去路！' : m.icon + ' ' + m.name + ' 出现了！')
 }
 
+// 全宽按钮纵向布局(对齐原版): 攻击/防御/逃跑(非Boss)
+const BTN_X = 32
+const BTN_W = 311  // LW-64
+const BTN_H = 46
+const BTN_GAP = 10
+const BTN_Y1 = 400  // 攻击
+const BTN_Y2 = 456  // 防御
+const BTN_Y3 = 512  // 逃跑
+
 function touch(x, y) {
-  if (result !== 'fighting') return
-  const bw = 110, bh = 40
-  const cx = S.LW / 2
-  const y1 = S.LH - 140
-  if (y > y1 - 20 && y < y1 + bh) {
-    if (x > cx - bw * 1.7 && x < cx - bw * 0.6) attack()
-    else if (x > cx - bw * 0.4 && x < cx + bw * 0.4) defend()
-    else if (x > cx + bw * 0.6 && x < cx + bw * 1.7) {
-      if (!isBoss) flee()
-      else logs.push('Boss 拦住了去路，无法逃跑！')
+  if (result === 'fighting') {
+    if (x < BTN_X || x > BTN_X + BTN_W) return
+    if (y > BTN_Y1 && y < BTN_Y1 + BTN_H) { attack(); return }
+    if (y > BTN_Y2 && y < BTN_Y2 + BTN_H) { defend(); return }
+    if (!isBoss && y > BTN_Y3 && y < BTN_Y3 + BTN_H) { flee(); return }
+  } else {
+    // 结果卡: 返回探索/重新开始按钮
+    const ry = BTN_Y1 - 30
+    if (y > ry + 150 && y < ry + 190 && x > BTN_X && x < BTN_X + BTN_W) {
+      if (result === 'defeat') {
+        S.player = null
+        S.switchScene('menu')
+      } else {
+        finish()
+      }
     }
-  }
-  const y2 = S.LH - 90
-  if (y > y2 - 20 && y < y2 + bh) {
-    if (x > cx - bw * 0.5 && x < cx + bw * 0.5) usePotion()
   }
 }
 
@@ -106,6 +117,7 @@ function victory() {
   const leveled = p.addExp(expGain)
   p.poisonTurns = 0
   result = 'victory'
+  S.lastReward = { gold: goldGain, exp: expGain, leveled: leveled, bossLoot: isBoss && monster.loot ? monster.loot : null }
   logs.push('🎉 击败 ' + monster.name + '！ +' + goldGain + '💰 +' + expGain + '经验')
   if (leveled) logs.push('🎊 升级到 Lv.' + p.level + '！')
   if (isBoss && monster.loot) {
@@ -120,10 +132,6 @@ function defeat() {
   result = 'defeat'
   logs.push('💀 你被打倒了...')
   wx.removeStorageSync('dungeon_save')
-  setTimeout(() => {
-    S.player = null
-    S.switchScene('menu')
-  }, 1200)
 }
 
 function finish() {
@@ -139,55 +147,81 @@ function draw() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, S.LW, S.LH)
 
-  // 怪物卡 (入场 0s 下滑)
-  const mw = S.LW * 0.8, mh = 130
-  const mx = (S.LW - mw) / 2, my = 58
-  const pM = ui.animProgress(enterTime, 0, 450)
-  const mOff = (1 - pM) * 36
-  roundRect(ctx, mx, my, mw, mh, 12, ui.cardFill(ctx, mx, my, mw, mh), isBoss ? COLORS.red : COLORS.cardBorder, 2)
-  text(ctx, monster.icon, mx + 50, my + mh / 2, 44)
-  text(ctx, monster.name + '  Lv.' + monster.level, mx + 130, my + 30, 16, isBoss ? COLORS.red : COLORS.gold, 'left', true)
-  if (isBoss) text(ctx, '⚠️ BOSS ⚠️', mx + 130, my + 52, 11, COLORS.red, 'left', true)
-  hpBar(ctx, mx + 130, my + 62, mw - 150, 10, monster.hp / monster.maxHp)
-  text(ctx, monster.hp + ' / ' + monster.maxHp, mx + 130 + (mw - 150) / 2, my + 80, 11, COLORS.textDim)
-  text(ctx, '⚔' + monster.attack + '  🛡' + monster.defense + '  ⚡' + monster.critPercent + '%暴  💨' + monster.dodgePercent + '%闪', mx + 130, my + 100, 10, COLORS.textDark, 'left')
+  const cw = S.LW - 32   // 卡片宽(16边距)
+  const cx = S.LW / 2
+  const cxp = 16         // 卡片x
 
-  // 玩家卡 (入场 0.1s 上滑)
-  const py = my + mh + 16
-  const pP = ui.animProgress(enterTime, 100, 450)
-  const pOff = (1 - pP) * 36
-  roundRect(ctx, mx, py, mw, 100, 12, ui.cardFill(ctx, mx, py, mw, 100), COLORS.cardBorder, 2)
-  text(ctx, '🧝 ' + p.name, mx + 50, py + 25, 14, COLORS.text, 'left', true)
-  hpBar(ctx, mx + 100, py + 14, mw - 120, 10, p.hp / p.totalMaxHp)
-  text(ctx, p.hp + ' / ' + p.totalMaxHp, mx + 100 + (mw - 120) / 2, py + 34, 11, COLORS.textDim)
-  text(ctx, '⚔' + p.totalAttack + '  🛡' + p.totalDefense + '  ⚡' + Math.round(p.totalCrit * 100) + '%暴  💨' + Math.round(p.totalDodge * 100) + '%闪', mx + 100, py + 52, 10, COLORS.textDark, 'left')
-  if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', mx + 100, py + 72, 11, COLORS.purple, 'left', true)
+  // ============ 1. 怪物卡 (对齐原版: icon 48px 居中 + 名字 + Lv掉落 + 生命值 + 血条 + 攻防暴闪) ============
+  const my = 20
+  const mh = 210
+  roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : COLORS.cardBorder, isBoss ? 2 : 1.5)
+  text(ctx, monster.icon || '👹', cx, my + 44, 48)
+  if (isBoss) text(ctx, '⚠️ BOSS ⚠️', cx, my + 82, 11, '#ff4444', 'center', true)
+  text(ctx, monster.name, cx, my + 104, 20, isBoss ? '#ff5555' : COLORS.gold, 'center', true)
+  text(ctx, 'Lv.' + monster.level + (isBoss && monster.loot ? ' · 掉落：' + monster.loot.name : ''), cx, my + 128, 12, COLORS.textDim)
+  // 生命值行
+  text(ctx, '生命值', cxp + 16, my + 154, 12, COLORS.textDim, 'left')
+  text(ctx, monster.hp + ' / ' + monster.maxHp, cxp + cw - 16, my + 154, 12, COLORS.gold, 'right', true)
+  hpBar(ctx, cxp + 16, my + 164, cw - 32, 10, monster.hp / monster.maxHp, isBoss ? '#ff8800' : '#ff4444')
+  // 攻防/暴闪
+  text(ctx, '⚔️ ' + monster.attack + '攻 🛡️ ' + monster.defense + '防', cxp + 16, my + 190, 12, COLORS.textDim, 'left')
+  text(ctx, '⚡' + monster.critPercent + '%暴 💨' + monster.dodgePercent + '%闪', cxp + cw - 16, my + 190, 12, COLORS.textDim, 'right')
 
-  // 日志
-  const ly = py + 110
-  roundRect(ctx, mx, ly, mw, 90, 12, '#101024', '#2a2a4a', 1.5)
-  text(ctx, '— 战斗日志 —', mx + mw / 2, ly + 16, 11, COLORS.textDark)
-  const show = logs.slice(-3)
-  for (let i = 0; i < show.length; i++) {
-    text(ctx, show[i], mx + 12, ly + 36 + i * 20, 11, COLORS.textDim, 'left')
+  // ============ 2. 玩家卡 (对齐原版: 🧝40px + 血量 + 血条 + 暴闪) ============
+  const py = my + mh + 12
+  const ph = 128
+  roundRect(ctx, cxp, py, cw, ph, 12, ui.cardFill(ctx, cxp, py, cw, ph), COLORS.cardBorder, 1.5)
+  text(ctx, '🧝', cx, py + 30, 40)
+  // 名字 + 血量
+  text(ctx, '❤️ ' + p.name, cxp + 16, py + 26, 13, COLORS.textDim, 'left')
+  text(ctx, p.hp + ' / ' + p.totalMaxHp, cxp + cw - 16, py + 26, 13, COLORS.gold, 'right', true)
+  hpBar(ctx, cxp + 16, py + 40, cw - 32, 10, p.hp / p.totalMaxHp)
+  // 暴闪
+  text(ctx, '⚡' + Math.round(p.totalCrit * 100) + '%暴 💨' + Math.round(p.totalDodge * 100) + '%闪', cxp + 16, py + 66, 12, COLORS.textDim, 'left')
+  if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', cxp + cw - 16, py + 66, 12, COLORS.purple, 'right', true)
+  // 攻防
+  text(ctx, '⚔️ ' + p.totalAttack + '攻 🛡️ ' + p.totalDefense + '防', cxp + 16, py + 92, 12, COLORS.textDim, 'left')
+  text(ctx, '💾 ' + p.gold + '金', cxp + cw - 16, py + 92, 12, COLORS.textDim, 'right')
+
+  // ============ 3. 操作/结果区 ============
+  if (result === 'fighting') {
+    // 全宽大按钮(对齐原版 .btn): 攻击/防御(带说明)/逃跑(带成功率,非Boss)
+    drawBtn(ctx, makeBtn(BTN_X, BTN_Y1, BTN_W, BTN_H, '⚔️ 攻击', null, ui.BTN.primary))
+    drawBtn(ctx, makeBtn(BTN_X, BTN_Y2, BTN_W, BTN_H, '🛡️ 防御（减少50%伤害，本回合）', null, ui.BTN.secondary))
+    if (!isBoss) {
+      const fleePct = Math.round(Math.min(0.9, 0.2 + p.fleeFails * 0.1) * 100)
+      drawBtn(ctx, makeBtn(BTN_X, BTN_Y3, BTN_W, BTN_H, '🏃 逃跑（' + fleePct + '%成功率）', null, ui.BTN.danger))
+    }
+  } else {
+    // 结果卡 (对齐原版: 图标40px + 标题 + 副标题 + 按钮)
+    const ry = BTN_Y1 - 30
+    const rh = 190
+    roundRect(ctx, cxp, ry, cw, rh, 12, ui.cardFill(ctx, cxp, ry, cw, rh), COLORS.cardBorder, 1.5)
+    if (result === 'victory') {
+      text(ctx, '🎉', cx, ry + 40, 40)
+      text(ctx, '胜利！', cx, ry + 74, 20, COLORS.gold, 'center', true)
+      text(ctx, '获得 ' + S.lastReward.gold + ' 金币', cx, ry + 102, 13, '#f0c040')
+      text(ctx, '获得 ' + S.lastReward.exp + ' 经验', cx, ry + 124, 13, COLORS.blue)
+      if (S.lastReward.leveled) text(ctx, '🎊 升级到 Lv.' + p.level + '！', cx, ry + 146, 13, COLORS.goldBright)
+    } else if (result === 'fled') {
+      text(ctx, '🏃', cx, ry + 40, 40)
+      text(ctx, '逃脱成功！', cx, ry + 74, 20, COLORS.green, 'center', true)
+      text(ctx, '暂时远离了危险', cx, ry + 102, 13, COLORS.textDim)
+    } else if (result === 'defeat') {
+      text(ctx, '💀', cx, ry + 40, 40)
+      text(ctx, '你被打倒了...', cx, ry + 74, 20, COLORS.red, 'center', true)
+      text(ctx, '冒险到此结束，一切重来', cx, ry + 102, 13, COLORS.textDim)
+    }
+    drawBtn(ctx, makeBtn(BTN_X, ry + 150, BTN_W, 40, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
   }
 
-  // 战斗按钮
-  if (result === 'fighting') {
-    const bw = 110, bh = 40
-    const cx = S.LW / 2
-    const y1 = S.LH - 140
-    drawBtn(ctx, makeBtn(cx - bw * 1.7, y1, bw, bh, '⚔️ 攻击', null, ui.BTN.primary))
-    drawBtn(ctx, makeBtn(cx - bw * 0.4, y1, bw, bh, '🛡️ 防御', null, ui.BTN.secondary))
-    drawBtn(ctx, makeBtn(cx + bw * 0.6, y1, bw, bh, '🏃 逃跑', null, ui.BTN.secondary))
-    const y2 = S.LH - 90
-    drawBtn(ctx, makeBtn(cx - bw * 0.5, y2, bw, bh, '🧪 药水', null, ui.BTN.gold))
-  } else if (result === 'victory') {
-    text(ctx, '🎉 胜利！', S.LW / 2, S.LH - 120, 24, COLORS.gold, 'center', true)
-  } else if (result === 'defeat') {
-    text(ctx, '💀 你被打倒了...', S.LW / 2, S.LH - 120, 22, COLORS.red, 'center', true)
-  } else if (result === 'fled') {
-    text(ctx, '🏃 成功逃脱！', S.LW / 2, S.LH - 120, 22, COLORS.green, 'center', true)
+  // ============ 4. 战斗日志(底部) ============
+  const ly = S.LH - 92
+  roundRect(ctx, cxp, ly, cw, 76, 12, '#101024', '#2a2a4a', 1.5)
+  text(ctx, '战斗日志：', cxp + 14, ly + 18, 13, COLORS.gold, 'left', true)
+  const show = logs.slice(-3)
+  for (let i = 0; i < show.length; i++) {
+    text(ctx, show[i], cxp + 14, ly + 40 + i * 16, 11, COLORS.textDim, 'left')
   }
 }
 
