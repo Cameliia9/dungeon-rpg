@@ -124,7 +124,7 @@ function touch(x, y) {
     const at2 = activeEvt2 ? activeEvt2.type : ''
     const bigH2 = at2 === 'merchant' ? 0.14 : at2 === 'monster' ? 0.10 : 0.05
     const bigW2 = at2 === 'merchant' ? 0.20 : at2 === 'monster' ? 0.16 : 0
-    const shrW2 = at2 === 'merchant' ? 0.18 : at2 === 'monster' ? 0.14 : 0
+    const shrW2 = at2 === 'merchant' ? 0.24 : at2 === 'monster' ? 0.14 : 0
     if (cardAnim.side === side) {
       sy = 1 + bigH2 * e; sx = 1 + bigW2 * e
       if (at2 === 'merchant') sy = 1  // 商人内容不缩放(布局已加大)
@@ -181,14 +181,14 @@ function touch(x, y) {
       // 返回按钮(cy+42)
       if (yy > cy + 42 && yy < cy + 76) blockSide(side)
     } else if (state === 'merchant') {
-      // 商品行(54px高) + 离开按钮
+      // 商品行(58px高, 购买按钮下行) + 离开按钮
       let yy2 = cy - 69
       for (let i = 0; i < evt.items.length; i++) {
-        if (yy > yy2 - 2 && yy < yy2 + 52) {
+        if (yy > yy2 - 2 && yy < yy2 + 56) {
           const iw = w * 0.9, ix = cx - iw / 2
-          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 20 && yy < yy2 + 44) { buyMerchant(side, i); return }
+          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 42 && yy < yy2 + 66) { buyMerchant(side, i); return }
         }
-        yy2 += 58
+        yy2 += 62
       }
       if (yy > yy2 + 6 && yy < yy2 + 42) finishSide(side)
     } else if (state === 'altar') {
@@ -430,7 +430,7 @@ function drawCard(x, y, w, h, side, slideIn) {
     // 放大分级: 商人最大(高1.14/宽1.20), 怪物(高1.10/宽1.16), 其他等比1.05
     const bigH = at === 'merchant' ? 0.14 : at === 'monster' ? 0.10 : 0.05
     const bigW = at === 'merchant' ? 0.20 : at === 'monster' ? 0.16 : 0
-    const shrW = at === 'merchant' ? 0.18 : at === 'monster' ? 0.14 : 0
+    const shrW = at === 'merchant' ? 0.24 : at === 'monster' ? 0.14 : 0
     if (cardAnim.side === side) {
       // 选中侧: 按事件类型放大(宽>高)
       scale = 1 + bigH * e
@@ -585,17 +585,17 @@ function drawMerchantCard(cx, cy, evt, side, w) {
   text(ctx, evt.merchantName || '神秘商人', cx, cy - 97, 18, COLORS.gold, 'center', true)
   text(ctx, '来自【' + (evt.themeName || '') + '】的游商', cx, cy - 75, 12, COLORS.textDim)
 
-  // 商品列表（每项: 名称金色15px+desc灰11px / 💰价格15px+金色购买按钮）
+  // 商品列表（两行: 名称+描述上行, 💰价格+购买按钮下行, 对齐原版不重叠）
   let yy = cy - 69
   for (let i = 0; i < evt.items.length; i++) {
     const it = evt.items[i]
     const iw = w * 0.9, ix = cx - iw / 2
-    roundRect(ctx, ix, yy - 2, iw, 54, 6, '#1a1a2e', '#2a2a4a', 1)
-    text(ctx, it.name, ix + 8, yy + 12, 15, COLORS.gold, 'left', true)
+    roundRect(ctx, ix, yy - 2, iw, 58, 6, '#1a1a2e', '#2a2a4a', 1)
+    text(ctx, it.name, ix + 8, yy + 14, 15, COLORS.gold, 'left', true)
     text(ctx, it.desc || '', ix + 8, yy + 34, 11, COLORS.textDim, 'left')
-    text(ctx, '💰 ' + it.price, ix + iw - 64, yy + 12, 15, '#f0c040', 'left', true)
-    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 20, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
-    yy += 58
+    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 42, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
+    text(ctx, '💰 ' + it.price, ix + iw - 74, yy + 52, 15, '#f0c040', 'right', true)
+    yy += 62
   }
   drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
 }
