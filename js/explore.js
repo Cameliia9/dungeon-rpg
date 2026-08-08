@@ -355,7 +355,7 @@ function draw() {
 
   // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
   const theme = Data.getThemeForFloor(p.floor)
-  const infoY = 118, infoH = 86
+  const infoY = 118, infoH = 108
   roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
   // 第一行(整体居中): 🏰紧贴字 + 金色「地牢第X层」 + 主题图案紧贴名称
   const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
@@ -364,12 +364,12 @@ function draw() {
   const w2 = ui.textWidth(ctx, seg2, 14)
   const lineW = w1 + 16 + w2
   let lx = (S.LW - lineW) / 2
-  text(ctx, seg1, lx + w1 / 2, infoY + 34, 18, '#e0c080', 'center', true)
-  text(ctx, seg2, lx + w1 + 16 + w2 / 2, infoY + 34, 14, '#ffffff', 'center', true)
+  text(ctx, seg1, lx + w1 / 2, infoY + 30, 18, '#e0c080', 'center', true)
+  text(ctx, seg2, lx + w1 + 16 + w2 / 2, infoY + 30, 14, '#ffffff', 'center', true)
   // 第二行(居中): 浅灰描述
-  text(ctx, theme.desc || '', S.LW / 2, infoY + 66, 13, '#8a8a9a', 'center')
+  text(ctx, theme.desc || '', S.LW / 2, infoY + 62, 13, '#8a8a9a', 'center')
   // 第三行(居中): 浅灰进度
-  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 94, 13, '#8a8a9a', 'center')
+  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 86, 11, '#8a8a9a', 'center')
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 214
