@@ -30,8 +30,8 @@ function expandScale(type) {
     default: return 1.05
   }
 }
-// 未选中侧缩小比例
-const SHRINK_SCALE = 0.86
+// 未选中侧宽度收缩比例(高度不变, 内容随宽度变窄)
+const SHRINK_SCALE_X = 0.82
 
 function init(shared) {
   S = shared
@@ -415,9 +415,9 @@ function drawCard(x, y, w, h, side, slideIn) {
       // 选中侧: 横向放大(宽度变长, 高度不变), 商人最宽
       scaleX = 1 + (expandScale(evtType) - 1) * e
     } else {
-      // 未选中侧: 宽度变小 + 内容整体缩小
-      scale = 1 + (SHRINK_SCALE - 1) * e
-      scaleX = 1 + (0.82 - 1) * e
+      // 未选中侧: 只缩宽度, 高度不变, 内容随宽度变窄
+      scale = 1
+      scaleX = 1 + (SHRINK_SCALE_X - 1) * e
     }
   } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
     // 完成侧: 向右上旋转滑出(扑克牌式)
