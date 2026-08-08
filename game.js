@@ -87,9 +87,9 @@ function drawMenu() {
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 80, dur)
   // ⚔️大号emoji用手动居中(真机textAlign center对emoji宽度测量偏差导致偏左)
-  const sw1 = ui.textWidth(ctx, '⚔️', 60)
-  text(ctx, '⚔️', LW / 2 - sw1 / 2, LH * 0.20 + (1 - p1) * dist, 60, COLORS.gold, 'left', false, p1)
-  text(ctx, '地牢冒险', LW / 2, LH * 0.30 + (1 - p2) * dist, 36, COLORS.gold, 'center', true, p2)
+  const sw1 = ui.textWidth(ctx, '⚔️', 68)
+  text(ctx, '⚔️', LW / 2 - sw1 / 2, LH * 0.24 + (1 - p1) * dist, 68, COLORS.gold, 'left', false, p1)
+  text(ctx, '地牢冒险', LW / 2, LH * 0.34 + (1 - p2) * dist, 42, COLORS.gold, 'center', true, p2)
 
   const delays = [160, 240, 320, 400]
   for (let i = 0; i < btns.length; i++) {
