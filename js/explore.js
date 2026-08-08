@@ -119,32 +119,35 @@ function touch(x, y) {
     }
   }
 
-  // 卡片区：根据状态分发（坐标与绘制一致）
-  const cardTop = 214
-  const cardH = 166
-  if (y > cardTop && y < cardTop + cardH) {
-    const isLeft = x < S.LW / 2
-    const side = isLeft ? 'left' : 'right'
-    const state = side === 'left' ? leftState : rightState
-    const evt = side === 'left' ? leftEvent : rightEvent
-    const w = cardW()
-    const cx = isLeft ? leftX() + w / 2 : rightX() + w / 2
-    const cy = cardTop + cardH / 2
+  // 卡片区：根据状态分发（商人/祭坛内容超出卡片, 命中区向下扩展）
+  const cardTop = 224
+  const cardH = 154
+  const isLeft = x < S.LW / 2
+  const side = isLeft ? 'left' : 'right'
+  const state = side === 'left' ? leftState : rightState
+  const evt = side === 'left' ? leftEvent : rightEvent
+  const w = cardW()
+  const cx = isLeft ? leftX() + w / 2 : rightX() + w / 2
+  const cy = cardTop + cardH / 2
+  let hitBottom = cardTop + cardH
+  if (state === 'merchant') hitBottom = cy + 176
+  else if (state === 'altar') hitBottom = cy + 108
+  if (y > cardTop && y < hitBottom) {
 
     if (state === 'door') {
       if (evt && evt.type === 'stairs') {
         // 楼梯按钮 cy+23~cy+57 (绘制 cy+40 高34)
-        if (y > cy + 23 && y < cy + 57) descend()
+        if (y > cy + 38 && y < cy + 76) descend()
       } else if (evt && evt.type === 'boss') {
         // Boss按钮 cy+25~cy+59 (绘制 cy+42 高34)
-        if (y > cy + 25 && y < cy + 59) startBattle(side, true)
+        if (y > cy + 38 && y < cy + 76) startBattle(side, true)
       } else {
         // 前进按钮 cy+13~cy+47 (绘制 cy+30 高34: cy+30~cy+64)
-        if (y > cy + 13 && y < cy + 64) pickSide(side)
+        if (y > cy + 32 && y < cy + 76) pickSide(side)
       }
     } else if (state === 'monster') {
       // 战斗/逃跑按钮(并排, cy+52)
-      if (y > cy + 52 && y < cy + 84) {
+      if (y > cy + 45 && y < cy + 77) {
         if (x > cx - w * 0.36 - 4 && x < cx - 4) startBattle(side, false)
         else if (x > cx + 4 && x < cx + w * 0.36 + 4) fleeMonster(side)
       }
@@ -372,8 +375,8 @@ function draw() {
   text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 78, 11, '#8a8a9a', 'center')
 
   // ============ 中间探索区(≈50%: 167~500) ============
-  const cardTop = 214
-  const cardH = 166
+  const cardTop = 224
+  const cardH = 154
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
@@ -441,19 +444,19 @@ function drawCard(x, y, w, h, side, slideIn) {
   if (state === 'door') {
     if (evt && evt.type === 'stairs') {
       // 楼梯卡: 🪜 + 发现楼梯！(金色粗体) + 金色按钮
-      text(ctx, '🪜', cx, cy - 58, 44)
+      text(ctx, '🪜', cx, cy - 55, 44)
       text(ctx, '发现楼梯！', cx, cy - 6, 16, '#f0c040', 'center', true)
-      drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 40, w * 0.68, 38, '⬇️ 下到 ' + (p.floor + 1) + ' 层', () => descend(), { ...ui.BTN.gold, r: 19 }))
+      drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 38, w * 0.68, 38, '⬇️ 下到 ' + (p.floor + 1) + ' 层', () => descend(), { ...ui.BTN.gold, r: 19 }))
     } else if (evt && evt.type === 'boss') {
       // Boss卡: 👑 + ⚠️ Boss拦路！(红粗) + 描述 + 红色按钮
-      text(ctx, '👑', cx, cy - 62, 44)
+      text(ctx, '👑', cx, cy - 55, 44)
       text(ctx, '⚠️ Boss 拦路！', cx, cy - 8, 16, '#ff5555', 'center', true)
       text(ctx, '击败它才能继续前进', cx, cy + 16, 11, COLORS.textDim)
-      drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 42, w * 0.68, 38, '⚔️ 挑战 Boss', () => startBattle(side, true), { ...ui.BTN.danger, r: 19 }))
+      drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 38, w * 0.68, 38, '⚔️ 挑战 Boss', () => startBattle(side, true), { ...ui.BTN.danger, r: 19 }))
     } else {
       // 普通门: 浅棕色木门图标(大) + 红色大圆角前进按钮
       text(ctx, '🚪', cx, cy - 48, 52)
-      drawBtn(ctx, makeBtn(cx - w * 0.42, cy + 34, w * 0.84, 44, '前进探索', () => pickSide(side), { ...ui.BTN.primary, r: 22, size: 15 }))
+      drawBtn(ctx, makeBtn(cx - w * 0.42, cy + 32, w * 0.84, 44, '前进探索', () => pickSide(side), { ...ui.BTN.primary, r: 22, size: 15 }))
     }
   } else if (state === 'deadend') {
     // 死路: 🚧 + 死路 + 描述 + 灰色返回按钮
@@ -498,7 +501,7 @@ function drawResultCard(cx, cy, evt, w) {
     case 'camp': icon = '🏕️'; title = '休息营地'; desc = '安全休息，生命回满'; descColor = '#2ecc71'; break
   }
   // 对齐原版: 图标36px + 标题16px金色粗体 + 描述12px彩色 + 好的按钮(红色80%)
-  text(ctx, icon, cx, cy - 64, 36)
+  text(ctx, icon, cx, cy - 58, 36)
   text(ctx, title, cx, cy - 16, 16, COLORS.gold, 'center', true)
   text(ctx, desc, cx, cy + 10, 12, descColor)
   const side = activeSide || 'left'
@@ -508,7 +511,7 @@ function drawResultCard(cx, cy, evt, w) {
 function drawMonsterCard(cx, cy, m, w) {
   const ctx = S.ctx
   // 对齐原版怪物卡
-  text(ctx, m.icon, cx, cy - 78, 30)
+  text(ctx, m.icon, cx, cy - 62, 30)
   // 名字 + Lv(橙色小字)
   text(ctx, m.name, cx, cy - 36, 15, COLORS.gold, 'center', true)
   text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 15) / 2 + 14, cy - 36, 12, '#ffaa00')
@@ -520,8 +523,8 @@ function drawMonsterCard(cx, cy, m, w) {
   // 战斗/逃跑按钮（并排）
   const bw = w * 0.36
   const side = activeSide || 'left'
-  drawBtn(ctx, makeBtn(cx - bw - 4, cy + 52, bw, 32, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
-  drawBtn(ctx, makeBtn(cx + 4, cy + 52, bw, 32, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
+  drawBtn(ctx, makeBtn(cx - bw - 4, cy + 45, bw, 32, '⚔️ 战斗', () => startBattle(side, false), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx + 4, cy + 45, bw, 32, '🏃 逃跑(' + Math.round(Math.min(0.9, 0.4 + S.player.fleeFails * 0.1) * 100) + '%)', () => fleeMonster(side), ui.BTN.secondary))
 }
 
 function fleeMonster(side) {
@@ -541,9 +544,9 @@ function fleeMonster(side) {
 function drawMerchantCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
   // 对齐原版商人卡
-  text(ctx, evt.merchantIcon || '🧙', cx, cy - 96, 36)
-  text(ctx, evt.merchantName || '神秘商人', cx, cy - 52, 16, COLORS.gold, 'center', true)
-  text(ctx, '来自【' + (evt.themeName || '') + '】的游商', cx, cy - 30, 11, COLORS.textDim)
+  text(ctx, evt.merchantIcon || '🧙', cx, cy - 60, 36)
+  text(ctx, evt.merchantName || '神秘商人', cx, cy - 32, 16, COLORS.gold, 'center', true)
+  text(ctx, '来自【' + (evt.themeName || '') + '】的游商', cx, cy - 12, 11, COLORS.textDim)
 
   // 商品列表（每项: 名称金色13px+desc灰10px / 💰价格+金色购买按钮）
   let yy = cy - 8
@@ -581,8 +584,8 @@ function drawAltarCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
   const p = S.player
   // 对齐原版祭坛卡
-  text(ctx, '🔮', cx, cy - 84, 36)
-  text(ctx, '遗物祭坛', cx, cy - 36, 16, COLORS.gold, 'center', true)
+  text(ctx, '🔮', cx, cy - 58, 36)
+  text(ctx, '遗物祭坛', cx, cy - 34, 16, COLORS.gold, 'center', true)
   text(ctx, '献祭' + evt.cost + '血（' + evt.altarCount + '/' + evt.maxCount + '次）', cx, cy - 12, 11, COLORS.textDim)
   const bw = w * 0.8
   const disabled = evt.altarCount >= evt.maxCount || p.hp <= evt.cost
