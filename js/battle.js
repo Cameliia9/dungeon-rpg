@@ -150,7 +150,7 @@ function flee() {
     logs.push('你成功逃脱了！')
     result = 'fled'
     S.savePlayer()
-    setTimeout(finish, 800)
+    // 不自动返回: 显示结果卡, 等玩家手动点返回探索
   } else {
     p.fleeFails++
     logs.push('逃跑失败！下次成功率 ' + Math.min(0.9, chance + 0.1) * 100 + '%')
@@ -194,7 +194,7 @@ function victory() {
     logs.push('💎 掉落: ' + monster.loot.name)
   }
   S.savePlayer()
-  setTimeout(finish, 1000)
+  // 不自动返回: 显示结果卡, 等玩家手动点返回探索
 }
 
 function defeat() {
