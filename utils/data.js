@@ -73,7 +73,7 @@ const monsters = {
 
   // ---- 6-10层 骸骨墓穴 ----
   bone: [
-    { name: '骷髅兵', hp: 90, attack: 30, defense: 8, exp: 50, gold: 14, level: 6, critChance: 0.08, dodgeChance: 0.02, desc: '死去冒险者的遗骸，挥剑有力', icon: '💀' },
+    { name: '骷髅兵', hp: 90, attack: 30, defense: 8, exp: 50, gold: 14, level: 6, critChance: 0.08, dodgeChance: 0.02, desc: '死去冒险者的遗骸，挥剑有力', icon: '🦴' },
     { name: '骷髅射手', hp: 80, attack: 34, defense: 6, exp: 56, gold: 16, level: 6, critChance: 0.15, dodgeChance: 0.08, desc: '弓弦崩响，骨箭破空而来', icon: '🏹' },
     { name: '腐尸', hp: 120, attack: 32, defense: 12, exp: 60, gold: 17, level: 7, critChance: 0.05, dodgeChance: 0, desc: '散发着恶臭的不死生物，动作迟缓', icon: '🧟' },
     { name: '食尸鬼', hp: 100, attack: 38, defense: 8, exp: 66, gold: 19, level: 8, critChance: 0.12, dodgeChance: 0.10, desc: '饥渴的食尸者，扑食速度极快', icon: '👺' },
@@ -132,7 +132,7 @@ const bosses = [
     level: 8,
     floorOfAppearance: 10,
     critChance: 0.12, dodgeChance: 0.03,
-    desc: '骸骨墓穴的主宰，统御着无数亡灵', icon: '🦴',
+    desc: '骸骨墓穴的主宰，统御着无数亡灵', icon: '💀',
     skills: [
       { type: 'heavy', name: '骸骨冲击', multiplier: 1.8 },
       { type: 'rage', name: '亡灵狂怒', multiplier: 1.3 }
