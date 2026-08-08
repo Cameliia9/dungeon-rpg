@@ -152,7 +152,8 @@ const BTN = {
   secondary: { bg1: '#2c3e50', bg2: '#34495e', border: 'rgba(255,255,255,0.1)', fg: '#cccccc' },
   gold: { bg1: '#d4a017', bg2: '#f0c040', border: 'rgba(255,255,255,0.25)', fg: '#1a1a2e' },
   danger: { bg1: '#8b0000', bg2: '#c0392b', border: 'rgba(255,255,255,0.15)', fg: '#ffffff' },
-  forge: { bg1: '#b34700', bg2: '#ff8c1a', border: 'rgba(255,255,255,0.2)', fg: '#ffffff' }
+  forge: { bg1: '#b34700', bg2: '#ff8c1a', border: 'rgba(255,255,255,0.2)', fg: '#ffffff' },
+  disabled: { bg1: '#3a3a4a', bg2: '#454555', border: 'rgba(255,255,255,0.08)', fg: '#888888' }
 }
 
 module.exports = { COLORS, roundRect, text, textWidth, hpBar, makeBtn, drawBtn, hitBtn, BTN, cardFill, easeOut, animProgress }
