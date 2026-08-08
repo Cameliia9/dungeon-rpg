@@ -357,9 +357,9 @@ function draw() {
   const theme = Data.getThemeForFloor(p.floor)
   const infoY = 118, infoH = 118
   roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
-  // 第一行(整体居中): 🏰紧贴字 + 金色「地牢第X层」 + 绿色圆点 + 主题图案+名称
+  // 第一行(整体居中): 🏰紧贴字 + 金色「地牢第X层」 + 主题图案紧贴名称
   const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
-  const seg2 = '● ' + theme.icon + ' ' + theme.name
+  const seg2 = theme.icon + ' ' + theme.name
   const w1 = ui.textWidth(ctx, seg1, 18)
   const w2 = ui.textWidth(ctx, seg2, 14)
   const lineW = w1 + 16 + w2
