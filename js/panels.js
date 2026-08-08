@@ -53,7 +53,7 @@ function build() {
       const hi = layout.length
       layout.push({ kind: 'header', text: sec.title, y, endY: 0 }); y += 30
       for (const it of sec.items) {
-        layout.push({ kind: 'item', item: it, y, h: 76 }); y += 76
+        layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
       }
       layout[hi].endY = y - 6
       if (si < sections.length - 1) y += 20  // 分类间距20px
@@ -75,7 +75,7 @@ function build() {
       y += 60
     } else {
       for (const it of list) {
-        layout.push({ kind: 'item', item: it, y, h: 76 }); y += 76
+        layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
       }
     }
     layout[invHi].endY = y - 6
@@ -84,7 +84,7 @@ function build() {
     list = ['weapon', 'armor', 'accessory'].map(slot => ({ slot, item: p[slot] }))
     let y = 212
     for (const it of list) {
-      layout.push({ kind: 'item', item: it, y, h: 76 }); y += 76
+      layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
     }
     contentH = y
   }
@@ -95,11 +95,14 @@ function touch(x, y) {
   if (x > S.LW - 60 && y > M && y < M + 50) { close(); return }
   // 底部返回按钮(对齐原版 ↩️ 返回)
   if (y > S.LH - 60 && y < S.LH - 16 && x > M && x < M + PW()) { close(); return }
-  // 列表区: 记录拖动起点(点击在touchEnd判定)
+  // 列表区: 顶部/底部点按滚动兜底, 中部记录拖动起点(点击在touchEnd判定)
   const th = type === 'shop' ? 100 : 58
   const topY = 80 + th + 10
   const bottomY = S.LH - 70
+  const maxS = Math.max(0, contentH - (bottomY - topY))
   if (y > topY && y < bottomY) {
+    if (y < topY + 22) { scroll = Math.max(0, scroll - 60); return }
+    if (y > bottomY - 22) { scroll = Math.min(maxS, scroll + 60); return }
     touchStartY = y
     touchStartX = x
     dragged = false
@@ -244,9 +247,13 @@ function draw() {
   }
   ctx.restore()
 
-  // 滚动提示
-  if (contentH > bottomY - topY) {
-    text(ctx, '↑ 上滑 / ↓ 下滑', S.LW / 2, bottomY + 8, 11, COLORS.textDark)
+  // 右侧滚动条
+  const maxS = Math.max(0, contentH - (bottomY - topY))
+  if (maxS > 0) {
+    const barH = Math.max(22, (bottomY - topY) * (bottomY - topY) / contentH)
+    const barY = topY + (bottomY - topY - barH) * (scroll / maxS)
+    roundRect(ctx, S.LW - 10, barY, 4, barH, 2, 'rgba(255,255,255,0.45)')
+    text(ctx, '↑ 拖动 ↓', S.LW / 2, bottomY + 8, 10, COLORS.textDark)
   }
 
   // ===== 底部返回按钮(对齐原版 ↩️ 返回) =====
