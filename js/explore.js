@@ -120,14 +120,24 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（商人/祭坛内容超出卡片, 命中区向下扩展）
-  const cardTop = 214 + 12
-  const cardH = S.LH - FOOTER_H_EXPAND - 12 - cardTop
+  const cardTop = 214 + 15
+  const cardH = S.LH - FOOTER_H_EXPAND - 15 - cardTop
   const isLeft = x < S.LW / 2
   const side = isLeft ? 'left' : 'right'
   const state = side === 'left' ? leftState : rightState
   const evt = side === 'left' ? leftEvent : rightEvent
   const w = cardW()
-  const cx = isLeft ? leftX() + w / 2 : rightX() + w / 2
+  // 与绘制一致: 横向锚定外侧边缘, 含动画插值
+  let cwX = w, dxT = 0
+  if (cardAnim.phase === 'expand') {
+    const t = Math.min(1, (Date.now() - cardAnim.start) / cardAnim.dur)
+    const e = ui.easeOut(t)
+    cwX = w * (cardAnim.side === side ? 1 + (expandScale(evt ? evt.type : '') - 1) * e : 1 + (SHRINK_SCALE_X - 1) * e)
+  } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
+    const t = Math.min(1, (Date.now() - cardAnim.start) / 450)
+    dxT = 90 * ui.easeOut(t)
+  }
+  const cx = (isLeft ? leftX() + cwX / 2 : rightX() + w - cwX / 2) + dxT
   const cy = cardTop + cardH / 2
   let hitBottom = cardTop + cardH
   if (state === 'merchant') hitBottom = cy + 176
@@ -383,8 +393,8 @@ function draw() {
   text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 78, 11, '#8a8a9a', 'center')
 
   // ============ 中间探索区(≈50%: 167~500) ============
-  const cardTop = 214 + 12
-  const cardH = S.LH - FOOTER_H_EXPAND - 12 - cardTop
+  const cardTop = 214 + 15
+  const cardH = S.LH - FOOTER_H_EXPAND - 15 - cardTop
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
@@ -434,7 +444,9 @@ function drawCard(x, y, w, h, side, slideIn) {
   }
 
   const cw = w * scale * scaleX, ch = h * scale
-  const cx = x + w / 2 + dx, cy = y + h / 2 + (slideIn || 0) + dy
+  // 横向锚定外侧边缘: 左卡锚左缘/右卡锚右缘 → 变的是中间空隙, 两边到屏幕距离不变
+  const cx = (side === 'left' ? x + cw / 2 : x + w - cw / 2) + dx
+  const cy = y + h / 2 + (slideIn || 0) + dy
   ctx.globalAlpha = alpha
 
   // 旋转支持(扑克牌飞出)
