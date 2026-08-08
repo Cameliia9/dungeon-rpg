@@ -120,8 +120,8 @@ function touch(x, y) {
   }
 
   // 卡片区：根据状态分发（坐标与绘制一致）
-  const cardTop = 196
-  const cardH = 200
+  const cardTop = 228
+  const cardH = 168
   if (y > cardTop && y < cardTop + cardH) {
     const isLeft = x < S.LW / 2
     const side = isLeft ? 'left' : 'right'
@@ -353,22 +353,23 @@ function draw() {
   // 顶部居中白色标题「探索地牢」
   text(ctx, '探索地牢', S.LW / 2, 44, 20, '#ffffff', 'center', true)
 
-  // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距)
+  // 楼层信息卡(稍浅于背景的深蓝, 大圆角, 宽松内边距, 内容居中)
   const theme = Data.getThemeForFloor(p.floor)
-  const infoY = 84, infoH = 98
+  const infoY = 100, infoH = 120
   roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, '#16263a', 'rgba(255,255,255,0.06)', 1)
-  // 第一行: 左侧🏰+金色「地牢第X层」, 右侧绿色圆点+白色主题名
-  text(ctx, '🏰 地牢第 ' + p.floor + ' 层', 36, infoY + 28, 17, '#e0c080', 'left', true)
-  text(ctx, '●', S.LW - 70, infoY + 28, 10, '#2ecc71', 'left')
-  text(ctx, theme.name, S.LW - 56, infoY + 28, 13, '#ffffff', 'left', true)
-  // 第二行: 浅灰描述
-  text(ctx, theme.desc || '', 36, infoY + 58, 11, '#8a8a9a', 'left')
-  // 第三行: 浅灰进度
-  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', 36, infoY + 82, 11, '#8a8a9a', 'left')
+  // 第一行(居中): 🏰+金色「地牢第X层」+ 绿色圆点 + 白色主题名
+  text(ctx, '🏰', S.LW / 2 - 120, infoY + 32, 26)
+  text(ctx, '地牢第 ' + p.floor + ' 层', S.LW / 2, infoY + 32, 20, '#e0c080', 'center', true)
+  text(ctx, '●', S.LW / 2 + 68, infoY + 32, 12, '#2ecc71', 'center')
+  text(ctx, theme.name, S.LW / 2 + 90, infoY + 32, 15, '#ffffff', 'center', true)
+  // 第二行(居中): 浅灰描述
+  text(ctx, theme.desc || '', S.LW / 2, infoY + 66, 13, '#8a8a9a', 'center')
+  // 第三行(居中): 浅灰进度
+  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 94, 13, '#8a8a9a', 'center')
 
   // ============ 中间探索区(≈50%: 167~500) ============
-  const cardTop = 196
-  const cardH = 200
+  const cardTop = 228
+  const cardH = 168
   const cardW = S.LW * 0.43
   const pL = ui.animProgress(enterTime, 100, 600)
   const pR = ui.animProgress(enterTime, 200, 600)
