@@ -542,15 +542,23 @@ function getRandomMonster(floor, difficulty) {
     if (roll <= 0) { template = pool[i]; break }
   }
 
+  // ---- 等级随层偏移：同种怪在主题内越深等级越高 ----
+  // displayLevel = 基础等级 + (主题内层数-1)，封顶主题内最高等级，且不低于基础等级
+  const themeMaxLevel = Math.max(...pool.map(m => m.level))
+  const levelOffset = Math.min(floorInTheme - 1, themeMaxLevel - template.level)
+  const displayLevel = template.level + Math.max(0, levelOffset)
+
   const scaled = { ...template }
-  if (floor > template.level) {
-    const scale = 1 + (floor - template.level) * 0.3
-    scaled.hp = Math.floor(template.hp * scale)
-    scaled.attack = Math.floor(template.attack * scale)
-    scaled.defense = Math.floor(template.defense * scale)
-    scaled.exp = Math.floor(template.exp * scale)
-    scaled.gold = Math.floor(template.gold * scale)
+  // 按等级成长：每级血+15% 攻+10% 防+8% 经验金币+10%
+  const grow = displayLevel - template.level
+  if (grow > 0) {
+    scaled.hp = Math.floor(template.hp * Math.pow(1.15, grow))
+    scaled.attack = Math.floor(template.attack * Math.pow(1.10, grow))
+    scaled.defense = Math.floor(template.defense * Math.pow(1.08, grow))
+    scaled.exp = Math.floor(template.exp * Math.pow(1.10, grow))
+    scaled.gold = Math.floor(template.gold * Math.pow(1.10, grow))
   }
+  scaled.level = displayLevel
   // 难度缩放: 攻击/防御/奖励大幅，HP 小幅
   if (d.atk > 1 || d.hp > 1) {
     scaled.hp = Math.floor(scaled.hp * d.hp)
