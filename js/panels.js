@@ -45,30 +45,40 @@ function build() {
     ]
     let y = 128
     for (const sec of sections) {
-      layout.push({ kind: 'header', text: sec.title, y }); y += 30
+      const hi = layout.length
+      layout.push({ kind: 'header', text: sec.title, y, endY: 0 }); y += 30
       for (const it of sec.items) {
-        layout.push({ kind: 'item', item: it, y, h: 68 }); y += 68
+        layout.push({ kind: 'item', item: it, y, h: 66 }); y += 66
       }
+      layout[hi].endY = y - 6
     }
     contentH = y
   } else if (type === 'inventory') {
     // 对齐原版: 当前装备区 + 物品列表
     list = p.inventory.map((it, i) => ({ ...it, invIdx: i }))
-    layout.push({ kind: 'eqHeader', y: 148 })
+    layout.push({ kind: 'eqHeader', y: 148, endY: 0 })
     let y = 148 + 42
     layout.push({ kind: 'eqRow', slot: 'weapon', item: p.weapon, y, h: 40 }); y += 40
     layout.push({ kind: 'eqRow', slot: 'armor', item: p.armor, y, h: 40 }); y += 40
     layout.push({ kind: 'eqRow', slot: 'accessory', item: p.accessory, y, h: 40 }); y += 40
-    layout.push({ kind: 'invHeader', count: list.length, y: y + 6 }); y += 34
-    for (const it of list) {
-      layout.push({ kind: 'item', item: it, y, h: 62 }); y += 62
+    layout[0].endY = y - 2
+    const invHi = layout.length
+    layout.push({ kind: 'invHeader', count: list.length, y: y + 6, endY: 0 }); y += 34
+    if (list.length === 0) {
+      layout.push({ kind: 'invEmpty', y: y + 24 })
+      y += 60
+    } else {
+      for (const it of list) {
+        layout.push({ kind: 'item', item: it, y, h: 66 }); y += 66
+      }
     }
+    layout[invHi].endY = y - 6
     contentH = y
   } else if (type === 'forge') {
     list = ['weapon', 'armor', 'accessory'].map(slot => ({ slot, item: p[slot] }))
     let y = 148
     for (const it of list) {
-      layout.push({ kind: 'item', item: it, y, h: 68 }); y += 68
+      layout.push({ kind: 'item', item: it, y, h: 66 }); y += 66
     }
     contentH = y
   }
@@ -158,7 +168,7 @@ function draw() {
   const ctx = S.ctx
   const p = S.player
   // 半透明遮罩
-  ctx.fillStyle = 'rgba(0,0,0,0.7)'
+  ctx.fillStyle = 'rgba(0,0,0,0.65)'
   ctx.fillRect(0, 0, S.LW, S.LH)
 
   // ===== 标题卡(对齐原版: 标题+金币+区域/阶数) =====
@@ -188,17 +198,17 @@ function draw() {
   for (const el of layout) {
     const ey = el.y - scroll
     if (ey < topY - 80 || ey > bottomY + 10) continue
-    if (el.kind === 'header') {
-      text(ctx, el.text, M + 6, ey + 16, 16, '#e0c080', 'left', true)
-    } else if (el.kind === 'eqHeader') {
-      text(ctx, '当前装备', M + 6, ey + 16, 16, '#e0c080', 'left', true)
+    if (el.kind === 'header' || el.kind === 'eqHeader' || el.kind === 'invHeader') {
+      // 分类卡片背景(对齐原版 .card 渐变, 包住标题+其下内容)
+      const cardH2 = el.endY - el.y + 8
+      roundRect(ctx, M, ey - 8, PW(), cardH2, 12, ui.cardFill(ctx, M, ey - 8, PW(), cardH2), COLORS.cardBorder, 1.5)
+      text(ctx, el.kind === 'header' ? el.text : el.kind === 'eqHeader' ? '当前装备' : '背包物品（' + el.count + '件）', M + 12, ey + 14, 15, '#e0c080', 'left', true)
     } else if (el.kind === 'eqRow') {
       drawEquipRow(ctx, el, ey)
-    } else if (el.kind === 'invHeader') {
-      text(ctx, '背包物品（' + el.count + '件）', M + 6, ey + 16, 16, '#e0c080', 'left', true)
-      if (el.count === 0) text(ctx, '背包空空如也，去地牢冒险获取装备吧！', S.LW / 2, ey + 42, 12, '#666666')
     } else if (el.kind === 'item') {
       drawItemRow(ctx, el.item, ey, el.h)
+    } else if (el.kind === 'invEmpty') {
+      text(ctx, '背包空空如也，去地牢冒险获取装备吧！', S.LW / 2, ey, 12, '#666666')
     }
   }
   ctx.restore()
@@ -212,30 +222,41 @@ function draw() {
   drawBtn(ctx, makeBtn(M, S.LH - 60, PW(), 44, '↩️ 返回', null, ui.BTN.secondary))
 }
 
-// 装备项(商店/背包/铁匠铺, 对齐原版)
+// 装备项(商店/背包/铁匠铺, 3行紧凑布局+文字截断防溢出)
 function drawItemRow(ctx, it, y, h) {
-  const p = S.player
   // 原版: 背景#141428 边框#2a2a4a 圆角8
   roundRect(ctx, M, y, PW(), h - 10, 8, '#141428', '#2a2a4a', 1)
   const x = M + 14
+  const rightEdge = S.LW - M - 104  // 文本右边界(按钮左侧)
   if (type === 'shop') {
-    // 名称粗体 + 主属性(红/蓝/绿) + 副属性(暴击/闪避) + desc + 右侧💰价格金按钮
-    text(ctx, it.name, x, y + 18, 14, COLORS.text, 'left', true)
+    // 行1: 名称(粗体, 截断防压按钮)
+    let name = it.name
+    while (name.length > 1 && ui.textWidth(ctx, name, 14) > rightEdge - x) name = name.slice(0, -1)
+    text(ctx, name, x, y + 16, 14, COLORS.text, 'left', true)
+    // 行2: 主属性(攻红/防蓝/血绿)
     let prop = '', propColor = COLORS.textDim
     if (it.attack) { prop = '攻击 +' + it.attack; propColor = '#e74c3c' }
     else if (it.defense) { prop = '防御 +' + it.defense; propColor = '#3498db' }
     else if (it.hp) { prop = '生命上限 +' + it.hp; propColor = '#2ecc71' }
-    text(ctx, prop, x, y + 38, 12, propColor, 'left', true)
+    text(ctx, prop, x, y + 34, 12, propColor, 'left', true)
+    // 行3: 副属性(暴击黄/闪避蓝) + 描述(灰, 拼接截断)
     let sub = ''
-    if (it.critChance) sub += '⚡暴击 +' + Math.round(it.critChance * 100) + '% '
-    if (it.dodgeChance) sub += '💨闪避 +' + Math.round(it.dodgeChance * 100) + '%'
-    text(ctx, sub, x, y + 54, 11, '#ffaa00', 'left')
-    text(ctx, it.desc || '', x + (sub ? ui.textWidth(ctx, sub, 11) + 8 : 0), y + 54, 11, '#666666', 'left')
-    drawBtn(ctx, makeBtn(S.LW - M - 96, y + 14, 80, 34, '💰 ' + it.price, null, { ...ui.BTN.gold, size: 12 }))
+    if (it.critChance) sub += '⚡暴击+' + Math.round(it.critChance * 100) + '% '
+    if (it.dodgeChance) sub += '💨闪避+' + Math.round(it.dodgeChance * 100) + '%'
+    const subW = ui.textWidth(ctx, sub, 10)
+    let desc = it.desc || ''
+    while (desc.length > 1 && ui.textWidth(ctx, sub + desc, 10) > rightEdge - x) desc = desc.slice(0, -1)
+    text(ctx, sub, x, y + 50, 10, '#ffaa00', 'left')
+    text(ctx, desc, x + subW + 4, y + 50, 10, '#666666', 'left')
+    // 右侧💰价格金按钮
+    drawBtn(ctx, makeBtn(S.LW - M - 96, y + 15, 80, 34, '💰 ' + it.price, null, { ...ui.BTN.gold, size: 12 }))
   } else if (type === 'inventory') {
-    // 图标+名称 + 属性 + desc + 右侧装备按钮
+    // 行1: 图标+名称(截断)
     const icon = it.type === 'weapon' ? '🗡️' : it.type === 'armor' ? '🛡️' : it.type === 'accessory' ? '💍' : '🧪'
-    text(ctx, icon + ' ' + it.name, x, y + 18, 14, COLORS.text, 'left', true)
+    let name = icon + ' ' + it.name
+    while (name.length > 2 && ui.textWidth(ctx, name, 14) > rightEdge - x) name = name.slice(0, -1)
+    text(ctx, name, x, y + 16, 14, COLORS.text, 'left', true)
+    // 行2: 属性
     let prop = ''
     if (it.type === 'potion') prop = '治疗'
     else {
@@ -243,15 +264,21 @@ function drawItemRow(ctx, it, y, h) {
       if (it.defense) prop += '防御+' + it.defense + ' '
       if (it.hp) prop += '生命+' + it.hp
     }
-    text(ctx, prop, x, y + 38, 12, '#8a8a9a', 'left')
-    text(ctx, it.desc || '', x, y + 54, 11, '#666666', 'left')
-    drawBtn(ctx, makeBtn(S.LW - M - 90, y + 14, 74, 34, '装备', null, it.type === 'potion' ? ui.BTN.gold : ui.BTN.primary))
+    text(ctx, prop, x, y + 34, 12, '#8a8a9a', 'left')
+    // 行3: 描述(截断)
+    let desc = it.desc || ''
+    while (desc.length > 1 && ui.textWidth(ctx, desc, 10) > rightEdge - x) desc = desc.slice(0, -1)
+    text(ctx, desc, x, y + 50, 10, '#666666', 'left')
+    // 右侧装备按钮
+    drawBtn(ctx, makeBtn(S.LW - M - 90, y + 15, 74, 34, it.type === 'potion' ? '使用' : '装备', null, it.type === 'potion' ? ui.BTN.gold : ui.BTN.primary))
   } else {
     // forge
     const slotName = it.slot === 'weapon' ? '🗡️ 武器' : it.slot === 'armor' ? '🛡️ 护甲' : '💍 饰品'
     if (it.item) {
       const it2 = it.item
-      text(ctx, slotName + ' ' + it2.name + (it2.enhanceLevel ? ' +' + it2.enhanceLevel : ''), x, y + 20, 14, COLORS.text, 'left', true)
+      let name = slotName + ' ' + it2.name + (it2.enhanceLevel ? ' +' + it2.enhanceLevel : '')
+      while (name.length > 2 && ui.textWidth(ctx, name, 14) > rightEdge - x) name = name.slice(0, -1)
+      text(ctx, name, x, y + 18, 14, COLORS.text, 'left', true)
       const stat = it.slot === 'weapon' ? '攻+' + (it2.attack + (it2.enhanceLevel || 0) * 3) : it.slot === 'armor' ? '防+' + (it2.defense + (it2.enhanceLevel || 0) * 3) : '血+' + (it2.hp + (it2.enhanceLevel || 0) * 15)
       text(ctx, stat + '  (' + (it2.enhanceLevel || 0) + '/' + p.maxEnhanceLevel + ')', x, y + 42, 12, COLORS.textDim, 'left')
       const cost = p.getEnhanceCost(it2)
