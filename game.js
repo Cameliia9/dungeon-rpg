@@ -225,22 +225,25 @@ function draw() {
   else if (scene === 'battle' && battle) battle.draw()
 }
 
-// 触摸
-wx.onTouchStart((e) => {
-  const t = e.touches[0]
-  if (!t) return
-  // 小游戏触摸坐标 = 逻辑像素(与 windowWidth 同坐标系)
-  // 兜底: 若坐标明显超出逻辑宽(物理像素模式), 按比例换算
+// 触摸坐标归一化(物理像素 -> 逻辑像素)
+function normTouch(t) {
   let x = t.clientX, y = t.clientY
   if (x > LW * 1.5 && t.x) { x = t.x }
   if (y > LH * 1.5 && t.y) { y = t.y }
   if (x > LW || y > LH) {
-    // 尝试用 canvas 物理尺寸换算
     const cw = canvas.width || LW
     const ch = canvas.height || LH
     if (cw > 0) x = x * LW / cw
     if (ch > 0) y = y * LH / ch
   }
+  return { x, y }
+}
+
+// 触摸
+wx.onTouchStart((e) => {
+  const t = e.touches[0]
+  if (!t) return
+  const { x, y } = normTouch(t)
 
   // 面板层优先
   if (panels) {
@@ -255,6 +258,20 @@ wx.onTouchStart((e) => {
   } else if (scene === 'battle' && battle) {
     battle.touch(x, y)
   }
+})
+
+// 触摸滑动(战斗日志/探索日志滚动)
+wx.onTouchMove((e) => {
+  const t = e.touches[0]
+  if (!t || panels) return
+  const { x, y } = normTouch(t)
+  if (scene === 'battle' && battle && battle.touchMove) battle.touchMove(x, y)
+  else if (scene === 'explore' && explore && explore.touchMove) explore.touchMove(x, y)
+})
+
+wx.onTouchEnd(() => {
+  if (scene === 'battle' && battle && battle.touchEnd) battle.touchEnd()
+  else if (scene === 'explore' && explore && explore.touchEnd) explore.touchEnd()
 })
 
 // 启动

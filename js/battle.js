@@ -32,21 +32,37 @@ function start(shared, m, boss, done) {
 // 全宽按钮纵向布局(对齐原版): 攻击/防御/逃跑(非Boss)
 const BTN_X = 32
 const BTN_W = 311  // LW-64
-const BTN_H = 46
-const BTN_GAP = 10
-const BTN_Y1 = 440  // 攻击
-const BTN_Y2 = 496  // 防御
-const BTN_Y3 = 552  // 逃跑
+const BTN_H = 42
+const BTN_GAP = 9
+// 动态布局: 怪卡与玩家卡间距大(32), 玩家卡加高(140), 按钮下移, 日志区加高
+function layoutY() {
+  const my = 80
+  const mh = 180
+  const gap = 32
+  const py = my + mh + gap
+  const ph = 140
+  const btn1 = py + ph + 24
+  const btn2 = btn1 + BTN_H + BTN_GAP
+  const btn3 = btn2 + BTN_H + BTN_GAP
+  const logY = btn3 + BTN_H + 12
+  const logH = Math.max(50, S.LH - logY - 12)
+  return { my, mh, py, ph, btn1, btn2, btn3, logY, logH }
+}
+// 日志滑动状态
+let logScroll = 0
+let dragY = null
+let dragScroll = 0
 
 function touch(x, y) {
+  const L = layoutY()
   if (result === 'fighting') {
     if (x < BTN_X || x > BTN_X + BTN_W) return
-    if (y > BTN_Y1 && y < BTN_Y1 + BTN_H) { attack(); return }
-    if (y > BTN_Y2 && y < BTN_Y2 + BTN_H) { defend(); return }
-    if (!isBoss && y > BTN_Y3 && y < BTN_Y3 + BTN_H) { flee(); return }
+    if (y > L.btn1 && y < L.btn1 + BTN_H) { attack(); return }
+    if (y > L.btn2 && y < L.btn2 + BTN_H) { defend(); return }
+    if (!isBoss && y > L.btn3 && y < L.btn3 + BTN_H) { flee(); return }
   } else {
     // 结果卡: 返回探索/重新开始按钮
-    const ry = BTN_Y1 - 30
+    const ry = L.btn1 - 30
     if (y > ry + 150 && y < ry + 190 && x > BTN_X && x < BTN_X + BTN_W) {
       if (result === 'defeat') {
         S.player = null
@@ -57,6 +73,20 @@ function touch(x, y) {
     }
   }
 }
+
+// 日志区上下滑动
+function touchMove(x, y) {
+  const L = layoutY()
+  if (result !== 'fighting') return
+  if (y < L.logY || y > L.logY + L.logH) { dragY = null; return }
+  if (dragY === null) { dragY = y; dragScroll = logScroll }
+  const lineH = 14
+  const viewLines = Math.max(1, Math.floor((L.logH - 28) / lineH))
+  const maxScroll = Math.max(0, Math.max(0, battleLogs.length - viewLines) * lineH)
+  logScroll = Math.max(0, Math.min(maxScroll, dragScroll - (y - dragY)))
+}
+
+function touchEnd() { dragY = null }
 
 // 同步引擎战斗日志到界面(伤害/暴击/闪避/中毒/技能)
 function syncLogs() {
@@ -184,10 +214,10 @@ function draw() {
   const cw = S.LW - 32   // 卡片宽(16边距)
   const cx = S.LW / 2
   const cxp = 16         // 卡片x
+  const L = layoutY()
+  const { my, mh, py, ph, btn1, btn2, btn3, logY, logH } = L
 
   // ============ 1. 怪物卡 (对齐原版: icon 48px 居中 + 名字 + Lv掉落 + 生命值 + 血条 + 攻防暴闪) ============
-  const my = 80
-  const mh = 210
   roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : COLORS.cardBorder, isBoss ? 2 : 1.5)
   text(ctx, monster.icon || '👹', cx, my + 44, 48)
   if (isBoss) text(ctx, '⚠️ BOSS ⚠️', cx, my + 82, 11, '#ff4444', 'center', true)
@@ -201,34 +231,32 @@ function draw() {
   text(ctx, '⚔️ ' + monster.attack + '攻 🛡️ ' + monster.defense + '防', cxp + 16, my + 190, 12, COLORS.textDim, 'left')
   text(ctx, '⚡' + monster.critPercent + '%暴 💨' + monster.dodgePercent + '%闪', cxp + cw - 16, my + 190, 12, COLORS.textDim, 'right')
 
-  // ============ 2. 玩家卡 (对齐原版: 🧝40px + 血量 + 血条 + 暴闪) ============
-  const py = my + mh + 12
-  const ph = 116
+  // ============ 2. 玩家卡 (加高140, 内容分散不紧凑) ============
   roundRect(ctx, cxp, py, cw, ph, 12, ui.cardFill(ctx, cxp, py, cw, ph), COLORS.cardBorder, 1.5)
-  text(ctx, '🧝', cx, py + 30, 40)
+  text(ctx, '🧝', cx, py + 38, 44)
   // 名字 + 血量
-  text(ctx, '❤️ ' + p.name, cxp + 16, py + 26, 13, COLORS.textDim, 'left')
-  text(ctx, p.hp + ' / ' + p.totalMaxHp, cxp + cw - 16, py + 26, 13, COLORS.gold, 'right', true)
-  hpBar(ctx, cxp + 16, py + 40, cw - 32, 10, p.hp / p.totalMaxHp)
+  text(ctx, '❤️ ' + p.name, cxp + 16, py + 32, 14, COLORS.textDim, 'left')
+  text(ctx, p.hp + ' / ' + p.totalMaxHp, cxp + cw - 16, py + 32, 14, COLORS.gold, 'right', true)
+  hpBar(ctx, cxp + 16, py + 48, cw - 32, 12, p.hp / p.totalMaxHp)
   // 暴闪
-  text(ctx, '⚡' + Math.round(p.totalCrit * 100) + '%暴 💨' + Math.round(p.totalDodge * 100) + '%闪', cxp + 16, py + 66, 12, COLORS.textDim, 'left')
-  if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', cxp + cw - 16, py + 66, 12, COLORS.purple, 'right', true)
+  text(ctx, '⚡' + Math.round(p.totalCrit * 100) + '%暴 💨' + Math.round(p.totalDodge * 100) + '%闪', cxp + 16, py + 78, 13, COLORS.textDim, 'left')
+  if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', cxp + cw - 16, py + 78, 13, COLORS.purple, 'right', true)
   // 攻防
-  text(ctx, '⚔️ ' + p.totalAttack + '攻 🛡️ ' + p.totalDefense + '防', cxp + 16, py + 92, 12, COLORS.textDim, 'left')
-  text(ctx, '💾 ' + p.gold + '金', cxp + cw - 16, py + 92, 12, COLORS.textDim, 'right')
+  text(ctx, '⚔️ ' + p.totalAttack + '攻 🛡️ ' + p.totalDefense + '防', cxp + 16, py + 108, 13, COLORS.textDim, 'left')
+  text(ctx, '💾 ' + p.gold + '金', cxp + cw - 16, py + 108, 13, COLORS.textDim, 'right')
 
   // ============ 3. 操作/结果区 ============
   if (result === 'fighting') {
     // 全宽大按钮(对齐原版 .btn): 攻击/防御(带说明)/逃跑(带成功率,非Boss)
-    drawBtn(ctx, makeBtn(BTN_X, BTN_Y1, BTN_W, BTN_H, '⚔️ 攻击', null, ui.BTN.primary))
-    drawBtn(ctx, makeBtn(BTN_X, BTN_Y2, BTN_W, BTN_H, '🛡️ 防御（减少50%伤害，本回合）', null, ui.BTN.secondary))
+    drawBtn(ctx, makeBtn(BTN_X, btn1, BTN_W, BTN_H, '⚔️ 攻击', null, ui.BTN.primary))
+    drawBtn(ctx, makeBtn(BTN_X, btn2, BTN_W, BTN_H, '🛡️ 防御（减少50%伤害，本回合）', null, ui.BTN.secondary))
     if (!isBoss) {
       const fleePct = Math.round(Math.min(0.9, 0.2 + p.fleeFails * 0.1) * 100)
-      drawBtn(ctx, makeBtn(BTN_X, BTN_Y3, BTN_W, BTN_H, '🏃 逃跑（' + fleePct + '%成功率）', null, ui.BTN.danger))
+      drawBtn(ctx, makeBtn(BTN_X, btn3, BTN_W, BTN_H, '🏃 逃跑（' + fleePct + '%成功率）', null, ui.BTN.danger))
     }
   } else {
     // 结果卡 (对齐原版: 图标40px + 标题 + 副标题 + 按钮)
-    const ry = BTN_Y1 - 30
+    const ry = btn1 - 30
     const rh = 190
     roundRect(ctx, cxp, ry, cw, rh, 12, ui.cardFill(ctx, cxp, ry, cw, rh), COLORS.cardBorder, 1.5)
     if (result === 'victory') {
@@ -249,12 +277,17 @@ function draw() {
     drawBtn(ctx, makeBtn(BTN_X, ry + 150, BTN_W, 40, '↩️ 返回探索', null, result === 'defeat' ? ui.BTN.danger : ui.BTN.primary))
   }
 
-  // ============ 4. 战斗日志(底部, 保留类型着色) ============
-  // 保留类型信息: syncLogs 时转存 battleLogs(对象数组)
-  const ly = S.LH - 76
-  roundRect(ctx, cxp, ly, cw, 64, 12, '#101024', '#2a2a4a', 1.5)
-  text(ctx, '战斗日志：', cxp + 14, ly + 14, 12, COLORS.gold, 'left', true)
-  const show = battleLogs.slice(-3)
+  // ============ 4. 战斗日志(可上下滑动) ============
+  roundRect(ctx, cxp, logY, cw, logH, 12, '#101024', '#2a2a4a', 1.5)
+  text(ctx, '战斗日志：', cxp + 14, logY + 14, 12, COLORS.gold, 'left', true)
+  const lineH = 14
+  const viewLines = Math.max(1, Math.floor((logH - 28) / lineH))
+  const total = battleLogs.length
+  const maxScroll = Math.max(0, Math.max(0, total - viewLines) * lineH)
+  logScroll = Math.max(0, Math.min(maxScroll, logScroll))
+  const scrollLines = Math.round(logScroll / lineH)
+  const startIdx = Math.max(0, total - viewLines - scrollLines)
+  const show = battleLogs.slice(startIdx, Math.min(total, startIdx + viewLines))
   for (let i = 0; i < show.length; i++) {
     const item = show[i]
     const msg = typeof item === 'string' ? item : item.msg
@@ -265,12 +298,17 @@ function draw() {
     else if (type === 'poison') color = COLORS.purple
     else if (type === 'skill') color = COLORS.red
     else if (type === 'loot') color = COLORS.goldBright
-    else if (type === 'info') color = COLORS.textDim
-    text(ctx, msg, cxp + 14, ly + 34 + i * 14, 10, color, 'left')
+    text(ctx, msg, cxp + 14, logY + 30 + i * lineH, 10, color, 'left')
+  }
+  // 滚动条(可滑动提示)
+  if (maxScroll > 0) {
+    const barH = Math.max(8, (logH - 30) * (viewLines / total))
+    const barY = logY + 30 + (logH - 30 - barH) * (logScroll / maxScroll)
+    roundRect(ctx, cxp + cw - 6, barY, 3, barH, 1.5, 'rgba(255,255,255,0.35)')
   }
 }
 
 // 引擎战斗日志(含类型)
 let battleLogs = []
 
-module.exports = { start, draw, touch }
+module.exports = { start, draw, touch, touchMove, touchEnd }
