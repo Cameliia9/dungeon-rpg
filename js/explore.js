@@ -101,7 +101,7 @@ function touch(x, y) {
   }
   // 面板按钮（仅展开时, y+122 和 y+152 两行）
   if (footerExpanded) {
-    const bw = S.LW * 0.42, bh = 32
+    const bw = S.LW * 0.42, bh = 40
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.53
     // 第一行: 商店 / 背包
     const by1 = fy + 170
@@ -636,19 +636,9 @@ function drawFooter() {
   if (ratio > 0) roundRect(ctx, barX, y + 64, barW * ratio, 12, 6, '#e74c3c')
 
   if (footerExpanded) {
-    // 属性两行: 图标x=18 数值x=34 与血条/金币列对齐
-    text(ctx, '⚔️', 18, y + 96, 12)
-    text(ctx, '' + p.totalAttack, 34, y + 96, 12, '#ffffff', 'left', true)
-    text(ctx, '攻击', 78, y + 96, 11, '#8a8a9a', 'left')
-    text(ctx, '🛡️', 140, y + 96, 12)
-    text(ctx, '' + p.totalDefense, 156, y + 96, 12, '#ffffff', 'left', true)
-    text(ctx, '防御', 200, y + 96, 11, '#8a8a9a', 'left')
-    text(ctx, '⚡', 18, y + 120, 12)
-    text(ctx, '' + Math.round(p.totalCrit * 100) + '%', 34, y + 120, 12, '#ffffff', 'left', true)
-    text(ctx, '暴击', 78, y + 120, 11, '#8a8a9a', 'left')
-    text(ctx, '💨', 140, y + 120, 12)
-    text(ctx, '' + Math.round(p.totalDodge * 100) + '%', 156, y + 120, 12, '#ffffff', 'left', true)
-    text(ctx, '闪避', 200, y + 120, 11, '#8a8a9a', 'left')
+    // 属性两行(原版组合格式, 整行左对齐)
+    text(ctx, '⚔️ ' + p.totalAttack + '攻  🛡️ ' + p.totalDefense + '防', 18, y + 96, 12, '#ffffff', 'left')
+    text(ctx, '⚡ ' + Math.round(p.totalCrit * 100) + '%暴  💨 ' + Math.round(p.totalDodge * 100) + '%闪', 18, y + 120, 12, '#ffffff', 'left')
 
     // 资源行: 金币金色 + 经验黄色
     text(ctx, '💰', 18, y + 144, 12)
@@ -657,7 +647,7 @@ function drawFooter() {
     text(ctx, '' + p.exp + ' / ' + p.expToLevel(), 126, y + 144, 12, '#ffe080', 'left', true)
 
     // 2x2 功能按钮: 商店黄/背包红/铁匠橙/退出深灰蓝 (白色文字, 均等)
-    const bw = S.LW * 0.42, bh = 32
+    const bw = S.LW * 0.42, bh = 40
     const bx1 = S.LW * 0.05, bx2 = S.LW * 0.53
     const by1 = y + 170, by2 = y + 220
     // 左上: 黄色商店
