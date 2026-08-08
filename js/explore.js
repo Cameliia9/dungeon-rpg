@@ -101,7 +101,7 @@ function touch(x, y) {
   }
   // 面板按钮（仅展开时, y+122 和 y+152 两行）
   if (footerExpanded) {
-    const bw = S.LW * 0.46, bh = 26
+    const bw = S.LW * 0.46, bh = 32
     const bx1 = S.LW * 0.03, bx2 = S.LW * 0.51
     // 第一行: 商店 / 背包
     const by1 = fy + 170
@@ -648,7 +648,7 @@ function drawFooter() {
     text(ctx, '' + p.exp + ' / ' + p.expToLevel(), 126, y + 144, 12, '#ffe080', 'left', true)
 
     // 2x2 功能按钮: 商店黄/背包红/铁匠橙/退出深灰蓝 (白色文字, 均等)
-    const bw = S.LW * 0.46, bh = 26
+    const bw = S.LW * 0.46, bh = 32
     const bx1 = S.LW * 0.03, bx2 = S.LW * 0.51
     const by1 = y + 170, by2 = y + 220
     // 左上: 黄色商店
