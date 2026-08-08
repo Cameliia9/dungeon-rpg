@@ -22,7 +22,7 @@
 
   <!-- 玩家状态 -->
   <view class="card">
-    <text style="font-size: 40px; display: block;">🧝♂️</text>
+    <text style="font-size: 40px; display: block;">🧝</text>
     <view class="stat-row" style="margin-top: 4px;">
       <text class="stat-label">❤️ {{player.name}}</text>
       <text class="stat-value">{{player.hp}} / {{totalMaxHp}}</text>
