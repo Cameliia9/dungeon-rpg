@@ -54,13 +54,14 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke, lineW) {
 
 /** 文本（居中/左对齐）；可选动画：alpha 透明度, offsetY 上滑偏移 */
 function text(ctx, str, x, y, size, color, align, bold, alpha, offsetY) {
-  ctx.globalAlpha = alpha === undefined ? 1 : alpha
+  const prevAlpha = ctx.globalAlpha
+  ctx.globalAlpha = (alpha === undefined ? 1 : alpha) * prevAlpha
   ctx.fillStyle = color || COLORS.text
   ctx.font = (bold ? 'bold ' : '') + size + 'px sans-serif'
   ctx.textAlign = align || 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(str, x, y + (offsetY || 0))
-  ctx.globalAlpha = 1
+  ctx.globalAlpha = prevAlpha
 }
 
 /** 血条 */
@@ -85,7 +86,8 @@ function drawBtn(ctx, b, theme, alpha, offsetY) {
   const border = s.border || COLORS.cardBorder
   const fg = s.fg || COLORS.text
   const oy = offsetY || 0
-  ctx.globalAlpha = alpha === undefined ? 1 : alpha
+  const prevAlpha = ctx.globalAlpha
+  ctx.globalAlpha = (alpha === undefined ? 1 : alpha) * prevAlpha
   // 渐变背景
   const g = ctx.createLinearGradient(b.x, b.y + oy, b.x + b.w, b.y + oy + b.h)
   g.addColorStop(0, bg1)
@@ -107,7 +109,7 @@ function drawBtn(ctx, b, theme, alpha, offsetY) {
   ctx.fill()
   if (border) { ctx.strokeStyle = border; ctx.lineWidth = 1.5; ctx.stroke() }
   text(ctx, b.label, b.x + b.w / 2, b.y + oy + b.h / 2, s.size || 15, fg, 'center', s.bold)
-  ctx.globalAlpha = 1
+  ctx.globalAlpha = prevAlpha
 }
 
 /** 检测点击是否命中按钮 */
