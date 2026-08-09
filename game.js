@@ -34,6 +34,78 @@ function loadLogo() {
 }
 loadLogo()
 
+// Logo弹跳动画(弹性方块): 进入主菜单从上方掉下, 全屏弹跳衰减, 最后缓动落到中间
+let logoAnim = null
+const LOGO_SIZE = 76
+function startLogoAnim() {
+  logoAnim = {
+    x: LW / 2 + (Math.random() - 0.5) * 60,  // 顶部中间偏一点落下
+    y: -LOGO_SIZE,                            // 屏幕上方外
+    vx: (Math.random() - 0.5) * 160,
+    vy: 0,
+    deform: 0,        // 碰撞压扁幅度(0~0.4), 指数衰减恢复
+    phase: 'bounce',  // bounce(物理弹跳) | settle(缓动落位) | done(静止)
+    bounces: 0,
+    settleT: 0,
+    last: Date.now()
+  }
+}
+function updateLogoAnim() {
+  const a = logoAnim
+  if (!a || a.phase === 'done') return
+  const now = Date.now()
+  let dt = (now - a.last) / 1000
+  a.last = now
+  if (dt > 0.05) dt = 0.05  // 卡顿保护: 单帧最多50ms
+  const half = LOGO_SIZE / 2
+
+  if (a.phase === 'bounce') {
+    const G = 2600, REST = 0.55, WALL = 0.72
+    a.vy += G * dt
+    a.x += a.vx * dt
+    a.y += a.vy * dt
+    // 形变阻尼恢复(快): 压扁后约0.3s弹回
+    a.deform *= Math.exp(-9 * dt)
+    // 撞地: 反弹 + 压扁(冲击越大压得越扁)
+    if (a.y >= LH - half) {
+      a.y = LH - half
+      if (a.vy > 0) {
+        a.vy = -a.vy * REST
+        a.vx *= 0.72  // 地面摩擦
+        a.bounces++
+        a.deform = Math.min(0.4, Math.abs(a.vy) / 1600)
+        if (a.bounces === 1) a.vx += (Math.random() < 0.5 ? -1 : 1) * 200  // 首次落地给横向推动, 开始四处弹
+      }
+    }
+    // 撞左右墙: 反弹 + 轻微压扁
+    if (a.x <= half) { a.x = half; if (a.vx < 0) { a.vx = -a.vx * WALL; a.deform = Math.max(a.deform, 0.22) } }
+    else if (a.x >= LW - half) { a.x = LW - half; if (a.vx > 0) { a.vx = -a.vx * WALL; a.deform = Math.max(a.deform, 0.22) } }
+    // 撞顶: 轻反弹(几乎不弹, 只挡一下)
+    if (a.y <= half) { a.y = half; if (a.vy < 0) a.vy = -a.vy * 0.4 }
+    // 弹跳衰减到足够小 → 缓动落位
+    if (a.bounces >= 3 && Math.abs(a.vy) < 60 && Math.abs(a.vx) < 35) {
+      a.phase = 'settle'
+      a.settleT = 0
+    }
+  } else if (a.phase === 'settle') {
+    a.settleT += dt
+    const e = ui.easeOut(Math.min(1, a.settleT / 0.55))
+    const tx = LW / 2, ty = LH * 0.24
+    a.x += (tx - a.x) * e
+    a.y += (ty - a.y) * e
+    a.deform *= Math.exp(-9 * dt)
+    if (a.settleT >= 0.55) {
+      a.phase = 'done'
+      a.x = tx; a.y = ty
+      a.deform = 0.18  // 落定最后压一下(果冻收尾)
+    }
+  } else if (a.phase === 'done') {
+    // 最后一下压扁恢复
+    a.deform *= Math.exp(-9 * dt)
+    if (a.deform < 0.01) a.deform = 0
+  }
+}
+
 // ==================== 全局状态 ====================
 let player = null          // 当前玩家
 let scene = 'menu'         // 当前场景
@@ -64,7 +136,7 @@ function switchScene(name) {
   panels = null
   btns = []
   sceneEnterTime = Date.now()
-  if (name === 'menu') buildMenu()
+  if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()
   else if (name === 'game') buildGame()
   else if (name === 'explore') buildExplore()
@@ -111,11 +183,24 @@ function drawMenu() {
   const dur = 900, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 80, dur)
-  // 主菜单Logo: 优先图片(精确居中), 加载中回退emoji
+  // 主菜单Logo: 优先图片(弹跳动画+精确居中), 加载中回退emoji
   if (logoReady && logoImg) {
-    const s = 76  // 显示尺寸
-    ctx.globalAlpha = p1
-    ctx.drawImage(logoImg, LW / 2 - s / 2, LH * 0.24 - s / 2 + (1 - p1) * dist, s, s)
+    updateLogoAnim()
+    const a = logoAnim
+    const s = LOGO_SIZE
+    const lx = a ? a.x : LW / 2
+    const ly = a ? a.y : LH * 0.24
+    // 果冻形变: 压扁(横伸纵缩), 恢复过程带弹性
+    let sx = 1, sy = 1
+    if (a) { const d = a.deform; sx = 1 + d * 1.15; sy = 1 - d * 0.85 }
+    // 弹跳期间更快淡入(动画要看得清), 落定后正常
+    const la = Math.min(1, p1 * 3)
+    ctx.save()
+    ctx.globalAlpha = la
+    ctx.translate(lx, ly)
+    ctx.scale(sx, sy)
+    ctx.drawImage(logoImg, -s / 2, -s / 2, s, s)
+    ctx.restore()
     ctx.globalAlpha = 1
   } else {
     text(ctx, '⚔️', LW / 2, LH * 0.24 + (1 - p1) * dist, 68, COLORS.gold, 'center', false, p1)
