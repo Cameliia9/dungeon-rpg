@@ -23,6 +23,17 @@ canvas.height = LH * DPR
 const ctx = canvas.getContext('2d')
 ctx.scale(DPR, DPR)
 
+// ==================== 主菜单Logo ====================
+// 用app-icon.png(金色交叉双剑)替代emoji: 真机measureText对emoji宽度测量不可靠导致图案偏移
+let logoImg = null, logoReady = false
+function loadLogo() {
+  logoImg = wx.createImage()
+  logoImg.onload = () => { logoReady = true }
+  logoImg.onerror = () => { logoImg = null }
+  logoImg.src = 'app-icon.png'
+}
+loadLogo()
+
 // ==================== 全局状态 ====================
 let player = null          // 当前玩家
 let scene = 'menu'         // 当前场景
@@ -100,9 +111,15 @@ function drawMenu() {
   const dur = 900, dist = 28
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 80, dur)
-  // ⚔️大号emoji用手动居中(真机textAlign center对emoji宽度测量偏差导致偏左)
-  const sw1 = ui.textWidth(ctx, '⚔️', 68)
-  text(ctx, '⚔️', LW / 2 - sw1 / 2, LH * 0.24 + (1 - p1) * dist, 68, COLORS.gold, 'left', false, p1)
+  // 主菜单Logo: 优先图片(精确居中), 加载中回退emoji
+  if (logoReady && logoImg) {
+    const s = 76  // 显示尺寸
+    ctx.globalAlpha = p1
+    ctx.drawImage(logoImg, LW / 2 - s / 2, LH * 0.24 - s / 2 + (1 - p1) * dist, s, s)
+    ctx.globalAlpha = 1
+  } else {
+    text(ctx, '⚔️', LW / 2, LH * 0.24 + (1 - p1) * dist, 68, COLORS.gold, 'center', false, p1)
+  }
   text(ctx, '地牢冒险', LW / 2, LH * 0.34 + (1 - p2) * dist, 42, COLORS.gold, 'center', true, p2)
 
   const delays = [160, 240, 320, 400]
