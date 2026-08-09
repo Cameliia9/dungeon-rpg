@@ -268,11 +268,11 @@ function draw() {
   // ============ 2. 玩家卡 (加高140, 内容分散不紧凑) ============
   ctx.globalAlpha = a2
   roundRect(ctx, cxp, py, cw, ph, 12, ui.cardFill(ctx, cxp, py, cw, ph), COLORS.cardBorder, 1.5)
-  text(ctx, '🧝', cx, py + 38, 44)
+  text(ctx, '🧝', cx, py + 30, 36)
   // 名字 + 血量
   text(ctx, '❤️ ' + p.name, cxp + 16, py + 32, 14, COLORS.textDim, 'left')
   text(ctx, p.hp + ' / ' + p.totalMaxHp, cxp + cw - 16, py + 32, 14, COLORS.gold, 'right', true)
-  hpBar(ctx, cxp + 16, py + 48, cw - 32, 12, dispPlayerHp / p.totalMaxHp)
+  hpBar(ctx, cxp + 16, py + 54, cw - 32, 12, dispPlayerHp / p.totalMaxHp)
   // 暴闪
   text(ctx, '⚡' + Math.round(p.totalCrit * 100) + '%暴 💨' + Math.round(p.totalDodge * 100) + '%闪', cxp + 16, py + 78, 13, COLORS.textDim, 'left')
   if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', cxp + cw - 16, py + 78, 13, COLORS.purple, 'right', true)
