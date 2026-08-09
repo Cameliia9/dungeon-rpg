@@ -55,7 +55,7 @@ function startLogoAnim() {
 }
 function updateLogoAnim() {
   const a = logoAnim
-  if (!a || a.phase === 'done') return
+  if (!a) return
   const now = Date.now()
   let dt = (now - a.last) / 1000
   a.last = now
@@ -109,10 +109,10 @@ function updateLogoAnim() {
       logoSettledAt = Date.now()  // 落位完成: 标题/按钮从此刻起浮现
     }
   } else if (a.phase === 'done') {
-    // 最后一下压扁恢复
+    // 最后一下压扁恢复(必须执行, 否则图标永远压扁/拉伸)
     a.deformX *= Math.exp(-9 * dt)
     a.deformY *= Math.exp(-9 * dt)
-    if (Math.abs(a.deformX) < 0.01 && Math.abs(a.deformY) < 0.01) { a.deformX = 0; a.deformY = 0 }
+    if (Math.abs(a.deformX) < 0.005 && Math.abs(a.deformY) < 0.005) { a.deformX = 0; a.deformY = 0 }
   }
 }
 
