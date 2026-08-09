@@ -148,7 +148,7 @@ function startNew(difficulty) {
 function openPanel(name) {
   const panelsMod = require('./js/panels')
   const shared = {
-    player, LW, LH, ctx,
+    player, LW, LH, ctx, DPR,
     savePlayer,
     setPanels: (p) => { panels = p },
     getPanels: () => panels
@@ -245,7 +245,7 @@ function buildExplore() {
   // 延迟加载避免循环依赖
   if (!explore) explore = require('./js/explore')
   explore.init({
-    player, savePlayer, switchScene, canvas, ctx, LW, LH,
+    player, savePlayer, switchScene, canvas, ctx, LW, LH, DPR,
     getPlayer: () => player, setPlayer: (p) => { player = p },
     setPanels: (p) => { panels = p }, getPanels: () => panels
   })

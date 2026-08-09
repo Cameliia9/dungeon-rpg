@@ -439,9 +439,12 @@ const STATIC_H = 229  // 静态区高(0 ~ 信息卡底214 + 15空隙)
 function buildStatic(p) {
   try {
     if (!staticCanvas) staticCanvas = wx.createCanvas()
-    staticCanvas.width = S.LW
-    staticCanvas.height = STATIC_H
+    // 离屏canvas必须按DPR建物理尺寸, 否则drawImage到主canvas(已scale DPR)会被拉伸发糊
+    const dpr = S.DPR || 2
+    staticCanvas.width = S.LW * dpr
+    staticCanvas.height = STATIC_H * dpr
     const c = staticCanvas.getContext('2d')
+    c.scale(dpr, dpr)
     // 背景
     c.fillStyle = '#0f0f1a'
     c.fillRect(0, 0, S.LW, STATIC_H)
@@ -481,7 +484,10 @@ function draw() {
   // 静态头部: 楼层/房间变化时重建, 平时drawImage合成(省每帧重绘)
   const key = p.floor + '|' + p.roomsExplored
   if (staticKey !== key) { staticKey = key; buildStatic(p) }
-  if (staticCanvas) ctx.drawImage(staticCanvas, 0, 0, S.LW, STATIC_H, 0, 0, S.LW, STATIC_H)
+  // 事件卡区域(staticCanvas下方)补#0f0f1a背景, 与信息卡周围一致
+  ctx.fillStyle = '#0f0f1a'
+  ctx.fillRect(0, STATIC_H, S.LW, S.LH - STATIC_H)
+  if (staticCanvas) ctx.drawImage(staticCanvas, 0, 0, S.LW, STATIC_H)
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 214 + 15
