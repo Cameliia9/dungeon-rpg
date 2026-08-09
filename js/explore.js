@@ -189,9 +189,20 @@ function touch(x, y) {
       sx = (1 - 0.08 * e) * (1 - shrW2 * e)
     }
     cwX = w * sx
-  } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
+  } else if (cardAnim.phase === 'flyout') {
     const t = Math.min(1, (Date.now() - cardAnim.start) / 450)
-    dxT = 90 * ui.easeOut(t)
+    const e = ui.easeOut(t)
+    if (cardAnim.side === side) {
+      dxT = 90 * e  // 完成侧: 向右飞
+    } else {
+      // 未选中侧: 恢复动画与绘制一致(缩小->原状)
+      const activeEvt2 = cardAnim.side === 'left' ? leftEvent : rightEvent
+      const at2 = activeEvt2 ? activeEvt2.type : ''
+      const shrW2 = at2 === 'merchant' ? 0.24 : at2 === 'monster' ? 0.14 : 0
+      sy = (1 - 0.08 * (1 - e)) * (1 - shrW2 * (1 - e))
+      sx = sy
+      cwX = w * sx
+    }
   }
   const cx = (isLeft ? leftX() + cwX / 2 : rightX() + w - cwX / 2) + dxT
   const cy = cardTop + cardH / 2
@@ -534,15 +545,26 @@ function drawCard(x, y, w, h, side, slideIn) {
       scaleX = 1 - shrW * e
       alpha = 1 - 0.4 * e
     }
-  } else if (cardAnim.phase === 'flyout' && cardAnim.side === side) {
+  } else if (cardAnim.phase === 'flyout') {
     // 完成侧: 向右上旋转滑出(扑克牌式)
+    // 未选中侧: 同时从缩小状态平滑恢复原状(不能瞬间弹回)
     const t = Math.min(1, (now - cardAnim.start) / 450)
     const e = ui.easeOut(t)
-    scale = 1 + (1.1 - 1) * e
-    rot = 18 * e
-    dx = 90 * e
-    dy = -70 * e
-    alpha = 1 - e
+    if (cardAnim.side === side) {
+      scale = 1 + (1.1 - 1) * e
+      rot = 18 * e
+      dx = 90 * e
+      dy = -70 * e
+      alpha = 1 - e
+    } else {
+      // 恢复动画: 从expand的缩小值(0.92/0.86等)渐变回1
+      const activeEvt = cardAnim.side === 'left' ? leftEvent : rightEvent
+      const at = activeEvt ? activeEvt.type : ''
+      const shrW = at === 'merchant' ? 0.24 : at === 'monster' ? 0.14 : 0
+      scale = 1 - 0.08 * (1 - e)
+      scaleX = 1 - shrW * (1 - e)
+      alpha = 1 - 0.4 * (1 - e)
+    }
   } else if (cardAnim.phase === 'idle') {
     // 两卡相等
     scale = 1; scaleX = 1
@@ -569,7 +591,7 @@ function drawCard(x, y, w, h, side, slideIn) {
   if (isActive) ctx.restore()
 
   // 内容随卡片缩放: 选中侧按高度(scale), 未选中侧跟随卡片宽度(scale*scaleX)同步缩小
-  const zoomContent = cardAnim.phase === 'expand' && !(cardAnim.side === side && ((cardAnim.side === 'left' ? leftEvent : rightEvent) || {}).type === 'merchant')
+  const zoomContent = (cardAnim.phase === 'expand' || (cardAnim.phase === 'flyout' && cardAnim.side !== side)) && !(cardAnim.side === side && ((cardAnim.side === 'left' ? leftEvent : rightEvent) || {}).type === 'merchant')
   const zoomVal = cardAnim.side === side ? scale : scale * scaleX
   if (zoomContent) { ctx.save(); ctx.translate(cx, cy); ctx.scale(zoomVal, zoomVal); ctx.translate(-cx, -cy) }
 
