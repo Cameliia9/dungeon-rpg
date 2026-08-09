@@ -198,7 +198,7 @@ function drawGame() {
   text(ctx, '✨ 经验值', 32, cy + 90, 14, COLORS.textDim, 'left')
   text(ctx, player.exp + ' / ' + player.expToLevel(), LW - 32, cy + 90, 14, COLORS.gold, 'right', true)
   // 攻防暴闪
-  text(ctx, '⚔️ 攻击 ' + player.totalAttack + '   🛡️ 防御 ' + player.totalDefense, 32, cy + 114, 14, COLORS.textDim, 'left')
+  text(ctx, '⚔️攻击 ' + player.totalAttack + '   🛡️防御 ' + player.totalDefense, 32, cy + 114, 14, COLORS.textDim, 'left')
   text(ctx, '⚡ 暴击 ' + Math.round(player.totalCrit * 100) + '%   💨 闪避 ' + Math.round(player.totalDodge * 100) + '%', 32, cy + 136, 14, COLORS.textDim, 'left')
   // 金币/击杀
   text(ctx, '💰 金币 ' + player.gold + '   💀 击杀 ' + player.kills, 32, cy + 158, 14, COLORS.textDim, 'left')
