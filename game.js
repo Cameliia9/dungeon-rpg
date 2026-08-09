@@ -36,6 +36,7 @@ loadLogo()
 
 // Logo弹跳动画(弹性方块): 进入主菜单从上方掉下, 全屏弹跳衰减, 最后缓动落到中间
 let logoAnim = null
+let logoSettledAt = 0  // logo落位完成时间(之后标题/按钮才逐渐浮现); 必须声明否则严格模式ReferenceError
 const LOGO_SIZE = 76
 function startLogoAnim() {
   logoSettledAt = 0
