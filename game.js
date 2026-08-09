@@ -189,9 +189,11 @@ function drawMenu() {
   ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
-  // 入场动画: logo弹跳落位后, 标题/按钮才交错浮现(落位前 p=0)
+  // 入场动画: 弹跳期间只有logo, 落位后标题/按钮才交错浮现(落位前 p=0 不显示)
+  // logo不可用(未加载/失败)时按sceneEnterTime正常入场, 不等待弹跳
   const dur = 900, dist = 28
-  const baseT = logoSettledAt || sceneEnterTime
+  const logoActive = !!(logoReady && logoImg && logoAnim)
+  const baseT = logoActive ? (logoSettledAt > 0 ? logoSettledAt : Infinity) : sceneEnterTime
   const p1 = ui.animProgress(baseT, 0, dur)
   const p2 = ui.animProgress(baseT, 80, dur)
   // 主菜单Logo: 优先图片(弹跳动画+精确居中), 加载中回退emoji
