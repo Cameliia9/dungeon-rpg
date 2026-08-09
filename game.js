@@ -95,13 +95,13 @@ function updateLogoAnim() {
     }
   } else if (a.phase === 'settle') {
     a.settleT += dt
-    const e = ui.easeOut(Math.min(1, a.settleT / 0.55))
+    const e = ui.easeOut(Math.min(1, a.settleT / 1.1))
     const tx = LW / 2, ty = LH * 0.24
     a.x += (tx - a.x) * e
     a.y += (ty - a.y) * e
     a.deformX *= Math.exp(-9 * dt)
     a.deformY *= Math.exp(-9 * dt)
-    if (a.settleT >= 0.55) {
+    if (a.settleT >= 1.1) {
       a.phase = 'done'
       a.x = tx; a.y = ty
       a.deformX = 0.2   // 落定最后压一下(果冻收尾: 横伸)
