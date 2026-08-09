@@ -38,12 +38,14 @@ loadLogo()
 let logoAnim = null
 const LOGO_SIZE = 76
 function startLogoAnim() {
+  logoSettledAt = 0
   logoAnim = {
     x: LW / 2 + (Math.random() - 0.5) * 60,  // 顶部中间偏一点落下
     y: -LOGO_SIZE,                            // 屏幕上方外
     vx: (Math.random() - 0.5) * 160,
     vy: 0,
-    deform: 0,        // 碰撞压扁幅度(0~0.4), 指数衰减恢复
+    deformX: 0,       // 横向形变(+伸/-缩), 碰撞设置后指数衰减恢复
+    deformY: 0,       // 纵向形变(+伸/-缩)
     phase: 'bounce',  // bounce(物理弹跳) | settle(缓动落位) | done(静止)
     bounces: 0,
     settleT: 0,
@@ -60,30 +62,33 @@ function updateLogoAnim() {
   const half = LOGO_SIZE / 2
 
   if (a.phase === 'bounce') {
-    const G = 2600, REST = 0.55, WALL = 0.72
+    const G = 2600, REST = 0.68, WALL = 0.88
     a.vy += G * dt
     a.x += a.vx * dt
     a.y += a.vy * dt
-    // 形变阻尼恢复(快): 压扁后约0.3s弹回
-    a.deform *= Math.exp(-9 * dt)
-    // 撞地: 反弹 + 压扁(冲击越大压得越扁)
+    // 形变阻尼恢复(快): 碰撞形变约0.3s弹回
+    a.deformX *= Math.exp(-9 * dt)
+    a.deformY *= Math.exp(-9 * dt)
+    // 撞地: 反弹 + 纵向压扁(横伸+纵缩), 冲击越大压得越扁
     if (a.y >= LH - half) {
       a.y = LH - half
       if (a.vy > 0) {
         a.vy = -a.vy * REST
-        a.vx *= 0.72  // 地面摩擦
+        a.vx *= 0.86  // 地面摩擦(小, 横向多弹几个来回)
         a.bounces++
-        a.deform = Math.min(0.4, Math.abs(a.vy) / 1600)
-        if (a.bounces === 1) a.vx += (Math.random() < 0.5 ? -1 : 1) * 200  // 首次落地给横向推动, 开始四处弹
+        const d = Math.min(0.4, Math.abs(a.vy) / 1600)
+        a.deformX = d * 1.15
+        a.deformY = -d * 0.85
+        if (a.bounces === 1) a.vx += (Math.random() < 0.5 ? -1 : 1) * 340  // 首次落地给横向推动, 开始四处弹
       }
     }
-    // 撞左右墙: 反弹 + 轻微压扁
-    if (a.x <= half) { a.x = half; if (a.vx < 0) { a.vx = -a.vx * WALL; a.deform = Math.max(a.deform, 0.22) } }
-    else if (a.x >= LW - half) { a.x = LW - half; if (a.vx > 0) { a.vx = -a.vx * WALL; a.deform = Math.max(a.deform, 0.22) } }
-    // 撞顶: 轻反弹(几乎不弹, 只挡一下)
+    // 撞左右墙: 反弹 + 横向压扁(横缩+纵伸)
+    if (a.x <= half) { a.x = half; if (a.vx < 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16) } }
+    else if (a.x >= LW - half) { a.x = LW - half; if (a.vx > 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16) } }
+    // 撞顶: 轻反弹(几乎不弹, 只挡一下; 无压扁形变)
     if (a.y <= half) { a.y = half; if (a.vy < 0) a.vy = -a.vy * 0.4 }
-    // 弹跳衰减到足够小 → 缓动落位
-    if (a.bounces >= 3 && Math.abs(a.vy) < 60 && Math.abs(a.vx) < 35) {
+    // 弹跳衰减到足够小 → 缓动落位(阈值更低, 弹够才落位)
+    if (a.bounces >= 4 && Math.abs(a.vy) < 45 && Math.abs(a.vx) < 28) {
       a.phase = 'settle'
       a.settleT = 0
     }
@@ -93,16 +98,20 @@ function updateLogoAnim() {
     const tx = LW / 2, ty = LH * 0.24
     a.x += (tx - a.x) * e
     a.y += (ty - a.y) * e
-    a.deform *= Math.exp(-9 * dt)
+    a.deformX *= Math.exp(-9 * dt)
+    a.deformY *= Math.exp(-9 * dt)
     if (a.settleT >= 0.55) {
       a.phase = 'done'
       a.x = tx; a.y = ty
-      a.deform = 0.18  // 落定最后压一下(果冻收尾)
+      a.deformX = 0.2   // 落定最后压一下(果冻收尾: 横伸)
+      a.deformY = -0.15  // 纵缩
+      logoSettledAt = Date.now()  // 落位完成: 标题/按钮从此刻起浮现
     }
   } else if (a.phase === 'done') {
     // 最后一下压扁恢复
-    a.deform *= Math.exp(-9 * dt)
-    if (a.deform < 0.01) a.deform = 0
+    a.deformX *= Math.exp(-9 * dt)
+    a.deformY *= Math.exp(-9 * dt)
+    if (Math.abs(a.deformX) < 0.01 && Math.abs(a.deformY) < 0.01) { a.deformX = 0; a.deformY = 0 }
   }
 }
 
@@ -179,10 +188,11 @@ function drawMenu() {
   ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
-  // 入场动画: 交错 fadeSlideUp (对齐原版 delay)
+  // 入场动画: logo弹跳落位后, 标题/按钮才交错浮现(落位前 p=0)
   const dur = 900, dist = 28
-  const p1 = ui.animProgress(sceneEnterTime, 0, dur)
-  const p2 = ui.animProgress(sceneEnterTime, 80, dur)
+  const baseT = logoSettledAt || sceneEnterTime
+  const p1 = ui.animProgress(baseT, 0, dur)
+  const p2 = ui.animProgress(baseT, 80, dur)
   // 主菜单Logo: 优先图片(弹跳动画+精确居中), 加载中回退emoji
   if (logoReady && logoImg) {
     updateLogoAnim()
@@ -190,11 +200,12 @@ function drawMenu() {
     const s = LOGO_SIZE
     const lx = a ? a.x : LW / 2
     const ly = a ? a.y : LH * 0.24
-    // 果冻形变: 压扁(横伸纵缩), 恢复过程带弹性
+    // 果冻形变: 撞地横伸纵缩, 撞墙横缩纵伸, 各自阻尼恢复
     let sx = 1, sy = 1
-    if (a) { const d = a.deform; sx = 1 + d * 1.15; sy = 1 - d * 0.85 }
-    // 弹跳期间更快淡入(动画要看得清), 落定后正常
-    const la = Math.min(1, p1 * 3)
+    if (a) { sx = 1 + a.deformX; sy = 1 + a.deformY }
+    // logo自身淡入用sceneEnterTime(弹跳期间就要可见), 不跟随baseT
+    const logoFade = ui.animProgress(sceneEnterTime, 0, 300)
+    const la = Math.min(1, logoFade * 2)
     ctx.save()
     ctx.globalAlpha = la
     ctx.translate(lx, ly)
@@ -209,7 +220,7 @@ function drawMenu() {
 
   const delays = [160, 240, 320, 400]
   for (let i = 0; i < btns.length; i++) {
-    const p = ui.animProgress(sceneEnterTime, delays[i], dur)
+    const p = ui.animProgress(baseT, delays[i], dur)
     // 只做淡入，不做位移（位移会导致点击区域与显示位置不一致）
     drawBtn(ctx, btns[i], null, p)
   }
