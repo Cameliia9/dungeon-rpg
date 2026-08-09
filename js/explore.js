@@ -394,7 +394,9 @@ function doFinishSide(side) {
     return
   }
 
-  // 死路永久封锁: 另一侧保持原样, 完成侧原地生成新事件
+  // 死路封锁只持续到下一回合: 另一侧完成时, 封锁侧同步恢复为新事件(不再是永久封锁)
+  const otherSide = side === 'left' ? 'right' : 'left'
+  const otherState = side === 'left' ? rightState : leftState
   if (side === 'left') {
     leftEvent = genEvent()
     leftState = 'door'
@@ -405,6 +407,20 @@ function doFinishSide(side) {
     rightState = 'door'
     let guard = 0
     while (leftEvent && rightEvent.type === leftEvent.type && guard++ < 10) rightEvent = genEvent()
+  }
+  // 下回合恢复: 被封锁的死路侧重新生成为新事件
+  if (otherState === 'blocked') {
+    if (otherSide === 'left') {
+      leftEvent = genEvent()
+      leftState = 'door'
+      let guard = 0
+      while (rightEvent && leftEvent.type === rightEvent.type && guard++ < 10) leftEvent = genEvent()
+    } else {
+      rightEvent = genEvent()
+      rightState = 'door'
+      let guard = 0
+      while (leftEvent && rightEvent.type === leftEvent.type && guard++ < 10) rightEvent = genEvent()
+    }
   }
   saveExploreState()
 }

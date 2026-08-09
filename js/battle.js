@@ -191,6 +191,7 @@ function victory() {
   const leveled = p.addExp(expGain)
   p.poisonTurns = 0
   result = 'victory'
+  if (isBoss) S.bossDefeated = true  // Boss击败标记: 返回探索后显示楼梯进下一层
   S.lastReward = { gold: goldGain, exp: expGain, leveled: leveled, bossLoot: isBoss && monster.loot ? monster.loot : null }
   logs.push('🎉 击败 ' + monster.name + '！ +' + goldGain + '💰 +' + expGain + '经验')
   if (leveled) logs.push('🎊 升级到 Lv.' + p.level + '！')
