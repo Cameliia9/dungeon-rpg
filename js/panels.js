@@ -56,9 +56,9 @@ function build() {
       const hi = layout.length
       layout.push({ kind: 'header', text: sec.title, y, endY: 0 }); y += 30
       for (const it of sec.items) {
-        layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
+        layout.push({ kind: 'item', item: it, y, h: 86 }); y += 94
       }
-      layout[hi].endY = y + 14  // 最后商品下方留白, 分类卡间隙加大(用户: 间隙过小)
+      layout[hi].endY = y - 8  // 分类卡底(卡间8px, 不重叠); 商品卡间隙靠行距94留出
       if (si < sections.length - 1) y += 8  // 分类间距8px(用户指定)
     }
     contentH = y
@@ -82,10 +82,10 @@ function build() {
       y += 60
     } else {
       for (const it of list) {
-        layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
+        layout.push({ kind: 'item', item: it, y, h: 86 }); y += 94
       }
     }
-    layout[invHi].endY = y + 14  // 最后物品下方留白加大(对齐商店)
+    layout[invHi].endY = y - 8  // 分类卡底(对齐商店, 不重叠)
     contentH = y
   } else if (type === 'forge') {
     // 对齐原版: 武器/护甲/饰品三分类卡
@@ -95,8 +95,8 @@ function build() {
     for (let si = 0; si < list.length; si++) {
       const hi = layout.length
       layout.push({ kind: 'header', text: titles[si], y, endY: 0 }); y += 30
-      layout.push({ kind: 'item', item: list[si], y, h: 86 }); y += 86
-      layout[hi].endY = y + 14  // 最后装备下方留白加大(对齐商店)
+      layout.push({ kind: 'item', item: list[si], y, h: 86 }); y += 94
+      layout[hi].endY = y - 8  // 分类卡底(对齐商店, 不重叠)
       if (si < list.length - 1) y += 8  // 分类间距8px(对齐商店)
     }
     contentH = y
@@ -108,53 +108,68 @@ function touch(x, y) {
   if (x > S.LW - 60 && y > M && y < M + 50) { close(); return }
   // 底部返回按钮(对齐原版 ↩️ 返回)
   if (y > S.LH - 60 && y < S.LH - 16 && x > M && x < M + PW()) { close(); return }
-  // 列表区: ↑↓按钮/顶部底部点按滚动, 中部记录拖动起点(点击在touchEnd判定)
+  // 列表区
   const th = type === 'shop' ? 100 : 58
   const topY = 80 + th + 10
   const bottomY = S.LH - 70
   const maxS = Math.max(0, contentH - (bottomY - topY))
-  if (y > topY && y < bottomY) {
-    // ↑↓ 滚动按钮(右侧, 点击滚动一屏)
-    const midY = topY + (bottomY - topY) / 2
-    if (x > S.LW - 44 && x < S.LW - 16) {
-      if (y > midY - 32 && y < midY - 4) { scroll = Math.max(0, scroll - 120); return }
-      if (y > midY + 4 && y < midY + 32) { scroll = Math.min(maxS, scroll + 120); return }
-    }
-    if (y < topY + 22) { scroll = Math.max(0, scroll - 60); return }
-    if (y > bottomY - 22) { scroll = Math.min(maxS, scroll + 60); return }
-    touchStartY = y
-    touchStartX = x
-    dragged = false
-    dragBase = scroll
+  if (y < topY || y > bottomY) return
+  // ↑↓ 滚动按钮(右侧, 点击立即滚动一屏)
+  const midY = topY + (bottomY - topY) / 2
+  if (x > S.LW - 44 && x < S.LW - 16) {
+    if (y > midY - 32 && y < midY - 4) { scroll = Math.max(0, scroll - 120); return }
+    if (y > midY + 4 && y < midY + 32) { scroll = Math.min(maxS, scroll + 120); return }
   }
+  // 记录起点(点击/拖动统一在 touchEnd 判定; 边缘翻页也走这里, item优先)
+  touchStartY = y
+  touchStartX = x
+  dragged = false
+  dragBase = scroll
 }
 
-// 拖动滚动(上下滑动)
+// 拖动滚动(重写): 轻触阈值12px, 拖动跟手
 function touchMove(x, y) {
   if (touchStartY === null) return
   const dy = y - touchStartY
-  if (!dragged && Math.abs(dy) > 8) dragged = true
+  if (Math.abs(dy) > 12) dragged = true
   if (dragged) {
     const th = type === 'shop' ? 100 : 58
     const topY = 80 + th + 10
     const bottomY = S.LH - 70
-    scroll = Math.max(0, Math.min(Math.max(0, contentH - (bottomY - topY)), dragBase - dy))
+    const maxS = Math.max(0, contentH - (bottomY - topY))
+    scroll = Math.max(0, Math.min(maxS, dragBase - dy))
   }
 }
 
-// 松手: 未拖动则视为点击
+// 松手(重写): 未拖动=点击。先命中 item/eqRow(边缘的item也能点), 未命中再边缘翻页
 function touchEnd() {
-  if (touchStartY !== null && !dragged) {
+  if (touchStartY === null) return
+  if (!dragged) {
     const cy = touchStartY + scroll
+    let hit = false
     for (const el of layout) {
       if (el.kind === 'item' && cy > el.y && cy < el.y + el.h) {
         handleItem(el.item)
+        hit = true
         break
       }
       if (el.kind === 'eqRow' && cy > el.y && cy < el.y + el.h) {
         const cx0 = M + 15, cw = PW() - 30
-        if (el.item && touchStartX > cx0 + cw - 76 && touchStartX < cx0 + cw - 12) { unequipSlot(el.slot); break }
+        if (el.item && touchStartX > cx0 + cw - 76 && touchStartX < cx0 + cw - 12) {
+          unequipSlot(el.slot)
+          hit = true
+          break
+        }
       }
+    }
+    // 未命中任何项: 顶部/底部边缘空白点击翻页
+    if (!hit) {
+      const th = type === 'shop' ? 100 : 58
+      const topY = 80 + th + 10
+      const bottomY = S.LH - 70
+      const maxS = Math.max(0, contentH - (bottomY - topY))
+      if (touchStartY < topY + 22) scroll = Math.max(0, scroll - 60)
+      else if (touchStartY > bottomY - 22) scroll = Math.min(maxS, scroll + 60)
     }
   }
   touchStartY = null
