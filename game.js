@@ -50,6 +50,7 @@ function startLogoAnim() {
     phase: 'bounce',  // bounce(物理弹跳) | settle(缓动落位) | done(静止)
     bounces: 0,
     settleT: 0,
+    startX: 0, startY: 0,  // settle 起点(切换时记录)
     last: Date.now()
   }
 }
@@ -92,13 +93,16 @@ function updateLogoAnim() {
     if (a.bounces >= 4 && Math.abs(a.vy) < 45 && Math.abs(a.vx) < 28) {
       a.phase = 'settle'
       a.settleT = 0
+      a.startX = a.x  // 记录起点, 基于起点插值(原指数逼近前0.6s就走完, 后段像等待)
+      a.startY = a.y
     }
   } else if (a.phase === 'settle') {
     a.settleT += dt
-    const e = ui.easeOut(Math.min(1, a.settleT / 1.5))
+    const t = Math.min(1, a.settleT / 1.5)
+    const e = ui.easeOut(t)
     const tx = LW / 2, ty = LH * 0.24
-    a.x += (tx - a.x) * e
-    a.y += (ty - a.y) * e
+    a.x = a.startX + (tx - a.startX) * e
+    a.y = a.startY + (ty - a.startY) * e
     a.deformX *= Math.exp(-9 * dt)
     a.deformY *= Math.exp(-9 * dt)
     if (a.settleT >= 1.5) {
