@@ -134,9 +134,9 @@ function touchMove(x, y) {
     const bottomY = S.LH - 70
     const maxS = Math.max(0, contentH - (bottomY - topY))
     let target = dragBase - dy
-    // 超出边界带阻尼(回弹效果): 超出部分衰减35%
-    if (target < 0) target = target * 0.35
-    else if (target > maxS) target = maxS + (target - maxS) * 0.35
+    // 超出边界带阻尼(回弹效果): 衰减20%且最多超界50px, 不会拖出大片空白
+    if (target < 0) target = Math.max(-50, target * 0.2)
+    else if (target > maxS) target = Math.min(maxS + 50, maxS + (target - maxS) * 0.2)
     scroll = target
   }
 }
