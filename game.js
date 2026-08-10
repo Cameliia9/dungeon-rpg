@@ -291,6 +291,10 @@ function drawGame() {
   ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
+  // 背包按钮数量实时刷新(商店买装备后返回主界面, btns不重建导致数量不更新)
+  const bagBtn = btns.find(b => b.label && b.label.indexOf('背包') >= 0)
+  if (bagBtn) bagBtn.label = '🎒 背包 (' + player.inventory.length + '件)'
+
   // 入场动画(交错淡入): 标题卡 -> 状态卡 -> 按钮
   const dur = 900
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)

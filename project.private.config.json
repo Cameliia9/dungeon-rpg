@@ -1,6 +1,6 @@
 {
   "libVersion": "3.16.2",
-  "projectname": "dungeon-rpg",
+  "projectname": "minirpg1",
   "setting": {
     "urlCheck": false,
     "coverView": false,
@@ -17,5 +17,6 @@
     "bigPackageSizeSupport": false,
     "checkInvalidKey": true,
     "ignoreDevUnusedFiles": true
-  }
+  },
+  "condition": {}
 }

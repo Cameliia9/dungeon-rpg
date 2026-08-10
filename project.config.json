@@ -27,7 +27,7 @@
     "useCompilerPlugins": false
   },
   "compileType": "game",
-  "libVersion": "latest",
+  "libVersion": "3.16.2",
   "appid": "wxac339b81b7a91422",
   "projectname": "dungeon-rpg",
   "condition": {

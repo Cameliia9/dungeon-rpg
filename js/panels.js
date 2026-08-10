@@ -58,7 +58,7 @@ function build() {
       for (const it of sec.items) {
         layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
       }
-      layout[hi].endY = y - 6
+      layout[hi].endY = y + 14  // 最后商品下方留白, 分类卡间隙加大(用户: 间隙过小)
       if (si < sections.length - 1) y += 8  // 分类间距8px(用户指定)
     }
     contentH = y
@@ -85,7 +85,7 @@ function build() {
         layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
       }
     }
-    layout[invHi].endY = y - 6
+    layout[invHi].endY = y + 14  // 最后物品下方留白加大(对齐商店)
     contentH = y
   } else if (type === 'forge') {
     // 对齐原版: 武器/护甲/饰品三分类卡
@@ -96,7 +96,7 @@ function build() {
       const hi = layout.length
       layout.push({ kind: 'header', text: titles[si], y, endY: 0 }); y += 30
       layout.push({ kind: 'item', item: list[si], y, h: 86 }); y += 86
-      layout[hi].endY = y - 6
+      layout[hi].endY = y + 14  // 最后装备下方留白加大(对齐商店)
       if (si < list.length - 1) y += 8  // 分类间距8px(对齐商店)
     }
     contentH = y
