@@ -58,7 +58,7 @@ function build() {
         layout.push({ kind: 'item', item: it, y, h: 86 }); y += 86
       }
       layout[hi].endY = y - 6
-      if (si < sections.length - 1) y += 20  // 分类间距20px
+      if (si < sections.length - 1) y += 8  // 分类间距8px(用户指定)
     }
     contentH = y
   } else if (type === 'inventory') {
@@ -94,7 +94,7 @@ function build() {
       layout.push({ kind: 'header', text: titles[si], y, endY: 0 }); y += 30
       layout.push({ kind: 'item', item: list[si], y, h: 86 }); y += 86
       layout[hi].endY = y - 6
-      if (si < list.length - 1) y += 20  // 分类间距(对齐商店)
+      if (si < list.length - 1) y += 8  // 分类间距8px(对齐商店)
     }
     contentH = y
   }
