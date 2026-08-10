@@ -120,6 +120,18 @@ function updateLogoAnim() {
   }
 }
 
+// 轻触跳过弹跳动画: logo直接落位, 标题/按钮立即开始浮现
+function skipLogoAnim() {
+  const a = logoAnim
+  if (!a || a.phase === 'done') return
+  a.phase = 'done'
+  a.x = LW / 2
+  a.y = LH * 0.24
+  a.deformX = 0
+  a.deformY = 0
+  logoSettledAt = Date.now()
+}
+
 // ==================== 全局状态 ====================
 let player = null          // 当前玩家
 let scene = 'menu'         // 当前场景
@@ -222,6 +234,10 @@ function drawMenu() {
     ctx.globalAlpha = 1
   } else {
     text(ctx, '⚔️', LW / 2, LH * 0.24 + (1 - p1) * dist, 68, COLORS.gold, 'center', false, p1)
+  }
+  // 右下角提示: 弹跳期间可轻触跳过
+  if (logoActive && logoSettledAt === 0) {
+    text(ctx, '轻触跳过', LW - 16, LH - 20, 12, 'rgba(255,255,255,0.35)', 'right')
   }
   text(ctx, '地牢远征', LW / 2, LH * 0.34 + (1 - p1) * dist, 42, COLORS.gold, 'center', true, p1)
 
@@ -415,6 +431,7 @@ wx.onTouchStart((e) => {
   if (scene === 'menu' || scene === 'difficulty' || scene === 'game') {
     const b = hitBtn(btns, x, y)
     if (b && !b.disabled) b.cb()
+    else if (scene === 'menu' && logoAnim && logoSettledAt === 0) skipLogoAnim()  // 轻触跳过弹跳
   } else if (scene === 'explore' && explore) {
     explore.touch(x, y)
   } else if (scene === 'battle' && battle) {
