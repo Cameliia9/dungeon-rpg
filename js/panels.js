@@ -305,7 +305,14 @@ function draw() {
   let elIdx = 0
   for (const el of layout) {
     const ey = el.y - scroll
-    if (ey < topY - 80 || ey > bottomY + 10) continue
+    // 分类卡: 按整卡范围判断可见性(标题滚出屏幕但卡背景还在可视区时必须继续绘制, 否则背景消失)
+    if (el.kind === 'header' || el.kind === 'eqHeader' || el.kind === 'invHeader') {
+      const cardH2 = el.endY - el.y + 8
+      const cardTop = ey - 8
+      if (cardTop + cardH2 < topY - 80 || cardTop > bottomY + 10) continue
+    } else {
+      if (ey < topY - 80 || ey > bottomY + 10) continue
+    }
     // 每个卡片逐个淡入(80ms递增, 400ms完成, 对齐难度按钮)
     const elFade = ui.animProgress(enterTime, 80 + elIdx * 70, 400)
     ctx.globalAlpha = elFade
