@@ -106,7 +106,8 @@ class Player {
   }
 
   expToLevel() {
-    return this.level * 80 + 20
+    if (this.level <= 1) return 100  // 1升2保持100(用户指定)
+    return this.level * 140 + 60     // 之后升级总经验大幅提高
   }
 
   addExp(amount) {
