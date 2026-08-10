@@ -107,7 +107,7 @@ class Player {
 
   expToLevel() {
     if (this.level <= 1) return 100  // 1升2保持100(用户指定)
-    return Math.round((this.level * 80 + 20) * 1.3)  // 原需求+30%
+    return Math.round((this.level * 80 + 20) * 1.3 / 10) * 10  // 原需求+30%, 四舍五入到十位
   }
 
   addExp(amount) {
