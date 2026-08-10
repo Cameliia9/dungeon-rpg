@@ -112,7 +112,7 @@ const monsters = {
 const bosses = [
   {
     name: '史莱姆之王',
-    hp: 260, attack: 46, defense: 12, exp: 200, gold: 90,
+    hp: 210, attack: 36, defense: 12, exp: 200, gold: 90,
     level: 5,
     floorOfAppearance: 5,
     critChance: 0.15, dodgeChance: 0.08,

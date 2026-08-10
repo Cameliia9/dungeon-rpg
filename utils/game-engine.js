@@ -133,9 +133,9 @@ class Player {
     // 记录升级前的损失生命值
     const lostBefore = Math.max(0, this.totalMaxHp - this.hp)
     this.level++
-    this.baseAttack += 2  // 方案2: 成长放缓, 装备驱动
+    this.baseAttack += 1  // 升级收益削一档: 每级攻+3(1+2), 2级不碾压小怪
     this.baseDefense += 1
-    this.maxHp += 8
+    this.maxHp += 4       // 每级血+14(4+10)
     // 升级不回复满血，只恢复已损失生命的比例（easy 80% / hard 60% / nightmare 40%）
     // 用整数百分比避免浮点误差（如 1-0.8=0.19999999999999996）
     const healPercent = Math.round(this.levelUpHealRatio * 100)
