@@ -171,11 +171,11 @@ function buildMenu() {
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🆕 新游戏', () => switchScene('difficulty'), ui.BTN.primary)); y += bh + 16
   const contBtn = makeBtn(cx - bw / 2, y, bw, bh, savedGame ? '▶️ 继续游戏' : '▶️ 继续游戏（无存档）', () => {
     if (savedGame) { loadGame(); switchScene('game') }
-  }, savedGame ? ui.BTN.primary : ui.BTN.disabled)
+  }, savedGame ? ui.BTN.gold : ui.BTN.disabled)
   if (!savedGame) contBtn.disabled = true  // 无存档彻底禁用
   btns.push(contBtn); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '⚙️ 设置', () => wx.showToast({ title: '暂无设置项', icon: 'none' }), ui.BTN.secondary)); y += bh + 16
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🚪 退出', () => wx.exitMiniProgram(), ui.BTN.secondary))
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🚪 退出', () => wx.exitMiniProgram(), ui.BTN.disabled))
 }
 
 let bgGrad = null  // 背景渐变缓存(每帧重建开销大)
