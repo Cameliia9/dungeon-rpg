@@ -106,7 +106,7 @@ class Player {
   }
 
   expToLevel() {
-    return this.level * 140 + 60  // 升级变难: 1级升2级需200exp(约13只小史莱姆)
+    return this.level * 80 + 20
   }
 
   addExp(amount) {
