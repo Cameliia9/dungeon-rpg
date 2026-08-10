@@ -104,8 +104,8 @@ function updateLogoAnim() {
     if (a.settleT >= 1.1) {
       a.phase = 'done'
       a.x = tx; a.y = ty
-      a.deformX = 0.2   // 落定最后压一下(果冻收尾: 横伸)
-      a.deformY = -0.15  // 纵缩
+      a.deformX = 0   // 落位即静止, 不压一下(用户: 复位后抖动=果冻收尾, 去掉)
+      a.deformY = 0
       logoSettledAt = Date.now()  // 落位完成: 标题/按钮从此刻起浮现
     }
   } else if (a.phase === 'done') {
