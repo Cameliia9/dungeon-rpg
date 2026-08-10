@@ -92,6 +92,7 @@ function updateLogoAnim() {
     if (a.bounces >= 4 && Math.abs(a.vy) < 45 && Math.abs(a.vx) < 28) {
       a.phase = 'settle'
       a.settleT = 0
+      logoSettledAt = Date.now()  // 弹跳结束即触发文字浮现(用户: 出现时间太慢, 不等落位完成)
     }
   } else if (a.phase === 'settle') {
     a.settleT += dt
@@ -106,7 +107,7 @@ function updateLogoAnim() {
       a.x = tx; a.y = ty
       a.deformX = 0   // 落位即静止, 不压一下(用户: 复位后抖动=果冻收尾, 去掉)
       a.deformY = 0
-      logoSettledAt = Date.now()  // 落位完成: 标题/按钮从此刻起浮现
+      // logoSettledAt 已在 settle 开始时设置, 此处不再刷新(否则淡入倒退)
     }
   } else if (a.phase === 'done') {
     // 最后一下压扁恢复(必须执行, 否则图标永远压扁/拉伸)
@@ -191,7 +192,7 @@ function drawMenu() {
 
   // 入场动画: 弹跳期间只有logo, 落位后标题/按钮才交错浮现(落位前 p=0 不显示)
   // logo不可用(未加载/失败)时按sceneEnterTime正常入场, 不等待弹跳
-  const dur = 900, dist = 28
+  const dur = 1400, dist = 28  // 文字淡入放慢(用户: 出现过程太快)
   const logoActive = !!(logoReady && logoImg && logoAnim)
   const baseT = logoActive ? (logoSettledAt > 0 ? logoSettledAt : Infinity) : sceneEnterTime
   const p1 = ui.animProgress(baseT, 0, dur)
@@ -333,7 +334,7 @@ function drawDifficulty() {
   ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
-  const dur = 900, dist = 28
+  const dur = 1400, dist = 28  // 文字淡入放慢(用户: 出现过程太快)
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 60, dur)
   text(ctx, '选择难度', LW / 2, LH * 0.14 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
