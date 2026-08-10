@@ -1,5 +1,5 @@
 /**
- * 地牢冒险 - 微信小游戏版入口
+ * 地牢远征 - 微信小游戏版入口
  * 场景: menu(主菜单) -> difficulty(难度) -> explore(探索) -> battle(战斗)
  *       explore 内可开 panels(商店/背包/铁匠铺)
  */
@@ -110,7 +110,7 @@ function updateLogoAnim() {
       a.x = tx; a.y = ty
       a.deformX = 0   // 落位即静止, 无果冻形变(用户: 没有图案复位这段)
       a.deformY = 0
-      logoSettledAt = Date.now() + 300  // 落位完成后等0.3s文字才浮现(用户指定)
+      logoSettledAt = Date.now()  // 图案复位后标题立即出现, 按钮逐个浮现(用户指定)
     }
   } else if (a.phase === 'done') {
     // 形变恒0(无注入), 防御性衰减
@@ -223,7 +223,7 @@ function drawMenu() {
   } else {
     text(ctx, '⚔️', LW / 2, LH * 0.24 + (1 - p1) * dist, 68, COLORS.gold, 'center', false, p1)
   }
-  text(ctx, '地牢冒险', LW / 2, LH * 0.34 + (1 - p2) * dist, 42, COLORS.gold, 'center', true, p2)
+  text(ctx, '地牢远征', LW / 2, LH * 0.34 + (1 - p1) * dist, 42, COLORS.gold, 'center', true, p1)
 
   const delays = [160, 240, 320, 400]
   for (let i = 0; i < btns.length; i++) {
@@ -300,7 +300,7 @@ function drawGame() {
   // 标题卡(下移+放大)
   ctx.globalAlpha = p1
   roundRect(ctx, 16, 120, LW - 32, 74, 12, ui.cardFill(ctx, 16, 120, LW - 32, 74), COLORS.cardBorder, 1.5)
-  text(ctx, '⚔️ 地牢冒险 ⚔️', LW / 2, 148, 22, COLORS.gold, 'center', true)
+  text(ctx, '⚔️ 地牢远征 ⚔️', LW / 2, 148, 22, COLORS.gold, 'center', true)
   text(ctx, '第 ' + player.floor + ' 层 · Lv.' + player.level, LW / 2, 176, 13, COLORS.textDim)
   ctx.globalAlpha = 1
 
