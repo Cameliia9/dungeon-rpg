@@ -110,7 +110,7 @@ function updateLogoAnim() {
       a.x = tx; a.y = ty
       a.deformX = 0   // 落位即静止, 无果冻形变(用户: 没有图案复位这段)
       a.deformY = 0
-      logoSettledAt = Date.now() + 600  // 落位完成后等0.6s文字才浮现(用户指定)
+      logoSettledAt = Date.now() + 300  // 落位完成后等0.3s文字才浮现(用户指定)
     }
   } else if (a.phase === 'done') {
     // 形变恒0(无注入), 防御性衰减
