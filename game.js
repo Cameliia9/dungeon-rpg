@@ -438,6 +438,11 @@ wx.onTouchEnd(() => {
   else if (scene === 'explore' && explore && explore.touchEnd) explore.touchEnd()
 })
 
+// 鼠标滚轮(开发者工具/模拟器): 面板列表滚动, delta>0 向下
+if (wx.onMouseWheel) wx.onMouseWheel((e) => {
+  if (panels && panels.wheel) panels.wheel(e.delta || 0)
+})
+
 // 启动
 if (loadGame()) savedGame = true
 switchScene('menu')

@@ -112,14 +112,7 @@ function touch(x, y) {
   const th = type === 'shop' ? 100 : 58
   const topY = 80 + th + 10
   const bottomY = S.LH - 70
-  const maxS = Math.max(0, contentH - (bottomY - topY))
   if (y < topY || y > bottomY) return
-  // ↑↓ 滚动按钮(右侧, 点击立即滚动一屏)
-  const midY = topY + (bottomY - topY) / 2
-  if (x > S.LW - 44 && x < S.LW - 16) {
-    if (y > midY - 32 && y < midY - 4) { scroll = Math.max(0, scroll - 120); return }
-    if (y > midY + 4 && y < midY + 32) { scroll = Math.min(maxS, scroll + 120); return }
-  }
   // 记录起点(点击/拖动统一在 touchEnd 判定; 边缘翻页也走这里, item优先)
   touchStartY = y
   touchStartX = x
@@ -139,6 +132,15 @@ function touchMove(x, y) {
     const maxS = Math.max(0, contentH - (bottomY - topY))
     scroll = Math.max(0, Math.min(maxS, dragBase - dy))
   }
+}
+
+// 鼠标滚轮滚动(开发者工具/模拟器): delta>0 向下滚
+function wheel(delta) {
+  const th = type === 'shop' ? 100 : 58
+  const topY = 80 + th + 10
+  const bottomY = S.LH - 70
+  const maxS = Math.max(0, contentH - (bottomY - topY))
+  scroll = Math.max(0, Math.min(maxS, scroll + (delta || 0)))
 }
 
 // 松手(重写): 未拖动=点击。先命中 item/eqRow(边缘的item也能点), 未命中再边缘翻页
@@ -302,18 +304,13 @@ function draw() {
   }
   ctx.restore()
 
-  // 右侧滚动条 + ↑↓ 滚动按钮(淡入)
+  // 右侧滚动条(淡入); 滚动靠拖动/鼠标滚轮
   ctx.globalAlpha = ui.animProgress(enterTime, 500, 400)
   const maxS = Math.max(0, contentH - (bottomY - topY))
   if (maxS > 0) {
     const barH = Math.max(22, (bottomY - topY) * (bottomY - topY) / contentH)
     const barY = topY + (bottomY - topY - barH) * (scroll / maxS)
     roundRect(ctx, S.LW - 10, barY, 4, barH, 2, 'rgba(255,255,255,0.45)')
-    const midY = topY + (bottomY - topY) / 2
-    roundRect(ctx, S.LW - 44, midY - 34, 28, 28, 6, '#1a1a2e', '#2a2a4a', 1)
-    roundRect(ctx, S.LW - 44, midY + 2, 28, 28, 6, '#1a1a2e', '#2a2a4a', 1)
-    text(ctx, '↑', S.LW - 30, midY - 20, 14, COLORS.text, 'center', true)
-    text(ctx, '↓', S.LW - 30, midY + 16, 14, COLORS.text, 'center', true)
   }
 
   // ===== 底部返回按钮(对齐原版 ↩️ 返回, 最后淡入) =====
@@ -434,4 +431,4 @@ function drawEquipRow(ctx, el, y) {
   }
 }
 
-module.exports = { create, draw, touch, touchMove, touchEnd }
+module.exports = { create, draw, touch, touchMove, touchEnd, wheel }
