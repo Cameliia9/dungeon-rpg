@@ -46,7 +46,8 @@ function build() {
     themeName = Data.getThemeForFloor(p.floor).name
     sections = [
       { title: '🗡️ 武器', items: Data.equipment.weapon.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'weapon' })) },
-      { title: '🛡️ 护甲', items: Data.equipment.armor.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'armor' })) },
+      { title: '👕 上衣', items: Data.equipment.top.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'top' })) },
+      { title: '👖 裤子', items: Data.equipment.pants.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'pants' })) },
       { title: '💍 饰品', items: Data.equipment.accessory.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'accessory' })) }
     ]
     let y = 208  // 标题卡下移后同步(卡顶200, 距标题卡底180为20px)
@@ -67,8 +68,10 @@ function build() {
     layout.push({ kind: 'eqHeader', y: 168, endY: 0 })
     let y = 168 + 42
     layout.push({ kind: 'eqRow', slot: 'weapon', item: p.weapon, y, h: 46 }); y += 46
-    layout.push({ kind: 'eqRow', slot: 'armor', item: p.armor, y, h: 46 }); y += 46
-    layout.push({ kind: 'eqRow', slot: 'accessory', item: p.accessory, y, h: 46 }); y += 46
+    layout.push({ kind: 'eqRow', slot: 'top', item: p.top, y, h: 46 }); y += 46
+    layout.push({ kind: 'eqRow', slot: 'pants', item: p.pants, y, h: 46 }); y += 46
+    layout.push({ kind: 'eqRow', slot: 'accessory1', item: p.accessory1, y, h: 46 }); y += 46
+    layout.push({ kind: 'eqRow', slot: 'accessory2', item: p.accessory2, y, h: 46 }); y += 46
     layout[0].endY = y + 12  // 饰品行下方留白, 卡片加高
     const invHi = layout.length
     const invY = y + 52
@@ -86,8 +89,8 @@ function build() {
     contentH = y
   } else if (type === 'forge') {
     // 对齐原版: 武器/护甲/饰品三分类卡
-    list = ['weapon', 'armor', 'accessory'].map(slot => ({ slot, item: p[slot] }))
-    const titles = ['🗡️ 武器', '🛡️ 护甲', '💍 饰品']
+    list = ['weapon', 'top', 'pants', 'accessory1', 'accessory2'].map(slot => ({ slot, item: p[slot] }))
+    const titles = ['🗡️ 武器', '👕 上衣', '👖 裤子', '💍 饰品1', '💍 饰品2']
     let y = 208
     for (let si = 0; si < list.length; si++) {
       const hi = layout.length
@@ -160,7 +163,8 @@ function touchEnd() {
 function unequipSlot(slot) {
   const p = S.player
   if (!p[slot]) return
-  p.inventory.push({ ...p[slot], type: slot })
+  const t = slot === 'accessory1' || slot === 'accessory2' ? 'accessory' : slot
+  p.inventory.push({ ...p[slot], type: t })
   p[slot] = null
   S.savePlayer()
   wx.showToast({ title: '已卸下', icon: 'success' })
@@ -173,10 +177,17 @@ function handleItem(it) {
 
   if (type === 'shop') {
     if (p.gold < it.price) { wx.showToast({ title: '金币不足！', icon: 'none' }); return }
-    const cur = p[it.type]
-    const curVal = cur ? (cur.attack || cur.defense || cur.hp || 0) : 0
+    // 已有更好装备检查: 武器/上衣/裤子比单槽; 饰品比双槽(两槽都更好才拦截)
+    let curVal = 0
+    if (it.type === 'accessory') {
+      const vs = [p.accessory1, p.accessory2].map(a => a ? (a.attack || a.defense || a.hp || 0) : 0)
+      curVal = Math.min(...vs)
+    } else {
+      const cur = p[it.type]
+      curVal = cur ? (cur.attack || cur.defense || cur.hp || 0) : 0
+    }
     const itVal = it.attack || it.defense || it.hp || 0
-    if (cur && curVal >= itVal) { wx.showToast({ title: '已有更好装备', icon: 'none' }); return }
+    if (it.type !== 'accessory' ? !!p[it.type] && curVal >= itVal : (p.accessory1 && p.accessory2) && curVal >= itVal) { wx.showToast({ title: '已有更好装备', icon: 'none' }); return }
     p.gold -= it.price
     p.inventory.push({ ...it })
     S.savePlayer()
@@ -329,7 +340,7 @@ function drawItemRow(ctx, it, y, h) {
     // 右侧💰价格金按钮(垂直居中)
     drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, '💰 ' + it.price, null, { ...ui.BTN.gold, size: 12 }))
   } else if (type === 'inventory') {
-    const icon = it.type === 'weapon' ? '🗡️' : it.type === 'armor' ? '🛡️' : it.type === 'accessory' ? '💍' : '🧪'
+    const icon = it.type === 'weapon' ? '🗡️' : (it.type === 'top' || it.type === 'pants' || it.type === 'armor') ? '🛡️' : it.type === 'accessory' ? '💍' : '🧪'
     let name = icon + ' ' + it.name
     while (name.length > 2 && ui.textWidth(ctx, name, 15) > rightEdge - x) name = name.slice(0, -1)
     text(ctx, name, x, y + 18, 15, COLORS.text, 'left', true)
@@ -365,8 +376,8 @@ function drawItemRow(ctx, it, y, h) {
       // 主属性(攻红/防蓝/血绿)
       let stat = '', statColor = COLORS.textDim
       if (it.slot === 'weapon') { stat = '攻击 +' + (it2.attack + (it2.enhanceLevel || 0) * 3); statColor = '#e74c3c' }
-      else if (it.slot === 'armor') { stat = '防御 +' + (it2.defense + (it2.enhanceLevel || 0) * 3); statColor = '#3498db' }
-      else { stat = '生命上限 +' + (it2.hp + (it2.enhanceLevel || 0) * 15); statColor = '#2ecc71' }
+      else if (it.slot === 'top' || it.slot === 'pants') { stat = '防御 +' + ((it2.defense || 0) + (it2.enhanceLevel || 0) * 3); statColor = '#3498db' }
+      else { stat = '生命上限 +' + ((it2.hp || 0) + (it2.enhanceLevel || 0) * 15); statColor = '#2ecc71' }
       text(ctx, stat, x, y + 38, 13, statColor, 'left', true)
       // 当前强化
       text(ctx, '当前强化：+' + (it2.enhanceLevel || 0) + ' / +' + p.maxEnhanceLevel, x, y + 55, 11, '#8a8a9a', 'left')
@@ -376,7 +387,7 @@ function drawItemRow(ctx, it, y, h) {
       drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, canUp ? '💰 ' + cost + ' 强化' : '已满级', null, canUp ? ui.BTN.forge : ui.BTN.secondary))
     } else {
       // 未装备(对齐原版: 居中灰字)
-      const slotName = it.slot === 'weapon' ? '武器' : it.slot === 'armor' ? '护甲' : '饰品'
+      const slotName = it.slot === 'weapon' ? '武器' : it.slot === 'top' ? '上衣' : it.slot === 'pants' ? '裤子' : '饰品'
       text(ctx, '未装备' + slotName, S.LW / 2, y + 32, 13, '#555555')
     }
   }
@@ -387,11 +398,20 @@ function drawEquipRow(ctx, el, y) {
   const cx0 = M + 15, cw = PW() - 30
   roundRect(ctx, cx0, y, cw, el.h - 4, 8, '#1a1a3e')
   const x = cx0 + 14
-  const slotName = el.slot === 'weapon' ? '🗡️ 武器' : el.slot === 'armor' ? '🛡️ 护甲' : '💍 饰品'
+  const slotName = el.slot === 'weapon' ? '🗡️ 武器' : el.slot === 'top' ? '👕 上衣' : el.slot === 'pants' ? '👖 裤子' : '💍 饰品'
   text(ctx, slotName, x, y + 18, 13, '#a080ff', 'left', true)
   if (el.item) {
     const it = el.item
-    const stat = el.slot === 'weapon' ? '(+' + it.attack + '攻)' : el.slot === 'armor' ? '(+' + it.defense + '防)' : '(+' + it.hp + '血)'
+    let stat = ''
+    if (el.slot === 'weapon') stat = '(+' + it.attack + '攻)'
+    else if (el.slot === 'top' || el.slot === 'pants') stat = '(+' + (it.defense || 0) + '防)'
+    else {
+      if (it.hp) stat = '(+' + it.hp + '血)'
+      else if (it.attack) stat = '(+' + it.attack + '攻)'
+      else if (it.defense) stat = '(+' + it.defense + '防)'
+      else if (it.critChance) stat = '(暴+' + Math.round(it.critChance * 100) + '%)'
+      else if (it.dodgeChance) stat = '(闪+' + Math.round(it.dodgeChance * 100) + '%)'
+    }
     text(ctx, it.name + ' ' + stat, x + 76, y + 18, 13, COLORS.text, 'left', true)
     drawBtn(ctx, makeBtn(cx0 + cw - 76, y + 7, 64, 26, '卸下', null, ui.BTN.secondary))
   } else {

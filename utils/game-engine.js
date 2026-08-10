@@ -49,8 +49,10 @@ class Player {
     this.baseDodge = 0.05  // 基础闪避率 5%
     this.gold = 50
     this.weapon = null
-    this.armor = null
-    this.accessory = null
+    this.top = null        // 上衣
+    this.pants = null      // 裤子
+    this.accessory1 = null // 饰品1
+    this.accessory2 = null // 饰品2
     this.inventory = []
     this.floor = 1
     this.kills = 0
@@ -63,38 +65,42 @@ class Player {
   }
 
   get totalAttack() {
-    let a = this.baseAttack + this.level * 3 + this.tempAttackBuff
+    let a = this.baseAttack + this.level * 2 + this.tempAttackBuff
     if (this.weapon) a += this.weapon.attack + this.getEnhanceBonus(this.weapon)
     return a
   }
 
   get totalDefense() {
     let d = this.baseDefense + Math.floor(this.level * 1.5) + this.tempDefenseBuff
-    if (this.armor) d += this.armor.defense + this.getEnhanceBonus(this.armor)
+    for (const slot of ['top', 'pants']) {
+      if (this[slot]) d += this[slot].defense + this.getEnhanceBonus(this[slot])
+    }
     return d
   }
 
   get totalMaxHp() {
-    let h = this.maxHp + this.level * 25
-    if (this.accessory) h += this.accessory.hp + this.getEnhanceBonus(this.accessory)
+    let h = this.maxHp + this.level * 10
+    for (const slot of ['accessory1', 'accessory2']) {
+      if (this[slot]) h += (this[slot].hp || 0) + this.getEnhanceBonus(this[slot])  // 无血量饰品(暴击/闪避款)加0
+    }
     return h
   }
 
   // 总暴击率 = 基础 + 装备
   get totalCrit() {
     let c = this.baseCrit
-    if (this.weapon) c += this.weapon.critChance || 0
-    if (this.armor) c += this.armor.critChance || 0
-    if (this.accessory) c += this.accessory.critChance || 0
+    for (const slot of ['weapon', 'top', 'pants', 'accessory1', 'accessory2']) {
+      if (this[slot]) c += this[slot].critChance || 0
+    }
     return Math.min(0.6, c)
   }
 
   // 总闪避率 = 基础 + 装备 + 临时增益
   get totalDodge() {
     let d = this.baseDodge
-    if (this.weapon) d += this.weapon.dodgeChance || 0
-    if (this.armor) d += this.armor.dodgeChance || 0
-    if (this.accessory) d += this.accessory.dodgeChance || 0
+    for (const slot of ['weapon', 'top', 'pants', 'accessory1', 'accessory2']) {
+      if (this[slot]) d += this[slot].dodgeChance || 0
+    }
     if (this.tempDodgeBuff) d += this.tempDodgeBuff
     return Math.min(0.5, d)
   }
@@ -127,9 +133,9 @@ class Player {
     // 记录升级前的损失生命值
     const lostBefore = Math.max(0, this.totalMaxHp - this.hp)
     this.level++
-    this.baseAttack += 3
+    this.baseAttack += 2  // 方案2: 成长放缓, 装备驱动
     this.baseDefense += 1
-    this.maxHp += 20
+    this.maxHp += 8
     // 升级不回复满血，只恢复已损失生命的比例（easy 80% / hard 60% / nightmare 40%）
     // 用整数百分比避免浮点误差（如 1-0.8=0.19999999999999996）
     const healPercent = Math.round(this.levelUpHealRatio * 100)
@@ -159,13 +165,20 @@ class Player {
         if (this.weapon) this.inventory.push(this.weapon)
         this.weapon = item
         break
-      case 'armor':
-        if (this.armor) this.inventory.push(this.armor)
-        this.armor = item
+      case 'top':
+      case 'armor':  // 兼容旧存档装备
+        if (this.top) this.inventory.push(this.top)
+        this.top = item
+        if (this.top.type === 'armor') this.top.type = 'top'
+        break
+      case 'pants':
+        if (this.pants) this.inventory.push(this.pants)
+        this.pants = item
         break
       case 'accessory':
-        if (this.accessory) this.inventory.push(this.accessory)
-        this.accessory = item
+        if (!this.accessory1) this.accessory1 = item
+        else if (!this.accessory2) this.accessory2 = item
+        else { if (this.accessory1) this.inventory.push(this.accessory1); this.accessory1 = item }
         break
     }
     const idx = this.inventory.findIndex(i => i === item)
@@ -194,7 +207,7 @@ class Player {
     if (!item || !item.enhanceLevel) return 0
     const lv = item.enhanceLevel
     if (item.type === 'weapon') return lv * 3
-    if (item.type === 'armor') return lv * 3
+    if (item.type === 'top' || item.type === 'pants' || item.type === 'armor') return lv * 3
     if (item.type === 'accessory') return lv * 15
     return 0
   }
@@ -608,7 +621,7 @@ function getRoomsPerFloor(floor) {
 
 // 获取随机装备（按当前层 tier，只出当前主题能获得的最好装备）
 function getRandomEquipment(floor) {
-  const types = ['weapon', 'armor', 'accessory']
+  const types = ['weapon', 'top', 'pants', 'accessory']
   const type = types[Math.floor(Math.random() * types.length)]
   // tier 与层数绑定：1-5层=tier1, 6-10=tier2, ... 21-25=tier5
   const tier = Math.min(Math.ceil(floor / 5), 5)
@@ -631,8 +644,10 @@ function savePlayer(player) {
     baseDefense: player.baseDefense,
     gold: player.gold,
     weapon: player.weapon,
-    armor: player.armor,
-    accessory: player.accessory,
+    top: player.top,
+    pants: player.pants,
+    accessory1: player.accessory1,
+    accessory2: player.accessory2,
     inventory: player.inventory,
     floor: player.floor,
     kills: player.kills,
@@ -654,10 +669,14 @@ function loadPlayer(data) {
   p.baseAttack = data.baseAttack
   p.baseDefense = data.baseDefense
   p.gold = data.gold
+  // 槽位迁移: 旧存档 armor->top(上衣), accessory->accessory1(饰品1)
   p.weapon = data.weapon
-  p.armor = data.armor
-  p.accessory = data.accessory
-  p.inventory = data.inventory || []
+  p.top = data.top || data.armor || null
+  if (p.top && p.top.type === 'armor') p.top.type = 'top'
+  p.pants = data.pants || null
+  p.accessory1 = data.accessory1 || data.accessory || null
+  p.accessory2 = data.accessory2 || null
+  p.inventory = (data.inventory || []).map(it => it && it.type === 'armor' ? { ...it, type: 'top' } : it)
   p.floor = data.floor
   p.kills = data.kills
   p.roomsExplored = data.roomsExplored || 0
