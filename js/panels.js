@@ -181,14 +181,17 @@ function touchEnd() {
       else if (touchStartY > bottomY - 22) scroll = Math.min(maxS, scroll + 60)
     }
   }
-  // 松手: 超出边界启动回弹(250ms easeOut弹回)
+  // 松手: 超界弹回 + 接近边界(40px内)吸附, 保证滑到底松手停在最后商品
   const th = type === 'shop' ? 100 : 58
   const topY = 80 + th + 10
   const bottomY = S.LH - 70
   const maxS = Math.max(0, contentH - (bottomY - topY))
-  if (scroll < 0 || scroll > maxS) {
-    bounce = { from: scroll, target: scroll < 0 ? 0 : maxS, t0: Date.now() }
-  }
+  let snap = null
+  if (scroll < 0) snap = 0
+  else if (scroll > maxS) snap = maxS
+  else if (scroll < 40) snap = 0
+  else if (maxS > 0 && scroll > maxS - 40) snap = maxS
+  if (snap !== null) bounce = { from: scroll, target: snap, t0: Date.now() }
   touchStartY = null
 }
 
