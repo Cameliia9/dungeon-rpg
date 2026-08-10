@@ -132,7 +132,7 @@ function touchMove(x, y) {
     const th = type === 'shop' ? 100 : 58
     const topY = 80 + th + 10
     const bottomY = S.LH - 70
-    const maxS = Math.max(0, contentH - (bottomY - topY))
+    const maxS = Math.max(0, contentH - bottomY)  // 内容底对齐可视区底(ey是画布绝对坐标, 不能减topY)
     let target = dragBase - dy
     // 超出边界带阻尼(回弹效果): 衰减20%且最多超界50px, 不会拖出大片空白
     if (target < 0) target = Math.max(-50, target * 0.2)
@@ -146,7 +146,7 @@ function wheel(delta) {
   const th = type === 'shop' ? 100 : 58
   const topY = 80 + th + 10
   const bottomY = S.LH - 70
-  const maxS = Math.max(0, contentH - (bottomY - topY))
+  const maxS = Math.max(0, contentH - bottomY)  // 内容底对齐可视区底(ey是画布绝对坐标, 不能减topY)
   scroll = Math.max(0, Math.min(maxS, scroll + (delta || 0)))
 }
 
@@ -176,7 +176,7 @@ function touchEnd() {
       const th = type === 'shop' ? 100 : 58
       const topY = 80 + th + 10
       const bottomY = S.LH - 70
-      const maxS = Math.max(0, contentH - (bottomY - topY))
+      const maxS = Math.max(0, contentH - bottomY)  // 内容底对齐可视区底(ey是画布绝对坐标, 不能减topY)
       if (touchStartY < topY + 22) scroll = Math.max(0, scroll - 60)
       else if (touchStartY > bottomY - 22) scroll = Math.min(maxS, scroll + 60)
     }
@@ -185,7 +185,7 @@ function touchEnd() {
   const th = type === 'shop' ? 100 : 58
   const topY = 80 + th + 10
   const bottomY = S.LH - 70
-  const maxS = Math.max(0, contentH - (bottomY - topY))
+  const maxS = Math.max(0, contentH - bottomY)  // 内容底对齐可视区底(ey是画布绝对坐标, 不能减topY)
   let snap = null
   if (scroll < 0) snap = 0
   else if (scroll > maxS) snap = maxS
@@ -338,7 +338,7 @@ function draw() {
 
   // 右侧滚动条(淡入); 滚动靠拖动/鼠标滚轮
   ctx.globalAlpha = ui.animProgress(enterTime, 500, 400)
-  const maxS = Math.max(0, contentH - (bottomY - topY))
+  const maxS = Math.max(0, contentH - bottomY)  // 内容底对齐可视区底(ey是画布绝对坐标, 不能减topY)
   if (maxS > 0) {
     const barH = Math.max(22, (bottomY - topY) * (bottomY - topY) / contentH)
     const barY = topY + (bottomY - topY - barH) * (scroll / maxS)
