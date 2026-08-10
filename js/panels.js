@@ -21,6 +21,7 @@ let touchStartY = null  // 拖动滚动状态
 let touchStartX = 0
 let dragged = false
 let dragBase = 0
+let bounce = null   // 回弹动画 {from, target, t0}: 滑过边界松手弹回
 const M = 16        // 边距
 const PW = () => S.LW - 32
 
@@ -38,6 +39,7 @@ function build() {
   const p = S.player
   btns = []
   scroll = 0
+  bounce = null
   sections = []
   layout = []
   if (type === 'shop') {
@@ -114,6 +116,7 @@ function touch(x, y) {
   const bottomY = S.LH - 70
   if (y < topY || y > bottomY) return
   // 记录起点(点击/拖动统一在 touchEnd 判定; 边缘翻页也走这里, item优先)
+  bounce = null  // 触摸打断回弹
   touchStartY = y
   touchStartX = x
   dragged = false
@@ -130,7 +133,11 @@ function touchMove(x, y) {
     const topY = 80 + th + 10
     const bottomY = S.LH - 70
     const maxS = Math.max(0, contentH - (bottomY - topY))
-    scroll = Math.max(0, Math.min(maxS, dragBase - dy))
+    let target = dragBase - dy
+    // 超出边界带阻尼(回弹效果): 超出部分衰减35%
+    if (target < 0) target = target * 0.35
+    else if (target > maxS) target = maxS + (target - maxS) * 0.35
+    scroll = target
   }
 }
 
@@ -173,6 +180,14 @@ function touchEnd() {
       if (touchStartY < topY + 22) scroll = Math.max(0, scroll - 60)
       else if (touchStartY > bottomY - 22) scroll = Math.min(maxS, scroll + 60)
     }
+  }
+  // 松手: 超出边界启动回弹(250ms easeOut弹回)
+  const th = type === 'shop' ? 100 : 58
+  const topY = 80 + th + 10
+  const bottomY = S.LH - 70
+  const maxS = Math.max(0, contentH - (bottomY - topY))
+  if (scroll < 0 || scroll > maxS) {
+    bounce = { from: scroll, target: scroll < 0 ? 0 : maxS, t0: Date.now() }
   }
   touchStartY = null
 }
@@ -245,6 +260,13 @@ function close() {
 function draw() {
   const ctx = S.ctx
   const p = S.player
+  // 回弹动画(滑过边界松手弹回, 250ms easeOut)
+  if (bounce) {
+    const t = Math.min(1, (Date.now() - bounce.t0) / 250)
+    const e = ui.easeOut(t)
+    scroll = bounce.from + (bounce.target - bounce.from) * e
+    if (t >= 1) { scroll = bounce.target; bounce = null }
+  }
   // 打开渐显动画: 标题卡先淡入, 然后卡片逐个交错出现(对齐难度按钮风格)
   const p0 = ui.animProgress(enterTime, 0, 400)
   ctx.globalAlpha = p0
