@@ -95,23 +95,25 @@ function updateLogoAnim() {
     }
   } else if (a.phase === 'settle') {
     a.settleT += dt
-    const e = ui.easeOut(Math.min(1, a.settleT / 1.5))
+    const e = ui.easeOut(Math.min(1, a.settleT / 0.6))
     const tx = LW / 2, ty = LH * 0.24
     a.x += (tx - a.x) * e
     a.y += (ty - a.y) * e
     a.deformX *= Math.exp(-9 * dt)
     a.deformY *= Math.exp(-9 * dt)
-    if (a.settleT >= 1.5) {
+    if (a.settleT >= 0.6) {
       a.phase = 'done'
       a.x = tx; a.y = ty
-      a.deformX = 0   // 落位即静止, 不压一下(用户: 复位后抖动=果冻收尾, 去掉)
-      a.deformY = 0
-      logoSettledAt = Date.now() + 600  // 落位完成后再等0.6s文字才浮现(用户指定)
+      // 图案复位: 注入果冻形变, 1.5s慢恢复(之前0.33s快恢复=用户说的莫名抖动)
+      a.deformX = 0.2
+      a.deformY = -0.15
+      // 复位1.5s + 等0.6s 后文字才浮现(用户指定顺序)
+      logoSettledAt = Date.now() + 2100
     }
   } else if (a.phase === 'done') {
-    // 最后一下压扁恢复(必须执行, 否则图标永远压扁/拉伸)
-    a.deformX *= Math.exp(-9 * dt)
-    a.deformY *= Math.exp(-9 * dt)
+    // 图案复位: 果冻形变1.5s慢恢复(系数2.6: 1.5s衰减到约2%, 舒缓不抖动)
+    a.deformX *= Math.exp(-2.6 * dt)
+    a.deformY *= Math.exp(-2.6 * dt)
     if (Math.abs(a.deformX) < 0.005 && Math.abs(a.deformY) < 0.005) { a.deformX = 0; a.deformY = 0 }
   }
 }
