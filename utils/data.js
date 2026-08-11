@@ -65,10 +65,10 @@ const monsters = {
   // ---- 1-5层 黏液沼泽 ----
   slime: [
     { name: '小史莱姆', hp: 40, attack: 11, defense: 2, exp: 24, gold: 4, level: 1, critChance: 0.05, dodgeChance: 0.05, desc: '一滩会动的绿色黏液', icon: '🟢' },
-    { name: '大史莱姆', hp: 64, attack: 17, defense: 5, exp: 42, gold: 7, level: 2, critChance: 0.06, dodgeChance: 0.04, desc: '体型庞大的黏稠怪物', icon: '🟩' },
-    { name: '毒液史莱姆', hp: 81, attack: 21, defense: 7, exp: 51, gold: 9, level: 3, critChance: 0.12, dodgeChance: 0.08, desc: '体表泛着危险紫光的剧毒史莱姆', icon: '🟣' },
-    { name: '黏土怪', hp: 111, attack: 25, defense: 9, exp: 60, gold: 11, level: 3, critChance: 0.05, dodgeChance: 0, desc: '由沼泽淤泥凝聚成的怪物，皮糙肉厚', icon: '🟤' },
-    { name: '巨鼠', hp: 136, attack: 29, defense: 10, exp: 66, gold: 12, level: 4, critChance: 0.10, dodgeChance: 0.15, desc: '沼泽边长大的巨型老鼠，动作敏捷', icon: '🐀' }
+    { name: '大史莱姆', hp: 60, attack: 14, defense: 4, exp: 42, gold: 7, level: 2, critChance: 0.06, dodgeChance: 0.04, desc: '体型庞大的黏稠怪物', icon: '🟩' },
+    { name: '毒液史莱姆', hp: 50, attack: 17, defense: 5, exp: 51, gold: 9, level: 3, critChance: 0.12, dodgeChance: 0.08, desc: '体表泛着危险紫光的剧毒史莱姆', icon: '🟣' },
+    { name: '黏土怪', hp: 75, attack: 18, defense: 7, exp: 60, gold: 11, level: 3, critChance: 0.05, dodgeChance: 0, desc: '由沼泽淤泥凝聚成的怪物，皮糙肉厚', icon: '🟤' },
+    { name: '巨鼠', hp: 65, attack: 19, defense: 5, exp: 66, gold: 12, level: 4, critChance: 0.10, dodgeChance: 0.15, desc: '沼泽边长大的巨型老鼠，动作敏捷', icon: '🐀' }
   ],
 
   // ---- 6-10层 骸骨墓穴 ----
