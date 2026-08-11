@@ -94,8 +94,8 @@ const monsters = {
     { name: '小恶魔', hp: 519, attack: 68, defense: 26, exp: 156, gold: 32, level: 14, critChance: 0.12, dodgeChance: 0.10, desc: '尖牙利爪的深渊幼魔', icon: '😈' },
     { name: '地狱犬', hp: 646, attack: 84, defense: 32, exp: 168, gold: 35, level: 15, critChance: 0.15, dodgeChance: 0.10, desc: '三头燃火的深渊猎犬', icon: '🐕' },
     { name: '熔岩怪', hp: 706, attack: 92, defense: 35, exp: 177, gold: 37, level: 16, critChance: 0.08, dodgeChance: 0, desc: '由滚烫熔岩构成的庞然大物', icon: '🌋' },
-    { name: '火元素', hp: 740, attack: 96, defense: 37, exp: 189, gold: 40, level: 17, critChance: 0.18, dodgeChance: 0.05, desc: '纯粹火焰构成的元素生物', icon: '🔥' },
-    { name: '炎魔', hp: 765, attack: 98, defense: 38, exp: 210, gold: 45, level: 18, critChance: 0.20, dodgeChance: 0.03, desc: '来自深渊的火焰恶魔', icon: '👹' }
+    { name: '火元素', hp: 800, attack: 98, defense: 37, exp: 189, gold: 40, level: 17, critChance: 0.18, dodgeChance: 0.05, desc: '纯粹火焰构成的元素生物', icon: '🔥' },
+    { name: '炎魔', hp: 850, attack: 100, defense: 38, exp: 210, gold: 45, level: 18, critChance: 0.20, dodgeChance: 0.03, desc: '来自深渊的火焰恶魔', icon: '👹' }
   ],
 
   // ---- 21-25层 龙之巢穴 ----
@@ -104,7 +104,7 @@ const monsters = {
     { name: '龙人战士', hp: 935, attack: 105, defense: 42, exp: 240, gold: 52, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士', icon: '🐉' },
     { name: '龙人法师', hp: 1020, attack: 115, defense: 46, exp: 252, gold: 55, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者', icon: '🧙' },
     { name: '亚龙', hp: 1046, attack: 118, defense: 47, exp: 264, gold: 58, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙', icon: '🦖' },
-    { name: '精英龙裔', hp: 1071, attack: 120, defense: 48, exp: 285, gold: 62, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
+    { name: '精英龙裔', hp: 1250, attack: 130, defense: 48, exp: 285, gold: 62, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
   ]
 }
 
