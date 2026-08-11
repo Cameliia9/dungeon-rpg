@@ -144,7 +144,7 @@ const bosses = [
   },
   {
     name: '死灵法师',
-    hp: 720, attack: 80, defense: 30, exp: 680, gold: 270,
+    hp: 800, attack: 90, defense: 30, exp: 680, gold: 270,
     level: 11,
     floorOfAppearance: 15,
     critChance: 0.18, dodgeChance: 0.08,
@@ -159,7 +159,7 @@ const bosses = [
   },
   {
     name: '深渊恶魔',
-    hp: 1050, attack: 100, defense: 40, exp: 1080, gold: 430,
+    hp: 1200, attack: 125, defense: 40, exp: 1080, gold: 430,
     level: 14,
     floorOfAppearance: 20,
     critChance: 0.22, dodgeChance: 0.05,
@@ -175,7 +175,7 @@ const bosses = [
   },
   {
     name: '远古邪龙',
-    hp: 1500, attack: 130, defense: 50, exp: 1600, gold: 680,
+    hp: 1700, attack: 158, defense: 50, exp: 1600, gold: 680,
     level: 18,
     floorOfAppearance: 25,
     critChance: 0.20, dodgeChance: 0.15,
