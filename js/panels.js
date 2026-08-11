@@ -431,7 +431,7 @@ function drawItemRow(ctx, it, y, h) {
       drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, canUp ? '💰 ' + cost + ' 强化' : '已满级', null, canUp ? ui.BTN.forge : ui.BTN.secondary))
     } else {
       // 未装备(对齐原版: 居中灰字)
-      const slotName = it.slot === 'weapon' ? '武器' : it.slot === 'top' ? '上衣' : it.slot === 'pants' ? '裤子' : '饰品'
+      const slotName = it.slot === 'weapon' ? '武器' : it.slot === 'top' ? '上衣' : it.slot === 'pants' ? '裤子' : it.slot === 'accessory1' ? '饰品1' : '饰品2'
       text(ctx, '未装备' + slotName, S.LW / 2, y + 32, 13, '#555555')
     }
   }
@@ -442,7 +442,7 @@ function drawEquipRow(ctx, el, y) {
   const cx0 = M + 15, cw = PW() - 30
   roundRect(ctx, cx0, y, cw, el.h - 4, 8, '#1a1a3e')
   const x = cx0 + 14
-  const slotName = el.slot === 'weapon' ? '🗡️ 武器' : el.slot === 'top' ? '👕 上衣' : el.slot === 'pants' ? '👖 裤子' : '💍 饰品'
+  const slotName = el.slot === 'weapon' ? '🗡️ 武器' : el.slot === 'top' ? '👕 上衣' : el.slot === 'pants' ? '👖 裤子' : el.slot === 'accessory1' ? '💍 饰品1' : '💍 饰品2'
   text(ctx, slotName, x, y + 18, 13, '#a080ff', 'left', true)
   if (el.item) {
     const it = el.item
