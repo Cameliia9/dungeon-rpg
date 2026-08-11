@@ -560,7 +560,9 @@ function getRandomMonster(floor, difficulty) {
   // ---- 等级随层偏移：同种怪在主题内越深等级越高 ----
   // displayLevel = 基础等级 + (主题内层数-1)，封顶主题内最高等级，且不低于基础等级
   const themeMaxLevel = Math.max(...pool.map(m => m.level))
-  const levelOffset = Math.min(floorInTheme - 1, themeMaxLevel - template.level)
+  // 弱怪成长封顶: 最多长到主题最高等级-2, 防止最弱怪在深层反超最强怪(用户指正)
+  const maxDisplay = Math.max(template.level, themeMaxLevel - 2)
+  const levelOffset = Math.min(floorInTheme - 1, maxDisplay - template.level)
   const displayLevel = template.level + Math.max(0, levelOffset)
 
   const scaled = { ...template }
