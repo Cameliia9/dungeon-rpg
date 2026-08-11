@@ -196,16 +196,16 @@ const bosses = [
 const equipment = {
   weapon: [
     // tier 1 (1-5层)
-    { name: '木剑', attack: 5, price: 48, tier: 1, desc: '新手冒险者的第一把武器' },
-    { name: '短剑', attack: 9, price: 108, tier: 1, desc: '轻便的近战武器' },
+    { name: '木剑', attack: 5, price: 50, tier: 1, desc: '新手冒险者的第一把武器' },
+    { name: '短剑', attack: 9, price: 110, tier: 1, desc: '轻便的近战武器' },
     // tier 2 (6-10层)
-    { name: '铁剑', attack: 15, price: 216, tier: 2, desc: '铁匠铺的标准制品' },
-    { name: '阔剑', attack: 22, price: 384, tier: 2, desc: '沉重但威力十足' },
+    { name: '铁剑', attack: 15, price: 220, tier: 2, desc: '铁匠铺的标准制品' },
+    { name: '阔剑', attack: 22, price: 380, tier: 2, desc: '沉重但威力十足' },
     // tier 3 (11-15层)
-    { name: '秘银长剑', attack: 30, price: 624, tier: 3, desc: '闪烁着银光的魔法武器' },
+    { name: '秘银长剑', attack: 30, price: 620, tier: 3, desc: '闪烁着银光的魔法武器' },
     { name: '暗影之刃', attack: 38, price: 960, tier: 3, critChance: 0.10, desc: '刀刃缠绕黑暗能量，暴击率+10%' },
     // tier 4 (16-20层)
-    { name: '龙牙战斧', attack: 48, price: 1392, tier: 4, critChance: 0.05, desc: '用龙牙锻造的传奇巨斧，暴击率+5%' },
+    { name: '龙牙战斧', attack: 48, price: 1390, tier: 4, critChance: 0.05, desc: '用龙牙锻造的传奇巨斧，暴击率+5%' },
     { name: '烈焰之刃', attack: 56, price: 1800, tier: 4, critChance: 0.10, desc: '缠绕着火焰的魔刃，暴击率+10%' },
     // tier 5 (21-25层)
     { name: '灭神之剑', attack: 66, price: 2280, tier: 5, critChance: 0.15, desc: '传说中能斩杀神明的圣剑，暴击率+15%' },
@@ -213,31 +213,31 @@ const equipment = {
   ],
   top: [
     // tier 1
-    { name: '布衣', defense: 3, price: 48, tier: 1, desc: '聊胜于无的防护' },
+    { name: '布衣', defense: 3, price: 50, tier: 1, desc: '聊胜于无的防护' },
     { name: '皮衣', defense: 6, price: 120, tier: 1, desc: '猎人们常用的轻便上衣' },
     // tier 2
-    { name: '锁子甲', defense: 11, price: 264, tier: 2, desc: '由金属环编织而成' },
-    { name: '板甲', defense: 16, price: 456, tier: 2, desc: '厚重的全身铁甲' },
+    { name: '锁子甲', defense: 11, price: 260, tier: 2, desc: '由金属环编织而成' },
+    { name: '板甲', defense: 16, price: 460, tier: 2, desc: '厚重的全身铁甲' },
     // tier 3
     { name: '秘银护甲', defense: 23, price: 720, tier: 3, desc: '轻如鸿毛，坚如磐石' },
-    { name: '暗影斗篷', defense: 20, price: 648, tier: 3, dodgeChance: 0.12, desc: '能吸收伤害的魔法斗篷，闪避率+12%' },
+    { name: '暗影斗篷', defense: 20, price: 650, tier: 3, dodgeChance: 0.12, desc: '能吸收伤害的魔法斗篷，闪避率+12%' },
     // tier 4
-    { name: '龙鳞铠甲', defense: 32, price: 1392, tier: 4, dodgeChance: 0.08, desc: '镶嵌龙鳞的终极铠甲，闪避率+8%' },
-    { name: '深渊铠甲', defense: 38, price: 1872, tier: 4, critChance: 0.05, desc: '深渊玄铁铸造的重甲，暴击率+5%' },
+    { name: '龙鳞铠甲', defense: 32, price: 1390, tier: 4, dodgeChance: 0.08, desc: '镶嵌龙鳞的终极铠甲，闪避率+8%' },
+    { name: '深渊铠甲', defense: 38, price: 1870, tier: 4, critChance: 0.05, desc: '深渊玄铁铸造的重甲，暴击率+5%' },
     // tier 5
     { name: '龙神战甲', defense: 46, price: 2640, tier: 5, dodgeChance: 0.10, desc: '灌注龙神之力的战甲，闪避率+10%' },
     { name: '圣龙护甲', defense: 52, price: 3360, tier: 5, critChance: 0.05, desc: '圣龙祝福的究极护甲，暴击率+5%' }
   ],
   pants: [
     // tier 1
-    { name: '麻裤', defense: 2, price: 36, tier: 1, desc: '粗麻织成的裤子' },
-    { name: '皮裤', defense: 4, price: 84, tier: 1, desc: '轻便耐磨的皮裤' },
+    { name: '麻裤', defense: 2, price: 40, tier: 1, desc: '粗麻织成的裤子' },
+    { name: '皮裤', defense: 4, price: 80, tier: 1, desc: '轻便耐磨的皮裤' },
     // tier 2
-    { name: '铁护腿', defense: 9, price: 192, tier: 2, desc: '铁片拼接的护腿' },
+    { name: '铁护腿', defense: 9, price: 190, tier: 2, desc: '铁片拼接的护腿' },
     { name: '钢板护腿', defense: 13, price: 360, tier: 2, desc: '沉重坚固的钢制护腿' },
     // tier 3
-    { name: '秘银护腿', defense: 18, price: 576, tier: 3, desc: '银光流转的秘银护腿' },
-    { name: '暗影绑腿', defense: 16, price: 528, tier: 3, dodgeChance: 0.08, desc: '轻若无物的绑腿，闪避率+8%' },
+    { name: '秘银护腿', defense: 18, price: 580, tier: 3, desc: '银光流转的秘银护腿' },
+    { name: '暗影绑腿', defense: 16, price: 530, tier: 3, dodgeChance: 0.08, desc: '轻若无物的绑腿，闪避率+8%' },
     // tier 4
     { name: '龙鳞护腿', defense: 26, price: 1140, tier: 4, dodgeChance: 0.06, desc: '龙鳞护膝，闪避率+6%' },
     { name: '深渊护腿', defense: 30, price: 1440, tier: 4, critChance: 0.04, desc: '深渊玄铁护腿，暴击率+4%' },
@@ -247,24 +247,24 @@ const equipment = {
   ],
   accessory: [
     // tier 1 (每层4件, 属性多样化)
-    { name: '铜戒指', hp: 20, price: 72, tier: 1, desc: '普通的铜制戒指' },
-    { name: '生命护符', hp: 40, price: 168, tier: 1, desc: '蕴含微弱生命力的护符' },
-    { name: '幸运坠饰', price: 144, tier: 1, critChance: 0.04, desc: '带来好运的坠饰，暴击率+4%' },
-    { name: '疾风之戒', price: 132, tier: 1, dodgeChance: 0.04, desc: '轻巧灵动，闪避率+4%' },
+    { name: '铜戒指', hp: 20, price: 70, tier: 1, desc: '普通的铜制戒指' },
+    { name: '生命护符', hp: 40, price: 170, tier: 1, desc: '蕴含微弱生命力的护符' },
+    { name: '幸运坠饰', price: 140, tier: 1, critChance: 0.04, desc: '带来好运的坠饰，暴击率+4%' },
+    { name: '疾风之戒', price: 130, tier: 1, dodgeChance: 0.04, desc: '轻巧灵动，闪避率+4%' },
     // tier 2
-    { name: '银项链', hp: 65, price: 312, tier: 2, desc: '做工精美的银项链' },
-    { name: '红宝石戒指', hp: 90, price: 528, tier: 2, critChance: 0.05, desc: '镶嵌血红宝石的戒指，暴击率+5%' },
-    { name: '勇者徽章', price: 456, tier: 2, attack: 8, desc: '勇气之证，攻击+8' },
+    { name: '银项链', hp: 65, price: 310, tier: 2, desc: '做工精美的银项链' },
+    { name: '红宝石戒指', hp: 90, price: 530, tier: 2, critChance: 0.05, desc: '镶嵌血红宝石的戒指，暴击率+5%' },
+    { name: '勇者徽章', price: 460, tier: 2, attack: 8, desc: '勇气之证，攻击+8' },
     { name: '灵巧之坠', price: 420, tier: 2, dodgeChance: 0.06, desc: '身轻如燕，闪避率+6%' },
     // tier 3
     { name: '凤凰羽毛', hp: 130, price: 840, tier: 3, dodgeChance: 0.10, desc: '传说中凤凰的尾羽，闪避率+10%' },
-    { name: '暗影之心', hp: 110, price: 768, tier: 3, critChance: 0.08, desc: '凝聚暗影之力的宝石，暴击率+8%' },
+    { name: '暗影之心', hp: 110, price: 770, tier: 3, critChance: 0.08, desc: '凝聚暗影之力的宝石，暴击率+8%' },
     { name: '力量手环', price: 720, tier: 3, attack: 14, desc: '蕴含蛮力的手环，攻击+14' },
-    { name: '鹰眼护符', price: 792, tier: 3, critChance: 0.12, desc: '锐利如鹰，暴击率+12%' },
+    { name: '鹰眼护符', price: 790, tier: 3, critChance: 0.12, desc: '锐利如鹰，暴击率+12%' },
     // tier 4
-    { name: '熔岩核心', hp: 180, price: 1488, tier: 4, critChance: 0.08, desc: '深渊熔岩凝结的核心，暴击率+8%' },
-    { name: '恶魔之眼', hp: 150, price: 1344, tier: 4, dodgeChance: 0.08, desc: '凝视深渊的恶魔之眼，闪避率+8%' },
-    { name: '暴君戒指', price: 1416, tier: 4, attack: 22, desc: '暴君之力，攻击+22' },
+    { name: '熔岩核心', hp: 180, price: 1490, tier: 4, critChance: 0.08, desc: '深渊熔岩凝结的核心，暴击率+8%' },
+    { name: '恶魔之眼', hp: 150, price: 1340, tier: 4, dodgeChance: 0.08, desc: '凝视深渊的恶魔之眼，闪避率+8%' },
+    { name: '暴君戒指', price: 1420, tier: 4, attack: 22, desc: '暴君之力，攻击+22' },
     { name: '深渊之心', hp: 120, price: 1260, tier: 4, attack: 12, desc: '深渊意志，攻击+12 生命+120' },
     // tier 5
     { name: '龙神之心', hp: 260, price: 3120, tier: 5, critChance: 0.10, dodgeChance: 0.05, desc: '蕴含着巨龙的生命精华，暴击+10% 闪避+5%' },
