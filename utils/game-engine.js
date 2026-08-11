@@ -9,8 +9,8 @@ const GameData = require('./data')
 // 难度系数: 影响怪物强度（攻击/防御/经验/金币大幅，HP 小幅）
 const DIFFICULTY_MULT = {
   easy: { atk: 1.0, hp: 1.0 },
-  hard: { atk: 1.25, hp: 1.1 },
-  nightmare: { atk: 1.5, hp: 1.2 }
+  hard: { atk: 1.3, hp: 1.15 },
+  nightmare: { atk: 1.5, hp: 1.35 }  // 噩梦: 攻防+50%血+35%, 满配五五开需药水强化(用户指定)
 }
 
 // ==================== 词缀系统 ====================
