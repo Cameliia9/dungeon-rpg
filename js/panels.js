@@ -50,7 +50,8 @@ function build() {
       { title: '🗡️ 武器', items: Data.equipment.weapon.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'weapon' })) },
       { title: '👕 上衣', items: Data.equipment.top.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'top' })) },
       { title: '👖 裤子', items: Data.equipment.pants.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'pants' })) },
-      { title: '💍 饰品', items: Data.equipment.accessory.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'accessory' })) }
+      { title: '💍 饰品', items: Data.equipment.accessory.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'accessory' })) },
+      { title: '🧪 药水', items: Data.shopPotions.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'potion' })) }
     ]
     let y = 208  // 标题卡下移后同步(卡顶200, 距标题卡底180为20px)
     for (let si = 0; si < sections.length; si++) {
@@ -371,6 +372,7 @@ function drawItemRow(ctx, it, y, h) {
     if (it.attack) { prop = '攻击 +' + it.attack; propColor = '#e74c3c' }
     else if (it.defense) { prop = '防御 +' + it.defense; propColor = '#3498db' }
     else if (it.hp) { prop = '生命上限 +' + it.hp; propColor = '#2ecc71' }
+    else if (it.type === 'potion') { prop = '恢复' + Math.round((it.healPercent || 0.3) * 100) + '%生命'; propColor = '#2ecc71' }
     text(ctx, prop, x, y + 38, 13, propColor, 'left', true)
     // 行3: 副属性(暴击黄/闪避蓝) + 描述紧随同行
     let sub = ''

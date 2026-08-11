@@ -314,4 +314,13 @@ const themeMerchantGoods = {
   }
 }
 
-module.exports = { THEMES, getThemeForFloor, monsters, bosses, equipment, themeMerchantGoods }
+// ==================== 商店药水(每层段1款回血药, 买进背包使用) ====================
+const shopPotions = [
+  { name: '生命药水', desc: '恢复30%生命值', price: 20, tier: 1, type: 'potion', healPercent: 0.3 },
+  { name: '治疗药水', desc: '恢复40%生命值', price: 45, tier: 2, type: 'potion', healPercent: 0.4 },
+  { name: '强效药水', desc: '恢复50%生命值', price: 80, tier: 3, type: 'potion', healPercent: 0.5 },
+  { name: '秘制药水', desc: '恢复60%生命值', price: 130, tier: 4, type: 'potion', healPercent: 0.6 },
+  { name: '圣疗药水', desc: '恢复70%生命值', price: 200, tier: 5, type: 'potion', healPercent: 0.7 }
+]
+
+module.exports = { THEMES, getThemeForFloor, monsters, bosses, equipment, themeMerchantGoods, shopPotions }
