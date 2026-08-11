@@ -540,20 +540,21 @@ function getRandomMonster(floor, difficulty) {
   const theme = GameData.getThemeForFloor(floor)
   const pool = [...(GameData.monsters[theme.id] || GameData.monsters.slime)].sort((a, b) => a.level - b.level)
 
-  // ---- 层数加权：同主题内，弱怪在浅层占比高，越深强怪越多 ----
+  // ---- 层数解锁+加权：1层只出第1种(最弱), 2层前2种, 3层前3种... 5层全部(用户指定) ----
   // 主题内层数 1-5（如 1-5层=主题第1-5层, 6-10层=第1-5层）
   const floorInTheme = ((floor - 1) % 5) + 1
-  // 权重：怪物强度位置(1-5)越接近当前层数权重越高
-  const weights = pool.map((m, i) => {
+  const available = pool.slice(0, floorInTheme)
+  // 权重：可出现的怪物中，越接近当前层数权重越高
+  const weights = available.map((m, i) => {
     const dist = Math.abs((i + 1) - floorInTheme)
     return Math.max(0.15, 1 - dist * 0.35)
   })
   const totalW = weights.reduce((s, w) => s + w, 0)
   let roll = Math.random() * totalW
-  let template = pool[pool.length - 1]
-  for (let i = 0; i < pool.length; i++) {
+  let template = available[available.length - 1]
+  for (let i = 0; i < available.length; i++) {
     roll -= weights[i]
-    if (roll <= 0) { template = pool[i]; break }
+    if (roll <= 0) { template = available[i]; break }
   }
 
   // ---- 等级随层偏移：同种怪在主题内越深等级越高 ----
