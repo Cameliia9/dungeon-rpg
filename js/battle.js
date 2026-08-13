@@ -346,6 +346,8 @@ function draw() {
   text(ctx, '⚔️ ' + monster.attack + '攻 🛡️ ' + monster.defense + '防', cxp + 16, my + 190, 12, COLORS.textDim, 'left')
   text(ctx, '⚡' + monster.critPercent + '%暴 💨' + monster.dodgePercent + '%闪', cxp + cw - 16, my + 190, 12, COLORS.textDim, 'right')
   ctx.globalAlpha = 1
+  // 怪物受击白闪(碰撞瞬间整卡闪白)
+  drawHitFlash(ctx, cxp, my, cw, mh, 'monster')
 
   // ============ 2. 玩家卡 (加高140, 内容分散不紧凑) ============
   ctx.globalAlpha = a2
@@ -362,6 +364,8 @@ function draw() {
   text(ctx, '⚔️ ' + p.totalAttack + '攻 🛡️ ' + p.totalDefense + '防', cxp + 16, py2 + 108, 13, COLORS.textDim, 'left')
   text(ctx, '💾 ' + p.gold + '金', cxp + cw - 16, py2 + 108, 13, COLORS.textDim, 'right')
   ctx.globalAlpha = 1
+  // 玩家受击白闪(碰撞瞬间整卡闪白)
+  drawHitFlash(ctx, cxp, py2, cw, ph, 'player')
 
   // ============ 3. 操作/结果区 ============
   ctx.globalAlpha = a3
@@ -473,6 +477,21 @@ function tickTurn() {
   if (!turnQueue.length && turnBusy) turnBusy = false
 }
 
+// 受击白闪(碰撞瞬间整卡闪白, 快速淡出)
+let hitFlash = { monster: null, player: null }   // {t0, dur}
+function playHitFlash(side) { hitFlash[side] = { t0: Date.now(), dur: 160 } }
+function drawHitFlash(ctx, x, y, w, h, side) {
+  const f = hitFlash[side]
+  if (!f) return
+  const t = (Date.now() - f.t0) / f.dur
+  if (t >= 1) { hitFlash[side] = null; return }
+  const prevA = ctx.globalAlpha
+  ctx.globalAlpha = 0.4 * (1 - t)   // 快速淡出
+  ctx.fillStyle = '#ffffff'
+  roundRect(ctx, x, y, w, h, 12, '#ffffff')
+  ctx.globalAlpha = prevA
+}
+
 function resetFx() {
   fxList = []
   shake = null
@@ -482,6 +501,7 @@ function resetFx() {
   }
   turnQueue = []
   turnBusy = false
+  hitFlash = { monster: null, player: null }
 }
 function spawnFx(f) { fxList.push({ t0: Date.now(), ...f }) }
 // 特效位置 = 怪物/玩家身上(图标处), 不是卡片中心
@@ -502,14 +522,16 @@ function cardOffset(anim) {
   return anim.to * Math.sin(Math.PI * t)
 }
 
-// 玩家攻击命中怪: 命中闪光 + 伤害飘字(动画由调度器负责, 避免重复启动)
+// 玩家攻击命中怪: 怪物受击白闪 + 命中闪光 + 伤害飘字(动画由调度器负责, 避免重复启动)
 function fxPlayerHit(dmg, crit) {
+  playHitFlash('monster')
   spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
   spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
 }
-// 怪物攻击命中玩家: 命中闪光 + 飘字(动画由调度器负责)
+// 怪物攻击命中玩家: 玩家受击白闪 + 命中闪光 + 飘字(动画由调度器负责)
 function fxMonsterHit(dmg, crit, skill) {
+  playHitFlash('player')
   spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: crit || skill ? 440 : 320, crit, skill })
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
