@@ -117,7 +117,7 @@ function attack() {
   const monHpBefore = battle.monster.hp
   const r1 = battle.playerAttack()
   syncLogs()
-  // 玩家攻击特效: 血量差=伤害, 最新日志判定暴击/闪避
+  // 玩家攻击特效: 血量差=伤害, 最新日志判定暴击/闪避; 玩家先手, 怪物动画延迟(等玩家撞完)
   const pDmg = monHpBefore - battle.monster.hp
   const lastLog = battle.logs[battle.logs.length - 1]
   if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'))
@@ -126,10 +126,10 @@ function attack() {
   const plyHpBefore = battle.player.hp
   const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
   syncLogs()
-  // 怪物攻击特效
+  // 怪物攻击特效(延迟, 玩家先手撞完再撞)
   const mDmg = plyHpBefore - battle.player.hp
   const lastLog2 = battle.logs[battle.logs.length - 1]
-  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'))
+  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'), TURN_DELAY)
   else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
   if (r2 === 'defeat') { fxDefeat(); defeat(); return }
 }
@@ -156,7 +156,7 @@ function defend() {
     ? '你进入防御姿态，' + m.name + ' 暴击造成 ' + dmg + ' 点伤害'
     : '你进入防御姿态，' + m.name + ' 造成 ' + dmg + ' 点伤害', isCrit ? 'crit' : 'info')
   syncLogs()
-  fxMonsterHit(dmg, isCrit, false)
+  fxMonsterHit(dmg, isCrit, false)  // 怪物先手(防御时), 玩家反击延迟
   if (p.isDead()) { fxDefeat(); defeat(); return }
   // 防御后玩家反击
   const monHpBefore = battle.monster.hp
@@ -164,7 +164,7 @@ function defend() {
   syncLogs()
   const pDmg = monHpBefore - battle.monster.hp
   const lastLog = battle.logs[battle.logs.length - 1]
-  if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'))
+  if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'), TURN_DELAY)
   else if (lastLog && lastLog.type === 'dodge') fxDodge('monster')
   if (r1 === 'victory') { fxVictory(); victory(); return }
 }
@@ -211,7 +211,7 @@ function usePotion() {
   syncLogs()
   const mDmg = plyHpBefore - battle.player.hp
   const lastLog2 = battle.logs[battle.logs.length - 1]
-  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'))
+  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'), TURN_DELAY)
   else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
   if (r2 === 'defeat') { fxDefeat(); defeat(); return }
 }
@@ -288,9 +288,9 @@ function draw() {
   const cxp = 16         // 卡片x
   const L = layoutY()
   const { mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
-  // 攻击前冲/受击后仰位移
-  const my = L.my + lungeOff.monster + hitOff.monster
-  const py2 = py + lungeOff.player + hitOff.player
+  // 攻击前冲/受击后仰位移(正弦插值: 冲出去再弹回; 后手方带delay, 先手方撞完才启动)
+  const my = L.my + cardOffset(cardAnim.monster.lunge) + cardOffset(cardAnim.monster.hit)
+  const py2 = py + cardOffset(cardAnim.player.lunge) + cardOffset(cardAnim.player.hit)
 
   // 入场动画: 怪卡->玩家卡->操作区->日志 交错淡入(对齐其他场景风格)
   const dur = 700
@@ -416,14 +416,22 @@ let battleLogs = []
 // ============ 战斗特效系统(2026-08 新增: 击打/暴击/闪避/中毒/屏幕震动) ============
 let fxList = []       // 活动特效 {kind:'ring'|'dmg'|'miss', x, y, t0, dur, crit/skill/poison, dmg}
 let shake = null      // 屏幕震动 {t0, dur, power}
-let lungeOff = { monster: 0, player: 0 }  // 攻击方前冲位移
-let hitOff = { monster: 0, player: 0 }    // 受击方后仰位移
+// 卡片碰撞动画(回合制节奏): 主动方前冲(lunge) + 受击方后仰(hit)
+// {from, to, t0, dur, delay} — 正弦插值 0->to->0, delay 用于"先手方动画播完再启动后手方"
+let cardAnim = {
+  monster: { lunge: null, hit: null },
+  player:  { lunge: null, hit: null }
+}
+const LUNGE_DUR = 300   // 单次碰撞时长(慢, 有节奏)
+const TURN_DELAY = 300  // 后手方延迟(等先手方撞完)
 
 function resetFx() {
   fxList = []
   shake = null
-  lungeOff = { monster: 0, player: 0 }
-  hitOff = { monster: 0, player: 0 }
+  cardAnim = {
+    monster: { lunge: null, hit: null },
+    player:  { lunge: null, hit: null }
+  }
 }
 function spawnFx(f) { fxList.push({ t0: Date.now(), ...f }) }
 // 特效位置 = 怪物/玩家身上(图标处), 不是卡片中心
@@ -432,18 +440,30 @@ const fxMonCy = () => layoutY().my + 44    // 怪物图标中心
 const fxPlyCx = () => S.LW / 2
 const fxPlyCy = () => layoutY().py + 30    // 玩家🧝图标中心
 
-// 玩家攻击命中怪: 玩家卡前冲 + 怪卡后仰 + 命中闪光 + 伤害飘字; 暴击屏幕震动
-function fxPlayerHit(dmg, crit) {
-  lungeOff.player = -16
-  hitOff.monster = 8
+// 启动碰撞动画: target 前冲/后仰, to=位移量(负=向上, 正=向下), delay 可选
+function playCardAnim(target, kind, to, delay) {
+  cardAnim[target][kind] = { from: 0, to, t0: Date.now(), dur: LUNGE_DUR, delay: delay || 0 }
+}
+// 当前位移量: 正弦半周期 0->to->0(冲出去再弹回), delay 内为 0
+function cardOffset(anim) {
+  if (!anim) return 0
+  const t = Math.min(1, (Date.now() - anim.t0 - anim.delay) / anim.dur)
+  if (t <= 0) return 0
+  return anim.to * Math.sin(Math.PI * t)
+}
+
+// 玩家攻击命中怪: 玩家卡前冲 + 怪卡后仰(同步) + 命中闪光 + 伤害飘字; 暴击屏幕震动
+function fxPlayerHit(dmg, crit, delay) {
+  playCardAnim('player', 'lunge', -28, delay)   // 玩家向上撞
+  playCardAnim('monster', 'hit', 14, delay)     // 怪向下后仰
   spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
   spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
 }
-// 怪物攻击命中玩家: 怪卡前冲 + 玩家卡后仰 + 命中闪光 + 飘字; 暴击/技能震动更强
-function fxMonsterHit(dmg, crit, skill) {
-  lungeOff.monster = 16
-  hitOff.player = -8
+// 怪物攻击命中玩家: 怪卡前冲 + 玩家卡后仰(同步) + 命中闪光 + 飘字; 暴击/技能震动更强
+function fxMonsterHit(dmg, crit, skill, delay) {
+  playCardAnim('monster', 'lunge', 32, delay)   // 怪向下撞
+  playCardAnim('player', 'hit', -16, delay)     // 玩家向上后仰
   spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: crit || skill ? 440 : 320, crit, skill })
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
@@ -476,16 +496,16 @@ function fxDefeat() {
   spawnFx({ kind: 'ring', x: fxPlyCx() + 30, y: fxPlyCy() - 30, dur: 520, skill: true })
 }
 
-// 每帧: 位移衰减 + 特效更新
+// 每帧: 卡片动画清理 + 特效更新
 function updateFx() {
-  const k = 0.8
-  lungeOff.monster *= k; lungeOff.player *= k
-  hitOff.monster *= k; hitOff.player *= k
-  for (const key of ['monster', 'player']) {
-    if (Math.abs(lungeOff[key]) < 0.4) lungeOff[key] = 0
-    if (Math.abs(hitOff[key]) < 0.4) hitOff[key] = 0
-  }
   const now = Date.now()
+  // 碰撞动画播完(含delay)清理
+  for (const side of ['monster', 'player']) {
+    for (const kind of ['lunge', 'hit']) {
+      const a = cardAnim[side][kind]
+      if (a && now - a.t0 - a.delay > a.dur) cardAnim[side][kind] = null
+    }
+  }
   fxList = fxList.filter(f => now - f.t0 < f.dur)
   if (shake && now - shake.t0 > shake.dur) shake = null
 }
