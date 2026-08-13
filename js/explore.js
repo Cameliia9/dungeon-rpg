@@ -50,7 +50,10 @@ function restoreExploreState() {
       trapResult = st.trapResult || null
       if (typeof st.footerExpanded === 'boolean') footerExpanded = st.footerExpanded
       activeSide = leftState !== 'door' ? 'left' : (rightState !== 'door' ? 'right' : null)
-      cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
+      // ⚠️ 切场景回来(背包/商店等)保持展开放大效果: activeSide 有展开事件时, cardAnim 设为 expand 终态
+      // (start 设为过去, t>=1 → scale/scaleX 直接是放大终值), 而不是重置 idle 缩回原样
+      if (activeSide) cardAnim = { phase: 'expand', start: Date.now() - 500, side: activeSide, dur: 350 }
+      else cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
       return true
     }
   } catch (e) {}
@@ -250,14 +253,15 @@ function touch(x, y) {
       // 返回按钮(cy+42)
       if (yy > cy + 42 && yy < cy + 76) blockSide(side)
     } else if (state === 'merchant') {
-      // 商品行(58px高, 购买按钮下行) + 离开按钮
+      // 商品行(64px高: 名称+价格上行, 描述+购买按钮下行) + 离开按钮
+      // ⚠️ 命中区与绘制同步(价格在按钮上方, 按钮 yy+34~58)
       let yy2 = cy - 69
       for (let i = 0; i < evt.items.length; i++) {
-        if (yy > yy2 - 2 && yy < yy2 + 56) {
+        if (yy > yy2 - 2 && yy < yy2 + 62) {
           const iw = w * 0.96, ix = cx - iw / 2
-          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 42 && yy < yy2 + 66) { buyMerchant(side, i); return }
+          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 34 && yy < yy2 + 58) { buyMerchant(side, i); return }
         }
-        yy2 += 68
+        yy2 += 72
       }
       if (yy > yy2 + 6 && yy < yy2 + 42) finishSide(side)
     } else if (state === 'altar') {
