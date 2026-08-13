@@ -108,65 +108,83 @@ function syncLogs() {
 }
 
 function attack() {
-  // 中毒结算
+  if (turnBusy) return  // 回合动画中, 禁连点
+  turnBusy = true
+  // 中毒结算(回合开始, 立即扣)
   const poisonDmg = battle.tickPoison()
   if (poisonDmg > 0) {
     fxPoison(poisonDmg)
-    if (battle.player.isDead()) { defeat(); return }
+    if (battle.player.isDead()) { fxDefeat(); defeat(); turnBusy = false; return }
   }
-  const monHpBefore = battle.monster.hp
-  const r1 = battle.playerAttack()
-  syncLogs()
-  // 玩家攻击特效: 血量差=伤害, 最新日志判定暴击/闪避; 玩家先手, 怪物动画延迟(等玩家撞完)
-  const pDmg = monHpBefore - battle.monster.hp
-  const lastLog = battle.logs[battle.logs.length - 1]
-  if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'))
-  else if (lastLog && lastLog.type === 'dodge') fxDodge('monster')
-  if (r1 === 'victory') { fxVictory(); victory(); return }
-  const plyHpBefore = battle.player.hp
-  const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
-  syncLogs()
-  // 怪物攻击特效(延迟, 玩家先手撞完再撞)
-  const mDmg = plyHpBefore - battle.player.hp
-  const lastLog2 = battle.logs[battle.logs.length - 1]
-  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'), TURN_DELAY)
-  else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
-  if (r2 === 'defeat') { fxDefeat(); defeat(); return }
+  // 玩家冲撞动画(立即播), 伤害到碰撞峰值才结算
+  playCardAnim('player', 'lunge', -20, 0)
+  scheduleTurn(PEAK_AT, () => {
+    const monHpBefore = battle.monster.hp
+    const r1 = battle.playerAttack()
+    syncLogs()
+    const pDmg = monHpBefore - battle.monster.hp
+    const lastLog = battle.logs[battle.logs.length - 1]
+    if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'))
+    else if (lastLog && lastLog.type === 'dodge') fxDodge('monster')
+    if (r1 === 'victory') { fxVictory(); victory(); turnBusy = false; return }
+    // 玩家撞完回位后, 怪物再冲撞(动画+伤害都延迟)
+    playCardAnim('monster', 'lunge', 24, TURN_DELAY - PEAK_AT)
+    scheduleTurn(TURN_DELAY, () => {
+      const plyHpBefore = battle.player.hp
+      const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
+      syncLogs()
+      const mDmg = plyHpBefore - battle.player.hp
+      const lastLog2 = battle.logs[battle.logs.length - 1]
+      if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'))
+      else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
+      if (r2 === 'defeat') { fxDefeat(); defeat() }
+      turnBusy = false
+    })
+  })
 }
 
 function defend() {
-  // 防御: 本回合怪物伤害减半(对齐原版)
-  const p = battle.player
-  const m = battle.monster
-  // 玩家闪避判定
-  if (Math.random() < p.totalDodge) {
-    battle.log('你侧身躲开了 ' + m.name + ' 的攻击！', 'dodge')
+  if (turnBusy) return
+  turnBusy = true
+  // 怪物冲撞动画(立即播), 防御减伤伤害到峰值才结算
+  playCardAnim('monster', 'lunge', 24, 0)
+  scheduleTurn(PEAK_AT, () => {
+    const p = battle.player
+    const m = battle.monster
+    // 玩家闪避判定
+    if (Math.random() < p.totalDodge) {
+      battle.log('你侧身躲开了 ' + m.name + ' 的攻击！', 'dodge')
+      syncLogs()
+      fxDodge('player')
+      turnBusy = false
+      return
+    }
+    // 基础伤害(防御姿态减半)
+    let base = m.dealDamage(p.totalDefense)
+    const isCrit = Math.random() < m.critChance
+    if (isCrit) base = Math.floor(base * 1.5)
+    const dmg = Math.max(1, Math.floor(base / 2))
+    p.hp = Math.max(0, p.hp - dmg)
+    battle.log(isCrit
+      ? '你进入防御姿态，' + m.name + ' 暴击造成 ' + dmg + ' 点伤害'
+      : '你进入防御姿态，' + m.name + ' 造成 ' + dmg + ' 点伤害', isCrit ? 'crit' : 'info')
     syncLogs()
-    fxDodge('player')
-    return
-  }
-  // 基础伤害(防御姿态减半)
-  const hpBefore = p.hp
-  let base = m.dealDamage(p.totalDefense)
-  const isCrit = Math.random() < m.critChance
-  if (isCrit) base = Math.floor(base * 1.5)
-  const dmg = Math.max(1, Math.floor(base / 2))
-  p.hp = Math.max(0, p.hp - dmg)
-  battle.log(isCrit
-    ? '你进入防御姿态，' + m.name + ' 暴击造成 ' + dmg + ' 点伤害'
-    : '你进入防御姿态，' + m.name + ' 造成 ' + dmg + ' 点伤害', isCrit ? 'crit' : 'info')
-  syncLogs()
-  fxMonsterHit(dmg, isCrit, false)  // 怪物先手(防御时), 玩家反击延迟
-  if (p.isDead()) { fxDefeat(); defeat(); return }
-  // 防御后玩家反击
-  const monHpBefore = battle.monster.hp
-  const r1 = battle.playerAttack()
-  syncLogs()
-  const pDmg = monHpBefore - battle.monster.hp
-  const lastLog = battle.logs[battle.logs.length - 1]
-  if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'), TURN_DELAY)
-  else if (lastLog && lastLog.type === 'dodge') fxDodge('monster')
-  if (r1 === 'victory') { fxVictory(); victory(); return }
+    fxMonsterHit(dmg, isCrit, false)  // 怪物先手撞玩家, 玩家受击反馈
+    if (p.isDead()) { fxDefeat(); defeat(); turnBusy = false; return }
+    // 玩家反击(延迟, 怪物撞完回位后)
+    playCardAnim('player', 'lunge', -20, TURN_DELAY - PEAK_AT)
+    scheduleTurn(TURN_DELAY, () => {
+      const monHpBefore = battle.monster.hp
+      const r1 = battle.playerAttack()
+      syncLogs()
+      const pDmg = monHpBefore - battle.monster.hp
+      const lastLog = battle.logs[battle.logs.length - 1]
+      if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'))
+      else if (lastLog && lastLog.type === 'dodge') fxDodge('monster')
+      if (r1 === 'victory') { fxVictory(); victory() }
+      turnBusy = false
+    })
+  })
 }
 
 function flee() {
@@ -182,14 +200,21 @@ function flee() {
     p.fleeFails++
     logs.push('逃跑失败！下次成功率 ' + Math.min(0.9, chance + 0.1) * 100 + '%')
     syncLogs()
-    const plyHpBefore = battle.player.hp
-    const r2 = battle.monsterAttack()
-    syncLogs()
-    const mDmg = plyHpBefore - battle.player.hp
-    const lastLog2 = battle.logs[battle.logs.length - 1]
-    if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), false)
-    else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
-    if (r2 === 'defeat') { fxDefeat(); defeat(); return }
+    if (turnBusy) return
+    turnBusy = true
+    // 怪物冲撞(逃跑失败被反击, 峰值结算)
+    playCardAnim('monster', 'lunge', 24, 0)
+    scheduleTurn(PEAK_AT, () => {
+      const plyHpBefore = battle.player.hp
+      const r2 = battle.monsterAttack()
+      syncLogs()
+      const mDmg = plyHpBefore - battle.player.hp
+      const lastLog2 = battle.logs[battle.logs.length - 1]
+      if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), false)
+      else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
+      if (r2 === 'defeat') { fxDefeat(); defeat() }
+      turnBusy = false
+    })
   }
 }
 
@@ -205,15 +230,21 @@ function usePotion() {
   logs.push('使用' + potion.name + '，回复生命！')
   syncLogs()
   fxHeal(healAmount)
-  // 怪物反击
-  const plyHpBefore = battle.player.hp
-  const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
-  syncLogs()
-  const mDmg = plyHpBefore - battle.player.hp
-  const lastLog2 = battle.logs[battle.logs.length - 1]
-  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'), TURN_DELAY)
-  else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
-  if (r2 === 'defeat') { fxDefeat(); defeat(); return }
+  if (turnBusy) return
+  turnBusy = true
+  // 怪物反击(延迟, 怪物冲撞峰值结算)
+  playCardAnim('monster', 'lunge', 24, 0)
+  scheduleTurn(PEAK_AT, () => {
+    const plyHpBefore = battle.player.hp
+    const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
+    syncLogs()
+    const mDmg = plyHpBefore - battle.player.hp
+    const lastLog2 = battle.logs[battle.logs.length - 1]
+    if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'))
+    else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
+    if (r2 === 'defeat') { fxDefeat(); defeat() }
+    turnBusy = false
+  })
 }
 
 function victory() {
@@ -268,6 +299,7 @@ function draw() {
   }
   dispPlayerHp += (p.hp - dispPlayerHp) * 0.15
   if (Math.abs(p.hp - dispPlayerHp) < 0.5) dispPlayerHp = p.hp
+  tickTurn()  // 回合调度: 到碰撞峰值时刻才结算伤害(谁被撞谁扣血)
   updateFx()
   ctx.fillStyle = battleBg()
   ctx.fillRect(0, 0, S.LW, S.LH)
@@ -288,9 +320,9 @@ function draw() {
   const cxp = 16         // 卡片x
   const L = layoutY()
   const { mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
-  // 攻击前冲位移(正弦插值: 只有主动方冲出去再弹回, 受击方不动; 后手方带delay等先手方撞完)
-  const my = L.my + cardOffset(cardAnim.monster.lunge)
-  const py2 = py + cardOffset(cardAnim.player.lunge)
+  // 攻击前冲位移 + 受击抖动(正弦插值: 只有主动方冲出去再弹回, 受击方只抖动; 后手方带delay等先手方撞完)
+  const my = L.my + cardOffset(cardAnim.monster.lunge) + joltOffset('monster')
+  const py2 = py + cardOffset(cardAnim.player.lunge) + joltOffset('player')
 
   // 入场动画: 怪卡->玩家卡->操作区->日志 交错淡入(对齐其他场景风格)
   const dur = 700
@@ -423,8 +455,35 @@ let cardAnim = {
   monster: { lunge: null },
   player:  { lunge: null }
 }
-const LUNGE_DUR = 420   // 单次碰撞时长(慢, 有节奏感)
-const TURN_DELAY = 480  // 后手方延迟(玩家撞完回位后, 停顿一下怪物再冲)
+const LUNGE_DUR = 320   // 单次碰撞时长(稍快, 减少延迟感)
+const TURN_DELAY = 380  // 后手方延迟(玩家撞完回位后, 停顿一下怪物再冲)
+const PEAK_AT = 160     // 碰撞峰值时刻(= LUNGE_DUR/2): 伤害在此刻结算, 血条同时滑落
+
+// 回合调度器: 扣血与碰撞动画同步(谁被撞谁才扣血, 不两人同时扣)
+// attack() 只播动画并排入时间轴, 到 PEAK_AT 时刻才真正结算伤害
+let turnQueue = []    // [{at, fn}] at=绝对时间戳
+let turnBusy = false  // 回合动画中(禁止连点攻击)
+function scheduleTurn(at, fn) { turnQueue.push({ at: Date.now() + at, fn }) }
+function tickTurn() {
+  if (!turnQueue.length) return
+  const now = Date.now()
+  const due = turnQueue.filter(q => now >= q.at)
+  turnQueue = turnQueue.filter(q => now < q.at)
+  for (const q of due) q.fn()
+  if (!turnQueue.length && turnBusy) turnBusy = false
+}
+
+// 受击反馈: 轻微抖动(碰撞瞬间, 幅度小不夸张)
+let hitJolt = { monster: null, player: null }    // {t0, dur}
+function playHitJolt(side) { hitJolt[side] = { t0: Date.now(), dur: 240 } }
+// 抖动位移: 低频正弦衰减(±2px, 轻轻震一下)
+function joltOffset(side) {
+  const j = hitJolt[side]
+  if (!j) return 0
+  const t = (Date.now() - j.t0) / j.dur
+  if (t >= 1) { hitJolt[side] = null; return 0 }
+  return Math.sin(t * Math.PI * 4) * 2 * (1 - t)
+}
 
 function resetFx() {
   fxList = []
@@ -433,6 +492,9 @@ function resetFx() {
     monster: { lunge: null },
     player:  { lunge: null }
   }
+  turnQueue = []
+  turnBusy = false
+  hitJolt = { monster: null, player: null }
 }
 function spawnFx(f) { fxList.push({ t0: Date.now(), ...f }) }
 // 特效位置 = 怪物/玩家身上(图标处), 不是卡片中心
@@ -453,16 +515,18 @@ function cardOffset(anim) {
   return anim.to * Math.sin(Math.PI * t)
 }
 
-// 玩家攻击命中怪: 只有玩家卡前冲撞怪(怪物不动) + 命中闪光 + 伤害飘字; 暴击屏幕震动
+// 玩家攻击命中怪: 只有玩家卡前冲撞怪(怪物不动) + 怪物轻微抖动 + 命中闪光 + 伤害飘字
 function fxPlayerHit(dmg, crit, delay) {
-  playCardAnim('player', 'lunge', -30, delay)   // 玩家向上冲撞怪物
+  playCardAnim('player', 'lunge', -20, delay)   // 玩家向上冲撞怪物
+  playHitJolt('monster')                        // 怪物受击轻抖
   spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
   spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
 }
-// 怪物攻击命中玩家: 只有怪物卡前冲撞玩家(玩家不动) + 命中闪光 + 飘字; 暴击/技能震动更强
+// 怪物攻击命中玩家: 只有怪物卡前冲撞玩家(玩家不动) + 玩家轻微抖动 + 命中闪光 + 飘字
 function fxMonsterHit(dmg, crit, skill, delay) {
-  playCardAnim('monster', 'lunge', 34, delay)   // 怪向下冲撞玩家
+  playCardAnim('monster', 'lunge', 24, delay)   // 怪向下冲撞玩家
+  playHitJolt('player')                         // 玩家受击轻抖
   spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: crit || skill ? 440 : 320, crit, skill })
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
