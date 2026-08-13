@@ -27,6 +27,7 @@ function start(shared, m, boss, done) {
   battleLogs = []
   S.lastReward = null
   levelUpInfo = null  // 新战斗重置升级弹窗
+  modalAnim = null
   enterTime = Date.now()
   battle = new GE.Battle(S.player, m)
   dispMonHp = m.hp
@@ -272,6 +273,7 @@ function victory() {
       hpGain: p.totalMaxHp - hpMaxBefore,
       expNow: p.exp, expNeed: p.expToLevel()
     }
+    modalAnim = { start: Date.now(), dur: 300 }  // 弹窗弹入动画起点
   }
   p.poisonTurns = 0
   result = 'victory'
@@ -468,14 +470,40 @@ function draw() {
   if (result !== 'fighting' && levelUpInfo) drawLevelUpModal(ctx)
 }
 
+// 升级弹窗出现动画: 遮罩淡入 + 弹窗 0.8→1.0 弹入回弹(约300ms)
+let modalAnim = null  // {start, dur} — 弹窗出现动画
+function modalProgress() {
+  if (!modalAnim) return 1  // 无动画=已完成
+  const t = Math.min(1, (Date.now() - modalAnim.start) / modalAnim.dur)
+  if (t >= 1) { modalAnim = null; return 1 }
+  return t
+}
+// 回弹曲线(easeOutBack): 0.8 快速弹到 1.0 并略过冲后回稳
+function overshoot(t) {
+  // easeOutBack 标准公式: c1=1.70158, c3=c1+1
+  // 映射到 [0.8, 1.0] 区间: 0.8 + 0.2 * easeOutBack(t)
+  const c1 = 1.70158, c3 = c1 + 1
+  const u = t - 1
+  const ease = 1 + c3 * u * u * u + c1 * u * u
+  return 0.8 + 0.2 * ease
+}
 // 升级弹窗: 全屏暗色遮罩 + 居中金色弹窗(升级前后/攻防血加成/距下一级经验)
 function drawLevelUpModal(ctx) {
   const info = levelUpInfo
-  // 暗色遮罩(背景变暗淡)
+  const prog = modalProgress()
+  // 暗色遮罩(背景变暗淡, 随弹窗淡入)
+  ctx.globalAlpha = 0.6 * Math.min(1, prog * 1.5)
   ctx.fillStyle = 'rgba(0,0,0,0.6)'
   ctx.fillRect(0, 0, S.LW, S.LH)
-  // 弹窗卡片(金色边框)
+  ctx.globalAlpha = 1
+  // 弹窗卡片(金色边框) + 弹入缩放(0.8→1.0 回弹)
   const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
+  const sc = overshoot(prog)
+  const cx = S.LW / 2, cy = S.LH / 2 - 20
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.scale(sc, sc)
+  ctx.translate(-cx, -cy)
   roundRect(ctx, px, py, pw, ph, 16, '#1a1f2e', '#ffd700', 2)
   // 标题
   text(ctx, '🎉', px + pw / 2, py + 36, 34)
@@ -497,6 +525,7 @@ function drawLevelUpModal(ctx) {
   text(ctx, '距下一级还需 ' + (info.expNeed - info.expNow) + ' 经验', px + pw / 2, ry + 4, 12, COLORS.blue)
   // 好的按钮(关闭弹窗, 显示结果卡)
   drawBtn(ctx, makeBtn(px + 45, py + ph - 74, pw - 90, 40, '好的', () => { levelUpInfo = null }, ui.BTN.primary))
+  ctx.restore()
 }
 
 // 引擎战斗日志(含类型)
