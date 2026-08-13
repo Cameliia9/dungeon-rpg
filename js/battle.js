@@ -288,9 +288,9 @@ function draw() {
   const cxp = 16         // 卡片x
   const L = layoutY()
   const { mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
-  // 攻击前冲/受击后仰位移(正弦插值: 冲出去再弹回; 后手方带delay, 先手方撞完才启动)
-  const my = L.my + cardOffset(cardAnim.monster.lunge) + cardOffset(cardAnim.monster.hit)
-  const py2 = py + cardOffset(cardAnim.player.lunge) + cardOffset(cardAnim.player.hit)
+  // 攻击前冲位移(正弦插值: 只有主动方冲出去再弹回, 受击方不动; 后手方带delay等先手方撞完)
+  const my = L.my + cardOffset(cardAnim.monster.lunge)
+  const py2 = py + cardOffset(cardAnim.player.lunge)
 
   // 入场动画: 怪卡->玩家卡->操作区->日志 交错淡入(对齐其他场景风格)
   const dur = 700
@@ -416,21 +416,22 @@ let battleLogs = []
 // ============ 战斗特效系统(2026-08 新增: 击打/暴击/闪避/中毒/屏幕震动) ============
 let fxList = []       // 活动特效 {kind:'ring'|'dmg'|'miss', x, y, t0, dur, crit/skill/poison, dmg}
 let shake = null      // 屏幕震动 {t0, dur, power}
-// 卡片碰撞动画(回合制节奏): 主动方前冲(lunge) + 受击方后仰(hit)
-// {from, to, t0, dur, delay} — 正弦插值 0->to->0, delay 用于"先手方动画播完再启动后手方"
+// 卡片碰撞动画(回合制节奏): 只有主动方前冲(lunge), 受击方不动
+// 顺序: 玩家冲撞怪物 -> 玩家回位 -> 怪物冲撞玩家 -> 怪物回位
+// {to, t0, dur, delay} — 正弦插值 0->to->0(冲出去再弹回), delay 用于"先手方撞完再启动后手方"
 let cardAnim = {
-  monster: { lunge: null, hit: null },
-  player:  { lunge: null, hit: null }
+  monster: { lunge: null },
+  player:  { lunge: null }
 }
-const LUNGE_DUR = 300   // 单次碰撞时长(慢, 有节奏)
-const TURN_DELAY = 300  // 后手方延迟(等先手方撞完)
+const LUNGE_DUR = 420   // 单次碰撞时长(慢, 有节奏感)
+const TURN_DELAY = 480  // 后手方延迟(玩家撞完回位后, 停顿一下怪物再冲)
 
 function resetFx() {
   fxList = []
   shake = null
   cardAnim = {
-    monster: { lunge: null, hit: null },
-    player:  { lunge: null, hit: null }
+    monster: { lunge: null },
+    player:  { lunge: null }
   }
 }
 function spawnFx(f) { fxList.push({ t0: Date.now(), ...f }) }
@@ -452,18 +453,16 @@ function cardOffset(anim) {
   return anim.to * Math.sin(Math.PI * t)
 }
 
-// 玩家攻击命中怪: 玩家卡前冲 + 怪卡后仰(同步) + 命中闪光 + 伤害飘字; 暴击屏幕震动
+// 玩家攻击命中怪: 只有玩家卡前冲撞怪(怪物不动) + 命中闪光 + 伤害飘字; 暴击屏幕震动
 function fxPlayerHit(dmg, crit, delay) {
-  playCardAnim('player', 'lunge', -28, delay)   // 玩家向上撞
-  playCardAnim('monster', 'hit', 14, delay)     // 怪向下后仰
+  playCardAnim('player', 'lunge', -30, delay)   // 玩家向上冲撞怪物
   spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
   spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
 }
-// 怪物攻击命中玩家: 怪卡前冲 + 玩家卡后仰(同步) + 命中闪光 + 飘字; 暴击/技能震动更强
+// 怪物攻击命中玩家: 只有怪物卡前冲撞玩家(玩家不动) + 命中闪光 + 飘字; 暴击/技能震动更强
 function fxMonsterHit(dmg, crit, skill, delay) {
-  playCardAnim('monster', 'lunge', 32, delay)   // 怪向下撞
-  playCardAnim('player', 'hit', -16, delay)     // 玩家向上后仰
+  playCardAnim('monster', 'lunge', 34, delay)   // 怪向下冲撞玩家
   spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: crit || skill ? 440 : 320, crit, skill })
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
@@ -501,10 +500,8 @@ function updateFx() {
   const now = Date.now()
   // 碰撞动画播完(含delay)清理
   for (const side of ['monster', 'player']) {
-    for (const kind of ['lunge', 'hit']) {
-      const a = cardAnim[side][kind]
-      if (a && now - a.t0 - a.delay > a.dur) cardAnim[side][kind] = null
-    }
+    const a = cardAnim[side].lunge
+    if (a && now - a.t0 - a.delay > a.dur) cardAnim[side].lunge = null
   }
   fxList = fxList.filter(f => now - f.t0 < f.dur)
   if (shake && now - shake.t0 > shake.dur) shake = null
