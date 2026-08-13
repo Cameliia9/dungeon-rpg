@@ -717,22 +717,25 @@ function drawMerchantCard(cx, cy, evt, side, w) {
   text(ctx, evt.merchantName || '神秘商人', cx, cy - 97, 18, COLORS.gold, 'center', true)
   text(ctx, '来自【' + (evt.themeName || '') + '】的游商', cx, cy - 75, 12, COLORS.textDim)
 
-  // 商品列表（两行: 名称+描述上行, 💰价格+购买按钮下行, 对齐原版不重叠）
+  // 商品列表（名称+价格上行, 描述+按钮下行; 价格在购买按钮正上方, 对齐原版不重叠）
   let yy = cy - 69
   for (let i = 0; i < evt.items.length; i++) {
     const it = evt.items[i]
     const iw = w * 0.96, ix = cx - iw / 2
-    roundRect(ctx, ix, yy - 2, iw, 58, 6, '#1a1a2e', '#2a2a4a', 1)
-    text(ctx, it.name, ix + 8, yy + 14, 15, COLORS.gold, 'left', true)
-    // ⚠️ 描述必须截断: 右边界到价格/按钮左侧(ix+iw-84), 否则长描述压到价格按钮(用户报文字不清楚)
+    roundRect(ctx, ix, yy - 2, iw, 64, 6, '#1a1a2e', '#2a2a4a', 1)
+    // 名称(左上, 截断到价格左侧)
+    let name = it.name || ''
+    while (name.length > 1 && ui.textWidth(ctx, name, 15) > (ix + iw - 82) - (ix + 8)) name = name.slice(0, -1)
+    text(ctx, name, ix + 8, yy + 12, 15, COLORS.gold, 'left', true)
+    // 价格(右上, 在购买按钮正上方; 按钮顶=yy+34, 价格字底≈yy+29.5 不压按钮)
+    text(ctx, '💰 ' + it.price, ix + iw - 74, yy + 22, 15, '#f0c040', 'right', true)
+    // 描述(左下, 截断到按钮左侧, 防压价格/按钮)
     let desc = it.desc || ''
-    const descRight = ix + iw - 84
-    while (desc.length > 1 && ui.textWidth(ctx, desc, 11) > descRight - (ix + 8)) desc = desc.slice(0, -1)
-    text(ctx, desc, ix + 8, yy + 34, 11, COLORS.textDim, 'left')
-    // ⚠️ 按钮必须在商品卡内: 卡底=yy+56, 按钮 y+24 高 => y 最大 yy+32 (底部 yy+56)
-    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 28, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
-    text(ctx, '💰 ' + it.price, ix + iw - 74, yy + 40, 15, '#f0c040', 'right', true)
-    yy += 68
+    while (desc.length > 1 && ui.textWidth(ctx, desc, 11) > (ix + iw - 84) - (ix + 8)) desc = desc.slice(0, -1)
+    text(ctx, desc, ix + 8, yy + 40, 11, COLORS.textDim, 'left')
+    // 购买按钮(右下: 卡底=yy+62, 按钮 yy+34~58 卡内)
+    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 34, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
+    yy += 72
   }
   drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
 }
