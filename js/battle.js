@@ -26,6 +26,7 @@ function start(shared, m, boss, done) {
   logs = []
   battleLogs = []
   S.lastReward = null
+  levelUpInfo = null  // 新战斗重置升级弹窗
   enterTime = Date.now()
   battle = new GE.Battle(S.player, m)
   dispMonHp = m.hp
@@ -65,6 +66,14 @@ let dragScroll = 0
 
 function touch(x, y) {
   const L = layoutY()
+  // 升级弹窗显示中: 只响应"好的"按钮, 其他点击全部拦截(背景变暗防误触)
+  if (result !== 'fighting' && levelUpInfo) {
+    const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
+    if (x > px + 45 && x < px + pw - 45 && y > py + ph - 74 && y < py + ph - 34) {
+      levelUpInfo = null  // 关闭弹窗, 显示结果卡
+    }
+    return  // 弹窗期间屏蔽一切其他点击
+  }
   if (result === 'fighting') {
     const bx = btnX()
     if (x < bx || x > bx + BTN_W) return
@@ -253,7 +262,17 @@ function victory() {
   const expGain = Math.floor(monster.exp * (monster.expMul || 1))
   p.kills++
   p.gold += goldGain
+  // 记录升级前后属性(升级弹窗展示: 攻/防/血各加了多少)
+  const atkBefore = p.totalAttack, defBefore = p.totalDefense, hpMaxBefore = p.totalMaxHp, lvBefore = p.level
   const leveled = p.addExp(expGain)
+  if (leveled) {
+    levelUpInfo = {
+      from: lvBefore, to: p.level,
+      atkGain: p.totalAttack - atkBefore, defGain: p.totalDefense - defBefore,
+      hpGain: p.totalMaxHp - hpMaxBefore,
+      expNow: p.exp, expNeed: p.expToLevel()
+    }
+  }
   p.poisonTurns = 0
   result = 'victory'
   if (isBoss) S.bossDefeated = true  // Boss击败标记: 返回探索后显示楼梯进下一层
@@ -444,10 +463,46 @@ function draw() {
   // ============ 5. 战斗特效(命中环/伤害飘字/MISS, 在全部内容之上) ============
   drawFx(ctx)
   if (shaking) ctx.restore()
+
+  // ============ 6. 升级弹窗(胜利且升级: 暗色遮罩 + 金色弹窗, 展示升级效果) ============
+  if (result !== 'fighting' && levelUpInfo) drawLevelUpModal(ctx)
+}
+
+// 升级弹窗: 全屏暗色遮罩 + 居中金色弹窗(升级前后/攻防血加成/距下一级经验)
+function drawLevelUpModal(ctx) {
+  const info = levelUpInfo
+  // 暗色遮罩(背景变暗淡)
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'
+  ctx.fillRect(0, 0, S.LW, S.LH)
+  // 弹窗卡片(金色边框)
+  const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
+  roundRect(ctx, px, py, pw, ph, 16, '#1a1f2e', '#ffd700', 2)
+  // 标题
+  text(ctx, '🎉', px + pw / 2, py + 36, 34)
+  text(ctx, '升级！', px + pw / 2, py + 72, 24, COLORS.goldBright, 'center', true)
+  text(ctx, 'Lv.' + info.from + ' → Lv.' + info.to, px + pw / 2, py + 100, 16, COLORS.text, 'center', true)
+  // 属性加成(每行图标+文字, 攻击/防御/生命)
+  const rows = [
+    { icon: '⚔️', label: '攻击', val: '+' + info.atkGain, color: '#ff6b6b' },
+    { icon: '🛡️', label: '防御', val: '+' + info.defGain, color: '#5aa7ff' },
+    { icon: '❤️', label: '生命', val: '+' + info.hpGain, color: '#ff4757' }
+  ]
+  let ry = py + 122
+  for (const r of rows) {
+    text(ctx, r.icon + ' ' + r.label, px + 38, ry, 13, COLORS.textDim, 'left')
+    text(ctx, r.val, px + pw - 38, ry, 14, r.color, 'right', true)
+    ry += 24
+  }
+  // 距下一级经验
+  text(ctx, '距下一级还需 ' + (info.expNeed - info.expNow) + ' 经验', px + pw / 2, ry + 4, 12, COLORS.blue)
+  // 好的按钮(关闭弹窗, 显示结果卡)
+  drawBtn(ctx, makeBtn(px + 45, py + ph - 74, pw - 90, 40, '好的', () => { levelUpInfo = null }, ui.BTN.primary))
 }
 
 // 引擎战斗日志(含类型)
 let battleLogs = []
+// 升级弹窗信息(胜利且升级时记录; null=不显示)
+let levelUpInfo = null
 
 // ============ 战斗特效系统(2026-08 新增: 击打/暴击/闪避/中毒/屏幕震动) ============
 let fxList = []       // 活动特效 {kind:'ring'|'dmg'|'miss', x, y, t0, dur, crit/skill/poison, dmg}
