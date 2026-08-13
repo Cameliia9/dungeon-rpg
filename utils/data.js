@@ -73,11 +73,11 @@ const monsters = {
 
   // ---- 6-10层 骸骨墓穴 ----
   bone: [
-    { name: '骷髅兵', hp: 153, attack: 41, defense: 18, exp: 75, gold: 17, level: 6, critChance: 0.08, dodgeChance: 0.02, desc: '死去冒险者的遗骸，挥剑有力', icon: '🦴' },
-    { name: '骷髅射手', hp: 187, attack: 48, defense: 21, exp: 84, gold: 19, level: 6, critChance: 0.15, dodgeChance: 0.08, desc: '弓弦崩响，骨箭破空而来', icon: '🏹' },
-    { name: '腐尸', hp: 204, attack: 51, defense: 22, exp: 90, gold: 20, level: 7, critChance: 0.05, dodgeChance: 0, desc: '散发着恶臭的不死生物，动作迟缓', icon: '🧟' },
-    { name: '食尸鬼', hp: 213, attack: 53, defense: 22, exp: 99, gold: 23, level: 8, critChance: 0.12, dodgeChance: 0.10, desc: '饥渴的食尸者，扑食速度极快', icon: '👺' },
-    { name: '墓穴僵尸', hp: 221, attack: 55, defense: 23, exp: 108, gold: 25, level: 9, critChance: 0.05, dodgeChance: 0, desc: '被墓穴诅咒复活的巨型僵尸', icon: '🧟♂️' }
+    { name: '骷髅兵', hp: 153, attack: 45, defense: 18, exp: 75, gold: 17, level: 6, critChance: 0.08, dodgeChance: 0.02, desc: '死去冒险者的遗骸，挥剑有力', icon: '🦴' },
+    { name: '骷髅射手', hp: 187, attack: 52, defense: 21, exp: 84, gold: 19, level: 6, critChance: 0.15, dodgeChance: 0.08, desc: '弓弦崩响，骨箭破空而来', icon: '🏹' },
+    { name: '腐尸', hp: 204, attack: 55, defense: 22, exp: 90, gold: 20, level: 7, critChance: 0.05, dodgeChance: 0, desc: '散发着恶臭的不死生物，动作迟缓', icon: '🧟' },
+    { name: '食尸鬼', hp: 213, attack: 57, defense: 22, exp: 99, gold: 23, level: 8, critChance: 0.12, dodgeChance: 0.10, desc: '饥渴的食尸者，扑食速度极快', icon: '👺' },
+    { name: '墓穴僵尸', hp: 221, attack: 59, defense: 23, exp: 108, gold: 25, level: 9, critChance: 0.05, dodgeChance: 0, desc: '被墓穴诅咒复活的巨型僵尸', icon: '🧟♂️' }
   ],
 
   // ---- 11-15层 暗影回廊 ----
@@ -104,7 +104,7 @@ const monsters = {
     { name: '龙人战士', hp: 935, attack: 180, defense: 68, exp: 240, gold: 62, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士', icon: '🐉' },
     { name: '龙人法师', hp: 1020, attack: 188, defense: 72, exp: 252, gold: 66, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者', icon: '🧙' },
     { name: '亚龙', hp: 1046, attack: 192, defense: 73, exp: 264, gold: 70, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙', icon: '🦖' },
-    { name: '精英龙裔', hp: 1250, attack: 198, defense: 74, exp: 285, gold: 74, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
+    { name: '精英龙裔', hp: 1250, attack: 188, defense: 74, exp: 285, gold: 74, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
   ]
 }
 
