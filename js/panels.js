@@ -46,12 +46,21 @@ function build() {
     // 对齐原版: 按当前层数阶数显示三分类装备
     shopTier = Math.min(Math.ceil(p.floor / 5), 5)
     themeName = Data.getThemeForFloor(p.floor).name
+    // 回收分类: 背包里可回收的旧装备(Boss掉落装备除外, 药水不回收)
+    // ⚠️ invIdx 必须是背包原始索引(filter后map会错位, splice删错物品)
+    const recyclable = []
+    p.inventory.forEach((it, i) => {
+      if (it.type !== 'potion' && !it.isBossLoot) {
+        recyclable.push({ ...it, type: it.type === 'armor' ? 'top' : it.type, _recycle: true, invIdx: i })
+      }
+    })
     sections = [
       { title: '🗡️ 武器', items: Data.equipment.weapon.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'weapon' })) },
       { title: '👕 上衣', items: Data.equipment.top.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'top' })) },
       { title: '👖 裤子', items: Data.equipment.pants.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'pants' })) },
       { title: '💍 饰品', items: Data.equipment.accessory.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'accessory' })) },
-      { title: '🧪 药水', items: Data.shopPotions.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'potion' })) }
+      { title: '🧪 药水', items: Data.shopPotions.filter(e => e.tier === shopTier).map(e => ({ ...e, type: 'potion' })) },
+      { title: '♻️ 回收旧装备', items: recyclable.length ? recyclable : [{ name: '没有可回收的旧装备', _recycleEmpty: true }] }
     ]
     let y = 208  // 标题卡下移后同步(卡顶200, 距标题卡底180为20px)
     for (let si = 0; si < sections.length; si++) {
@@ -212,6 +221,20 @@ function handleItem(it) {
   if (!it) return
 
   if (type === 'shop') {
+    // 回收分类空提示(不可点击)
+    if (it._recycleEmpty) { build(); return }
+    // 回收旧装备(回收分类专用): 原价40%, Boss掉落装备不可回收(已在列表过滤)
+    if (it._recycle) {
+      const orig = p.inventory[it.invIdx]
+      if (!orig) { build(); return }
+      const price = Math.floor(orig.price * 0.4)
+      p.inventory.splice(it.invIdx, 1)
+      p.gold += price
+      S.savePlayer()
+      wx.showToast({ title: '回收 ' + orig.name + ' +' + price + '金', icon: 'success' })
+      build()
+      return
+    }
     if (p.gold < it.price) { wx.showToast({ title: '金币不足！', icon: 'none' }); return }
     // 已有更好装备检查: 武器/上衣/裤子比单槽; 饰品比双槽(两槽都更好才拦截)
     let curVal = 0
@@ -363,6 +386,34 @@ function drawItemRow(ctx, it, y, h) {
   const btnX = cx0 + cw - btnW - 12
   const rightEdge = btnX - 10  // 文本右边界(按钮左侧)
   if (type === 'shop') {
+    // 回收分类空提示(不可点击)
+    if (it._recycleEmpty) {
+      text(ctx, it.name, S.LW / 2, y + 32, 13, '#555555')
+      return
+    }
+    // 回收项: 显示背包装备信息 + ♻️回收按钮(原价40%)
+    if (it._recycle) {
+      const icon = it.type === 'weapon' ? '🗡️' : (it.type === 'top' || it.type === 'pants') ? '🛡️' : '💍'
+      let name = icon + ' ' + it.name
+      while (name.length > 2 && ui.textWidth(ctx, name, 15) > rightEdge - x) name = name.slice(0, -1)
+      text(ctx, name, x, y + 18, 15, COLORS.text, 'left', true)
+      let prop = ''
+      if (it.attack) prop += '攻击+' + it.attack + ' '
+      if (it.defense) prop += '防御+' + it.defense + ' '
+      if (it.hp) prop += '生命+' + it.hp
+      text(ctx, prop, x, y + 38, 13, '#8a8a9a', 'left')
+      let sub2 = ''
+      if (it.critChance) sub2 += '⚡暴击+' + Math.round(it.critChance * 100) + '% '
+      if (it.dodgeChance) sub2 += '💨闪避+' + Math.round(it.dodgeChance * 100) + '%'
+      const subW2 = ui.textWidth(ctx, sub2, 11)
+      let desc = it.desc || ''
+      while (desc.length > 1 && ui.textWidth(ctx, sub2 + desc, 11) > rightEdge - x) desc = desc.slice(0, -1)
+      text(ctx, sub2, x, y + 55, 11, '#ffaa00', 'left')
+      text(ctx, desc, x + subW2 + 6, y + 55, 11, '#666666', 'left')
+      // ♻️ 回收按钮(橙色, 显示回收价)
+      drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, '♻️ ' + Math.floor(it.price * 0.4), null, ui.BTN.forge))
+      return
+    }
     // 行1: 名称(粗体, 截断)
     let name = it.name
     while (name.length > 1 && ui.textWidth(ctx, name, 15) > rightEdge - x) name = name.slice(0, -1)

@@ -123,7 +123,7 @@ const bosses = [
     ],
     loot: {
       name: '王浆之核', type: 'accessory', hp: 100, price: 320, dodgeChance: 0.05,
-      tier: 1, desc: '史莱姆之王的核心，蕴含着沼泽的生命力，闪避+5%'
+      tier: 1, isBossLoot: true, desc: '史莱姆之王的核心，蕴含着沼泽的生命力，闪避+5%'
     }
   },
   {
@@ -139,7 +139,7 @@ const bosses = [
     ],
     loot: {
       name: '骸骨王冠', type: 'armor', defense: 22, price: 480, critChance: 0.05,
-      tier: 2, desc: '墓穴领主之冠，亡者之力加身，暴击+5%'
+      tier: 2, isBossLoot: true, desc: '墓穴领主之冠，亡者之力加身，暴击+5%'
     }
   },
   {
@@ -154,7 +154,7 @@ const bosses = [
     ],
     loot: {
       name: '亡魂法杖', type: 'weapon', attack: 40, price: 650, critChance: 0.08,
-      tier: 3, desc: '缠绕着亡魂的法杖，攻击附带灵魂之力，暴击+8%'
+      tier: 3, isBossLoot: true, desc: '缠绕着亡魂的法杖，攻击附带灵魂之力，暴击+8%'
     }
   },
   {
@@ -170,7 +170,7 @@ const bosses = [
     ],
     loot: {
       name: '恶魔之翼', type: 'armor', defense: 32, price: 950, dodgeChance: 0.10,
-      tier: 4, desc: '深渊恶魔的双翼，能吸收火焰的伤害，闪避+10%'
+      tier: 4, isBossLoot: true, desc: '深渊恶魔的双翼，能吸收火焰的伤害，闪避+10%'
     }
   },
   {
@@ -187,7 +187,7 @@ const bosses = [
     ],
     loot: {
       name: '龙神之心', type: 'accessory', hp: 250, price: 1600, critChance: 0.10, dodgeChance: 0.05,
-      tier: 5, desc: '远古邪龙的心脏，跳动着永恒的生命力，暴击+10% 闪避+5%'
+      tier: 5, isBossLoot: true, desc: '远古邪龙的心脏，跳动着永恒的生命力，暴击+10% 闪避+5%'
     }
   }
 ]
