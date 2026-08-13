@@ -724,9 +724,14 @@ function drawMerchantCard(cx, cy, evt, side, w) {
     const iw = w * 0.96, ix = cx - iw / 2
     roundRect(ctx, ix, yy - 2, iw, 58, 6, '#1a1a2e', '#2a2a4a', 1)
     text(ctx, it.name, ix + 8, yy + 14, 15, COLORS.gold, 'left', true)
-    text(ctx, it.desc || '', ix + 8, yy + 34, 11, COLORS.textDim, 'left')
-    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 42, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
-    text(ctx, '💰 ' + it.price, ix + iw - 74, yy + 52, 15, '#f0c040', 'right', true)
+    // ⚠️ 描述必须截断: 右边界到价格/按钮左侧(ix+iw-84), 否则长描述压到价格按钮(用户报文字不清楚)
+    let desc = it.desc || ''
+    const descRight = ix + iw - 84
+    while (desc.length > 1 && ui.textWidth(ctx, desc, 11) > descRight - (ix + 8)) desc = desc.slice(0, -1)
+    text(ctx, desc, ix + 8, yy + 34, 11, COLORS.textDim, 'left')
+    // ⚠️ 按钮必须在商品卡内: 卡底=yy+56, 按钮 y+24 高 => y 最大 yy+32 (底部 yy+56)
+    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 28, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
+    text(ctx, '💰 ' + it.price, ix + iw - 74, yy + 40, 15, '#f0c040', 'right', true)
     yy += 68
   }
   drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
