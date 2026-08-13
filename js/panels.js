@@ -23,6 +23,29 @@ let dragged = false
 let dragBase = 0
 let bounce = null   // 回弹动画 {from, target, t0}: 滑过边界松手弹回
 const M = 16        // 边距
+
+// ============ 强化成功弹窗(对齐升级弹窗风格) ============
+// forgeModal: {item, from, to, atkGain, defGain, hpGain, cost} — 强化前后属性对比
+let forgeModal = null
+// forgeAnim: {start, dur, closing} — 弹窗出现(弹入回弹)/关闭(缩小淡出)
+let forgeAnim = null
+function forgeModalProgress() {
+  if (!forgeAnim) return 1
+  const t = Math.min(1, (Date.now() - forgeAnim.start) / forgeAnim.dur)
+  if (t >= 1) {
+    if (forgeAnim.closing) forgeModal = null
+    forgeAnim = null
+    return 1
+  }
+  return t
+}
+// 回弹曲线(与升级弹窗一致)
+function forgeOvershoot(t) {
+  const c1 = 1.70158, c3 = c1 + 1
+  const u = t - 1
+  const ease = 1 + c3 * u * u * u + c1 * u * u
+  return 0.8 + 0.2 * ease
+}
 const PW = () => S.LW - 32
 
 function create(name, shared) {
@@ -31,6 +54,8 @@ function create(name, shared) {
   scroll = 0
   btns = []
   enterTime = Date.now()
+  forgeModal = null   // 新面板重置强化弹窗
+  forgeAnim = null
   build()
   return this
 }
@@ -116,6 +141,17 @@ function build() {
 }
 
 function touch(x, y) {
+  // 强化弹窗显示中: 只响应"好的", 其他点击拦截(背景变暗防误触)
+  if (forgeModal) {
+    if (!(forgeAnim && forgeAnim.closing)) {
+      // ⚠️ 与绘制同步: 弹窗 320x300, 好的按钮 y=py+248~288, x=px+55~px+pw-55
+      const pw = 320, ph = 300, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2
+      if (x > px + 55 && x < px + pw - 55 && y > py + 248 && y < py + 288) {
+        forgeAnim = { start: Date.now(), dur: 200, closing: true }
+      }
+    }
+    return  // 弹窗期间屏蔽一切其他点击
+  }
   // ✕ 关闭(右上角)
   if (x > S.LW - 60 && y > M && y < M + 50) { close(); return }
   // 底部返回按钮(对齐原版 ↩️ 返回)
@@ -272,9 +308,26 @@ function handleItem(it) {
     if ((item.enhanceLevel || 0) >= p.maxEnhanceLevel) { wx.showToast({ title: '已达上限', icon: 'none' }); return }
     const cost = p.getEnhanceCost(item)
     if (p.gold < cost) { wx.showToast({ title: '金币不足 ' + cost, icon: 'none' }); return }
+    // 强化前后属性对比(弹窗展示: 武器+3攻/护甲+3防/饰品+15血)
+    const lvFrom = item.enhanceLevel || 0
+    const atkBefore = (item.attack || 0) + (item.type === 'weapon' ? lvFrom * 3 : 0)
+    const defBefore = (item.defense || 0) + ((item.type === 'top' || item.type === 'pants' || item.type === 'armor') ? lvFrom * 3 : 0)
+    const hpBefore = (item.hp || 0) + (item.type === 'accessory' ? lvFrom * 15 : 0)
     p.enhance(item)
+    const lvTo = item.enhanceLevel || 0
     S.savePlayer()
-    wx.showToast({ title: '强化 +' + (item.enhanceLevel || 1), icon: 'success' })
+    // 手机震动(强化成功反馈)
+    try { wx.vibrateShort({ type: 'light' }) } catch (e) { try { wx.vibrateShort() } catch (e2) {} }
+    // 强化弹窗(对齐升级弹窗: 弹入动画 + 属性变化 + 关闭动画)
+    forgeModal = {
+      item,
+      from: lvFrom, to: lvTo,
+      atkGain: (item.attack || 0) + (item.type === 'weapon' ? lvTo * 3 : 0) - atkBefore,
+      defGain: (item.defense || 0) + ((item.type === 'top' || item.type === 'pants' || item.type === 'armor') ? lvTo * 3 : 0) - defBefore,
+      hpGain: (item.hp || 0) + (item.type === 'accessory' ? lvTo * 15 : 0) - hpBefore,
+      cost
+    }
+    forgeAnim = { start: Date.now(), dur: 300 }
     build()
   }
 }
@@ -373,6 +426,55 @@ function draw() {
   ctx.globalAlpha = ui.animProgress(enterTime, 600, 400)
   drawBtn(ctx, makeBtn(M, S.LH - 60, PW(), 44, '↩️ 返回', null, ui.BTN.secondary))
   ctx.globalAlpha = 1
+
+  // ===== 强化成功弹窗(暗色遮罩 + 金色弹窗, 对齐升级弹窗风格) =====
+  if (forgeModal) drawForgeModal(ctx)
+}
+
+// 强化弹窗: 暗色遮罩 + 弹入动画(0.8→1.0回弹) + 装备名/强化等级/属性变化/费用 + 好的按钮
+function drawForgeModal(ctx) {
+  const info = forgeModal
+  const anim = forgeAnim
+  const prog = forgeModalProgress()
+  const closing = !!(anim && anim.closing)
+  const dispProg = closing ? (1 - prog) : prog
+  // 暗色遮罩(背景变暗淡)
+  ctx.globalAlpha = 0.6 * Math.min(1, dispProg * 1.5)
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'
+  ctx.fillRect(0, 0, S.LW, S.LH)
+  ctx.globalAlpha = 1
+  // 弹窗卡片(金色边框, 与升级弹窗同尺寸 320x300)
+  const pw = 320, ph = 300, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2
+  const sc = closing ? (0.8 + 0.2 * prog) : forgeOvershoot(prog)
+  const cx = S.LW / 2, cy = S.LH / 2
+  ctx.save()
+  ctx.globalAlpha = closing ? (1 - prog) : 1
+  ctx.translate(cx, cy)
+  ctx.scale(sc, sc)
+  ctx.translate(-cx, -cy)
+  roundRect(ctx, px, py, pw, ph, 16, '#1a1f2e', '#ffd700', 2)
+  // 标题
+  text(ctx, '🔨', px + pw / 2, py + 44, 36)
+  text(ctx, '强化成功！', px + pw / 2, py + 84, 24, COLORS.goldBright, 'center', true)
+  text(ctx, info.item.name + ' +' + info.from + ' → +' + info.to, px + pw / 2, py + 116, 16, COLORS.text, 'center', true)
+  // 属性变化(按装备类型显示对应加成, 其余行隐藏)
+  const rows = []
+  if (info.atkGain > 0) rows.push({ icon: '⚔️', label: '攻击', val: '+' + info.atkGain, color: '#ff6b6b' })
+  if (info.defGain > 0) rows.push({ icon: '🛡️', label: '防御', val: '+' + info.defGain, color: '#5aa7ff' })
+  if (info.hpGain > 0) rows.push({ icon: '❤️', label: '生命', val: '+' + info.hpGain, color: '#ff4757' })
+  let ry = py + 148
+  for (const r of rows) {
+    text(ctx, r.icon + ' ' + r.label, px + 46, ry, 14, COLORS.textDim, 'left')
+    text(ctx, r.val, px + pw - 46, ry, 15, r.color, 'right', true)
+    ry += 28
+  }
+  // 强化费用
+  text(ctx, '本次强化花费 ' + info.cost + ' 金币', px + pw / 2, py + 232, 13, '#f0c040')
+  // 好的按钮(关闭带缩小淡出动画)
+  drawBtn(ctx, makeBtn(px + 55, py + 248, pw - 110, 40, '好的', () => {
+    forgeAnim = { start: Date.now(), dur: 200, closing: true }
+  }, ui.BTN.primary))
+  ctx.restore()
 }
 
 // 装备项(商店/背包/铁匠铺, 4行舒展布局, 卡片不顶两边)
