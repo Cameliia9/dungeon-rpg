@@ -30,6 +30,7 @@ function start(shared, m, boss, done) {
   battle = new GE.Battle(S.player, m)
   dispMonHp = m.hp
   dispPlayerHp = S.player.hp
+  resetFx()
   logs.push(isBoss ? '👑 ' + m.name + ' 拦住了去路！' : m.icon + ' ' + m.name + ' 出现了！')
   syncLogs()
 }
@@ -110,14 +111,27 @@ function attack() {
   // 中毒结算
   const poisonDmg = battle.tickPoison()
   if (poisonDmg > 0) {
+    fxPoison(poisonDmg)
     if (battle.player.isDead()) { defeat(); return }
   }
+  const monHpBefore = battle.monster.hp
   const r1 = battle.playerAttack()
   syncLogs()
-  if (r1 === 'victory') { victory(); return }
+  // 玩家攻击特效: 血量差=伤害, 最新日志判定暴击/闪避
+  const pDmg = monHpBefore - battle.monster.hp
+  const lastLog = battle.logs[battle.logs.length - 1]
+  if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'))
+  else if (lastLog && lastLog.type === 'dodge') fxDodge('monster')
+  if (r1 === 'victory') { fxVictory(); victory(); return }
+  const plyHpBefore = battle.player.hp
   const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
   syncLogs()
-  if (r2 === 'defeat') { defeat(); return }
+  // 怪物攻击特效
+  const mDmg = plyHpBefore - battle.player.hp
+  const lastLog2 = battle.logs[battle.logs.length - 1]
+  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'))
+  else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
+  if (r2 === 'defeat') { fxDefeat(); defeat(); return }
 }
 
 function defend() {
@@ -128,9 +142,11 @@ function defend() {
   if (Math.random() < p.totalDodge) {
     battle.log('你侧身躲开了 ' + m.name + ' 的攻击！', 'dodge')
     syncLogs()
+    fxDodge('player')
     return
   }
   // 基础伤害(防御姿态减半)
+  const hpBefore = p.hp
   let base = m.dealDamage(p.totalDefense)
   const isCrit = Math.random() < m.critChance
   if (isCrit) base = Math.floor(base * 1.5)
@@ -140,11 +156,17 @@ function defend() {
     ? '你进入防御姿态，' + m.name + ' 暴击造成 ' + dmg + ' 点伤害'
     : '你进入防御姿态，' + m.name + ' 造成 ' + dmg + ' 点伤害', isCrit ? 'crit' : 'info')
   syncLogs()
-  if (p.isDead()) { defeat(); return }
+  fxMonsterHit(dmg, isCrit, false)
+  if (p.isDead()) { fxDefeat(); defeat(); return }
   // 防御后玩家反击
+  const monHpBefore = battle.monster.hp
   const r1 = battle.playerAttack()
   syncLogs()
-  if (r1 === 'victory') { victory(); return }
+  const pDmg = monHpBefore - battle.monster.hp
+  const lastLog = battle.logs[battle.logs.length - 1]
+  if (pDmg > 0) fxPlayerHit(pDmg, !!(lastLog && lastLog.type === 'crit'))
+  else if (lastLog && lastLog.type === 'dodge') fxDodge('monster')
+  if (r1 === 'victory') { fxVictory(); victory(); return }
 }
 
 function flee() {
@@ -160,9 +182,14 @@ function flee() {
     p.fleeFails++
     logs.push('逃跑失败！下次成功率 ' + Math.min(0.9, chance + 0.1) * 100 + '%')
     syncLogs()
+    const plyHpBefore = battle.player.hp
     const r2 = battle.monsterAttack()
     syncLogs()
-    if (r2 === 'defeat') { defeat(); return }
+    const mDmg = plyHpBefore - battle.player.hp
+    const lastLog2 = battle.logs[battle.logs.length - 1]
+    if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), false)
+    else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
+    if (r2 === 'defeat') { fxDefeat(); defeat(); return }
   }
 }
 
@@ -172,14 +199,21 @@ function usePotion() {
   const idx = p.inventory.findIndex(i => i.type === 'potion')
   if (idx < 0) { logs.push('背包里没有治疗药水'); return }
   const potion = p.inventory[idx]
+  const healAmount = Math.floor(p.totalMaxHp * (potion.healPercent || 0.3))
   p.inventory.splice(idx, 1)
-  p.heal(Math.floor(p.totalMaxHp * (potion.healPercent || 0.3)))
+  p.heal(healAmount)
   logs.push('使用' + potion.name + '，回复生命！')
   syncLogs()
+  fxHeal(healAmount)
   // 怪物反击
+  const plyHpBefore = battle.player.hp
   const r2 = isBoss && Math.random() < 0.3 ? battle.monsterSkillAttack() : battle.monsterAttack()
   syncLogs()
-  if (r2 === 'defeat') { defeat(); return }
+  const mDmg = plyHpBefore - battle.player.hp
+  const lastLog2 = battle.logs[battle.logs.length - 1]
+  if (mDmg > 0) fxMonsterHit(mDmg, !!(lastLog2 && lastLog2.type === 'crit'), !!(lastLog2 && lastLog2.type === 'skill'))
+  else if (lastLog2 && lastLog2.type === 'dodge') fxDodge('player')
+  if (r2 === 'defeat') { fxDefeat(); defeat(); return }
 }
 
 function victory() {
@@ -234,14 +268,29 @@ function draw() {
   }
   dispPlayerHp += (p.hp - dispPlayerHp) * 0.15
   if (Math.abs(p.hp - dispPlayerHp) < 0.5) dispPlayerHp = p.hp
+  updateFx()
   ctx.fillStyle = battleBg()
   ctx.fillRect(0, 0, S.LW, S.LH)
+  // 屏幕震动: 整帧偏移(暴击/技能/胜利/死亡时) — save/restore 严格配对防变换累积
+  let shaking = false
+  if (shake) {
+    const t = (Date.now() - shake.t0) / shake.dur
+    const pow = (t < 1) ? shake.power * (1 - t) : 0
+    if (pow > 0.5) {
+      shaking = true
+      ctx.save()
+      ctx.translate((Math.random() * 2 - 1) * pow, (Math.random() * 2 - 1) * pow)
+    }
+  }
 
   const cw = S.LW - 32   // 卡片宽(16边距)
   const cx = S.LW / 2
   const cxp = 16         // 卡片x
   const L = layoutY()
-  const { my, mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
+  const { mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
+  // 攻击前冲/受击后仰位移
+  const my = L.my + lungeOff.monster + hitOff.monster
+  const py2 = py + lungeOff.player + hitOff.player
 
   // 入场动画: 怪卡->玩家卡->操作区->日志 交错淡入(对齐其他场景风格)
   const dur = 700
@@ -268,18 +317,18 @@ function draw() {
 
   // ============ 2. 玩家卡 (加高140, 内容分散不紧凑) ============
   ctx.globalAlpha = a2
-  roundRect(ctx, cxp, py, cw, ph, 12, ui.cardFill(ctx, cxp, py, cw, ph), COLORS.cardBorder, 1.5)
-  text(ctx, '🧝', cx, py + 30, 36)
+  roundRect(ctx, cxp, py2, cw, ph, 12, ui.cardFill(ctx, cxp, py2, cw, ph), COLORS.cardBorder, 1.5)
+  text(ctx, '🧝', cx, py2 + 30, 36)
   // 名字 + 血量
-  text(ctx, '❤️ ' + p.name, cxp + 16, py + 32, 14, COLORS.textDim, 'left')
-  text(ctx, p.hp + ' / ' + p.totalMaxHp, cxp + cw - 16, py + 32, 14, COLORS.gold, 'right', true)
-  hpBar(ctx, cxp + 16, py + 54, cw - 32, 12, dispPlayerHp / p.totalMaxHp)
+  text(ctx, '❤️ ' + p.name, cxp + 16, py2 + 32, 14, COLORS.textDim, 'left')
+  text(ctx, p.hp + ' / ' + p.totalMaxHp, cxp + cw - 16, py2 + 32, 14, COLORS.gold, 'right', true)
+  hpBar(ctx, cxp + 16, py2 + 54, cw - 32, 12, dispPlayerHp / p.totalMaxHp)
   // 暴闪
-  text(ctx, '⚡' + Math.round(p.totalCrit * 100) + '%暴 💨' + Math.round(p.totalDodge * 100) + '%闪', cxp + 16, py + 78, 13, COLORS.textDim, 'left')
-  if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', cxp + cw - 16, py + 78, 13, COLORS.purple, 'right', true)
+  text(ctx, '⚡' + Math.round(p.totalCrit * 100) + '%暴 💨' + Math.round(p.totalDodge * 100) + '%闪', cxp + 16, py2 + 78, 13, COLORS.textDim, 'left')
+  if (p.poisonTurns > 0) text(ctx, '☠️ 中毒 ' + p.poisonTurns + ' 回合', cxp + cw - 16, py2 + 78, 13, COLORS.purple, 'right', true)
   // 攻防
-  text(ctx, '⚔️ ' + p.totalAttack + '攻 🛡️ ' + p.totalDefense + '防', cxp + 16, py + 108, 13, COLORS.textDim, 'left')
-  text(ctx, '💾 ' + p.gold + '金', cxp + cw - 16, py + 108, 13, COLORS.textDim, 'right')
+  text(ctx, '⚔️ ' + p.totalAttack + '攻 🛡️ ' + p.totalDefense + '防', cxp + 16, py2 + 108, 13, COLORS.textDim, 'left')
+  text(ctx, '💾 ' + p.gold + '金', cxp + cw - 16, py2 + 108, 13, COLORS.textDim, 'right')
   ctx.globalAlpha = 1
 
   // ============ 3. 操作/结果区 ============
@@ -355,9 +404,137 @@ function draw() {
     const barY = logY + 30 + (logH - 30 - barH) * (logScroll / maxScroll)
     roundRect(ctx, cxp + cw - 6, barY, 3, barH, 1.5, 'rgba(255,255,255,0.35)')
   }
+
+  // ============ 5. 战斗特效(命中环/伤害飘字/MISS, 在全部内容之上) ============
+  drawFx(ctx)
+  if (shaking) ctx.restore()
 }
 
 // 引擎战斗日志(含类型)
 let battleLogs = []
+
+// ============ 战斗特效系统(2026-08 新增: 击打/暴击/闪避/中毒/屏幕震动) ============
+let fxList = []       // 活动特效 {kind:'ring'|'dmg'|'miss', x, y, t0, dur, crit/skill/poison, dmg}
+let shake = null      // 屏幕震动 {t0, dur, power}
+let lungeOff = { monster: 0, player: 0 }  // 攻击方前冲位移
+let hitOff = { monster: 0, player: 0 }    // 受击方后仰位移
+
+function resetFx() {
+  fxList = []
+  shake = null
+  lungeOff = { monster: 0, player: 0 }
+  hitOff = { monster: 0, player: 0 }
+}
+function spawnFx(f) { fxList.push({ t0: Date.now(), ...f }) }
+const fxMonCx = () => S.LW / 2
+const fxMonCy = () => layoutY().my + 110
+const fxPlyCx = () => S.LW / 2
+const fxPlyCy = () => layoutY().py + 70
+
+// 玩家攻击命中怪: 玩家卡前冲 + 怪卡后仰 + 命中环 + 伤害飘字; 暴击屏幕震动
+function fxPlayerHit(dmg, crit) {
+  lungeOff.player = -16
+  hitOff.monster = 8
+  spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: 380, crit })
+  spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 40, dur: 700, dmg, crit })
+  if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
+}
+// 怪物攻击命中玩家: 怪卡前冲 + 玩家卡后仰 + 命中环 + 飘字; 暴击/技能震动更强
+function fxMonsterHit(dmg, crit, skill) {
+  lungeOff.monster = 16
+  hitOff.player = -8
+  spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: 380, crit, skill })
+  spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 40, dur: 700, dmg, crit })
+  if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
+  if (skill) shake = { t0: Date.now(), dur: 480, power: 10 }
+}
+// 闪避 MISS 飘字
+function fxDodge(side) {
+  const x = side === 'monster' ? fxMonCx() : fxPlyCx()
+  const y = (side === 'monster' ? fxMonCy() : fxPlyCy()) - 30
+  spawnFx({ kind: 'miss', x, y, dur: 600 })
+}
+// 中毒紫字
+function fxPoison(dmg) {
+  spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 40, dur: 800, dmg, poison: true })
+}
+// 回复绿字
+function fxHeal(amount) {
+  spawnFx({ kind: 'heal', x: fxPlyCx(), y: fxPlyCy() - 40, dur: 700, amount })
+}
+// 胜利/死亡大特效
+function fxVictory() {
+  shake = { t0: Date.now(), dur: 420, power: 8 }
+  for (let i = 0; i < 3; i++) {
+    spawnFx({ kind: 'ring', x: fxMonCx() + (Math.random() * 80 - 40), y: fxMonCy() + (Math.random() * 50 - 25), dur: 420, crit: true })
+  }
+}
+function fxDefeat() {
+  shake = { t0: Date.now(), dur: 520, power: 11 }
+  spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: 460, crit: true })
+  spawnFx({ kind: 'ring', x: fxPlyCx() + 30, y: fxPlyCy() - 30, dur: 520, skill: true })
+}
+
+// 每帧: 位移衰减 + 特效更新
+function updateFx() {
+  const k = 0.8
+  lungeOff.monster *= k; lungeOff.player *= k
+  hitOff.monster *= k; hitOff.player *= k
+  for (const key of ['monster', 'player']) {
+    if (Math.abs(lungeOff[key]) < 0.4) lungeOff[key] = 0
+    if (Math.abs(hitOff[key]) < 0.4) hitOff[key] = 0
+  }
+  const now = Date.now()
+  fxList = fxList.filter(f => now - f.t0 < f.dur)
+  if (shake && now - shake.t0 > shake.dur) shake = null
+}
+
+// 绘制特效(在卡片之上)
+function drawFx(ctx) {
+  const now = Date.now()
+  for (const f of fxList) {
+    const t = (now - f.t0) / f.dur
+    if (t <= 0 || t >= 1) continue
+    if (f.kind === 'ring') {
+      // 扩散圆环(暴击/技能金色或紫色, 普通白色)
+      const r = 26 + 48 * t
+      ctx.globalAlpha = (1 - t) * 0.85
+      ctx.strokeStyle = f.skill ? '#c040ff' : (f.crit ? '#ffcc00' : 'rgba(255,255,255,0.9)')
+      ctx.lineWidth = (f.crit || f.skill) ? 4 : 3
+      ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2); ctx.stroke()
+      if (f.crit || f.skill) {
+        ctx.globalAlpha = (1 - t) * 0.35
+        ctx.fillStyle = f.skill ? '#a030ff' : '#ffaa00'
+        ctx.beginPath(); ctx.arc(f.x, f.y, r * 0.7, 0, Math.PI * 2); ctx.fill()
+      }
+    } else if (f.kind === 'dmg') {
+      // 伤害飘字: 上浮+淡出; 暴击金色大号, 中毒紫色
+      const yy = f.y - 50 * t
+      ctx.globalAlpha = 1 - t * t
+      ctx.font = 'bold ' + (f.crit ? 28 : f.poison ? 18 : 22) + 'px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = f.poison ? '#a040ff' : (f.crit ? '#ffcc00' : '#ff6666')
+      ctx.fillText((f.poison ? '☠️-' : '-') + f.dmg, f.x, yy)
+    } else if (f.kind === 'miss') {
+      const yy = f.y - 34 * t
+      ctx.globalAlpha = 1 - t
+      ctx.font = 'bold 18px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = '#58b7ff'
+      ctx.fillText('MISS', f.x, yy)
+    } else if (f.kind === 'heal') {
+      const yy = f.y - 44 * t
+      ctx.globalAlpha = 1 - t * t
+      ctx.font = 'bold 20px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = '#2ecc71'
+      ctx.fillText('+' + f.amount, f.x, yy)
+    }
+  }
+  ctx.globalAlpha = 1
+}
 
 module.exports = { start, draw, touch, touchMove, touchEnd }
