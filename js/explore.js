@@ -253,15 +253,15 @@ function touch(x, y) {
       // 返回按钮(cy+42)
       if (yy > cy + 42 && yy < cy + 76) blockSide(side)
     } else if (state === 'merchant') {
-      // 商品行(64px高: 名称+价格上行, 描述+购买按钮下行) + 离开按钮
-      // ⚠️ 命中区与绘制同步(商品卡=整卡宽 iw=w, 按钮 yy+34~58)
+      // 商品行(56px高: 名称+价格上行, 描述+购买按钮下行) + 离开按钮
+      // ⚠️ 命中区与绘制同步(商品卡=整卡宽 iw=w, 按钮 yy+30~54, 行距60)
       let yy2 = cy - 69
       for (let i = 0; i < evt.items.length; i++) {
-        if (yy > yy2 - 2 && yy < yy2 + 62) {
+        if (yy > yy2 - 2 && yy < yy2 + 54) {
           const iw = w, ix = cx - iw / 2
-          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 34 && yy < yy2 + 58) { buyMerchant(side, i); return }
+          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy2 + 30 && yy < yy2 + 54) { buyMerchant(side, i); return }
         }
-        yy2 += 72
+        yy2 += 60
       }
       if (yy > yy2 + 6 && yy < yy2 + 42) finishSide(side)
     } else if (state === 'altar') {
@@ -726,19 +726,20 @@ function drawMerchantCard(cx, cy, evt, side, w) {
   for (let i = 0; i < evt.items.length; i++) {
     const it = evt.items[i]
     const iw = w, ix = cx - iw / 2   // 商品卡=整卡宽(名称不再被截断)
-    roundRect(ctx, ix, yy - 2, iw, 64, 6, '#1a1a2e', '#2a2a4a', 1)
-    // 名称(左上, 全卡宽不再截断: 商品名最长6字, 卡内足够)
-    text(ctx, it.name, ix + 8, yy + 12, 15, COLORS.gold, 'left', true)
-    // 价格(右上, 在购买按钮正上方; 按钮顶=yy+34, 价格字底≈yy+29.5 不压按钮)
-    text(ctx, '💰 ' + it.price, ix + iw - 74, yy + 22, 15, '#f0c040', 'right', true)
-    // 描述(左下, 截断到按钮左侧, 防压价格/按钮)
+    roundRect(ctx, ix, yy - 2, iw, 56, 6, '#1a1a2e', '#2a2a4a', 1)
+    // 名称(左上, 全卡宽不再截断)
+    text(ctx, it.name, ix + 8, yy + 10, 15, COLORS.gold, 'left', true)
+    // 价格(购买按钮正上方: 按钮 x=ix+iw-66~ix+iw-10, 中心 ix+iw-38; 价格右对齐按钮中心)
+    text(ctx, '💰 ' + it.price, ix + iw - 38, yy + 10, 15, '#f0c040', 'right', true)
+    // 描述(左下, 截断到按钮左侧)
     let desc = it.desc || ''
     while (desc.length > 1 && ui.textWidth(ctx, desc, 11) > (ix + iw - 84) - (ix + 8)) desc = desc.slice(0, -1)
-    text(ctx, desc, ix + 8, yy + 40, 11, COLORS.textDim, 'left')
-    // 购买按钮(右下: 卡底=yy+62, 按钮 yy+34~58 卡内)
-    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 34, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
-    yy += 72
+    text(ctx, desc, ix + 8, yy + 36, 11, COLORS.textDim, 'left')
+    // 购买按钮(右下: 卡底=yy+54, 按钮 yy+30~54 卡内)
+    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 30, 56, 24, '购买', () => buyMerchant(side, i), { ...ui.BTN.gold, size: 11 }))
+    yy += 60
   }
+  // 离开按钮(卡片内: 最后商品卡底 yy-60+54=cy+39, 离开 y=cy+51 起 高36 => 底 cy+87)
   drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
 }
 

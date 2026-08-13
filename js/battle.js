@@ -69,9 +69,12 @@ function touch(x, y) {
   const L = layoutY()
   // 升级弹窗显示中: 只响应"好的"按钮, 其他点击全部拦截(背景变暗防误触)
   if (result !== 'fighting' && levelUpInfo) {
-    const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
-    if (x > px + 45 && x < px + pw - 45 && y > py + ph - 74 && y < py + ph - 34) {
-      levelUpInfo = null  // 关闭弹窗, 显示结果卡
+    // 关闭动画播放中: 全部拦截(不再响应好的, 防重播)
+    if (!(modalAnim && modalAnim.closing)) {
+      const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
+      if (x > px + 45 && x < px + pw - 45 && y > py + ph - 56 && y < py + ph - 16) {
+        modalAnim = { start: Date.now(), dur: 200, closing: true }  // 播放关闭动画
+      }
     }
     return  // 弹窗期间屏蔽一切其他点击
   }
@@ -280,7 +283,7 @@ function victory() {
   if (isBoss) S.bossDefeated = true  // Boss击败标记: 返回探索后显示楼梯进下一层
   S.lastReward = { gold: goldGain, exp: expGain, leveled: leveled, bossLoot: isBoss && monster.loot ? monster.loot : null }
   logs.push('🎉 击败 ' + monster.name + '！ +' + goldGain + '💰 +' + expGain + '经验')
-  if (leveled) logs.push('🎊 升级到 Lv.' + p.level + '！')
+  // 升级消息由升级弹窗展示, 日志区不再重复显示
   if (isBoss && monster.loot) {
     p.inventory.push({ ...monster.loot, type: monster.loot.type })
     logs.push('💎 掉落: ' + monster.loot.name)
@@ -416,7 +419,7 @@ function draw() {
       text(ctx, '胜利！', cx, rc + 78, 20, COLORS.gold, 'center', true)
       text(ctx, '获得 ' + S.lastReward.gold + ' 金币', cx, rc + 106, 13, '#f0c040')
       text(ctx, '获得 ' + S.lastReward.exp + ' 经验', cx, rc + 128, 13, COLORS.blue)
-      if (S.lastReward.leveled) text(ctx, '🎊 升级到 Lv.' + p.level + '！', cx, rc + 150, 13, COLORS.goldBright)
+      // 升级信息由升级弹窗展示, 结果卡不再重复显示
     } else if (result === 'fled') {
       text(ctx, '🏃', cx, rc + 44, 40)
       text(ctx, '逃脱成功！', cx, rc + 78, 20, COLORS.green, 'center', true)
@@ -471,11 +474,16 @@ function draw() {
 }
 
 // 升级弹窗出现动画: 遮罩淡入 + 弹窗 0.8→1.0 弹入回弹(约300ms)
-let modalAnim = null  // {start, dur} — 弹窗出现动画
+// modalAnim: {start, dur, closing} — closing=true 时播放关闭动画(缩小淡出)
+let modalAnim = null
 function modalProgress() {
   if (!modalAnim) return 1  // 无动画=已完成
   const t = Math.min(1, (Date.now() - modalAnim.start) / modalAnim.dur)
-  if (t >= 1) { modalAnim = null; return 1 }
+  if (t >= 1) {
+    if (modalAnim.closing) levelUpInfo = null  // 关闭动画播完: 真正移除弹窗
+    modalAnim = null
+    return 1
+  }
   return t
 }
 // 回弹曲线(easeOutBack): 0.8 快速弹到 1.0 并略过冲后回稳
@@ -490,17 +498,22 @@ function overshoot(t) {
 // 升级弹窗: 全屏暗色遮罩 + 居中金色弹窗(升级前后/攻防血加成/距下一级经验)
 function drawLevelUpModal(ctx) {
   const info = levelUpInfo
+  const anim = modalAnim
   const prog = modalProgress()
-  // 暗色遮罩(背景变暗淡, 随弹窗淡入)
-  ctx.globalAlpha = 0.6 * Math.min(1, prog * 1.5)
+  const closing = !!(anim && anim.closing)
+  // 关闭动画: 缩小+淡出(1→0.8, alpha 1→0)
+  const dispProg = closing ? (1 - prog) : prog
+  // 暗色遮罩(背景变暗淡, 随弹窗淡入/淡出)
+  ctx.globalAlpha = 0.6 * Math.min(1, dispProg * 1.5)
   ctx.fillStyle = 'rgba(0,0,0,0.6)'
   ctx.fillRect(0, 0, S.LW, S.LH)
   ctx.globalAlpha = 1
-  // 弹窗卡片(金色边框) + 弹入缩放(0.8→1.0 回弹)
+  // 弹窗卡片(金色边框) + 弹入缩放(0.8→1.0 回弹; 关闭时 1.0→0.8 缩小)
   const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
-  const sc = overshoot(prog)
+  const sc = closing ? (0.8 + 0.2 * prog) : overshoot(prog)
   const cx = S.LW / 2, cy = S.LH / 2 - 20
   ctx.save()
+  ctx.globalAlpha = closing ? (1 - prog) : 1
   ctx.translate(cx, cy)
   ctx.scale(sc, sc)
   ctx.translate(-cx, -cy)
@@ -523,8 +536,10 @@ function drawLevelUpModal(ctx) {
   }
   // 距下一级经验
   text(ctx, '距下一级还需 ' + (info.expNeed - info.expNow) + ' 经验', px + pw / 2, ry + 4, 12, COLORS.blue)
-  // 好的按钮(关闭弹窗, 显示结果卡)
-  drawBtn(ctx, makeBtn(px + 45, py + ph - 74, pw - 90, 40, '好的', () => { levelUpInfo = null }, ui.BTN.primary))
+  // 好的按钮(下移: 弹窗底=py+250, 按钮底到 py+250-16; 关闭弹窗带缩小淡出动画)
+  drawBtn(ctx, makeBtn(px + 45, py + ph - 56, pw - 90, 40, '好的', () => {
+    modalAnim = { start: Date.now(), dur: 200, closing: true }  // 先播关闭动画
+  }, ui.BTN.primary))
   ctx.restore()
 }
 
