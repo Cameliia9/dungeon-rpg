@@ -71,8 +71,9 @@ function touch(x, y) {
   if (result !== 'fighting' && levelUpInfo) {
     // 关闭动画播放中: 全部拦截(不再响应好的, 防重播)
     if (!(modalAnim && modalAnim.closing)) {
-      const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
-      if (x > px + 45 && x < px + pw - 45 && y > py + ph - 56 && y < py + ph - 16) {
+      // ⚠️ 与绘制同步: 弹窗 320x300, 好的按钮 y=py+248~288, x=px+55~px+pw-55
+      const pw = 320, ph = 300, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2
+      if (x > px + 55 && x < px + pw - 55 && y > py + 248 && y < py + 288) {
         modalAnim = { start: Date.now(), dur: 200, closing: true }  // 播放关闭动画
       }
     }
@@ -509,9 +510,10 @@ function drawLevelUpModal(ctx) {
   ctx.fillRect(0, 0, S.LW, S.LH)
   ctx.globalAlpha = 1
   // 弹窗卡片(金色边框) + 弹入缩放(0.8→1.0 回弹; 关闭时 1.0→0.8 缩小)
-  const pw = 290, ph = 250, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2 - 20
+  // ⚠️ 弹窗加大(320x300): 属性行/经验/按钮垂直排布不重叠
+  const pw = 320, ph = 300, px = (S.LW - pw) / 2, py = (S.LH - ph) / 2
   const sc = closing ? (0.8 + 0.2 * prog) : overshoot(prog)
-  const cx = S.LW / 2, cy = S.LH / 2 - 20
+  const cx = S.LW / 2, cy = S.LH / 2
   ctx.save()
   ctx.globalAlpha = closing ? (1 - prog) : 1
   ctx.translate(cx, cy)
@@ -519,25 +521,25 @@ function drawLevelUpModal(ctx) {
   ctx.translate(-cx, -cy)
   roundRect(ctx, px, py, pw, ph, 16, '#1a1f2e', '#ffd700', 2)
   // 标题
-  text(ctx, '🎉', px + pw / 2, py + 36, 34)
-  text(ctx, '升级！', px + pw / 2, py + 72, 24, COLORS.goldBright, 'center', true)
-  text(ctx, 'Lv.' + info.from + ' → Lv.' + info.to, px + pw / 2, py + 100, 16, COLORS.text, 'center', true)
-  // 属性加成(每行图标+文字, 攻击/防御/生命)
+  text(ctx, '🎉', px + pw / 2, py + 44, 36)
+  text(ctx, '升级！', px + pw / 2, py + 84, 26, COLORS.goldBright, 'center', true)
+  text(ctx, 'Lv.' + info.from + ' → Lv.' + info.to, px + pw / 2, py + 116, 17, COLORS.text, 'center', true)
+  // 属性加成(每行图标+文字, 攻击/防御/生命; 行距28)
   const rows = [
     { icon: '⚔️', label: '攻击', val: '+' + info.atkGain, color: '#ff6b6b' },
     { icon: '🛡️', label: '防御', val: '+' + info.defGain, color: '#5aa7ff' },
     { icon: '❤️', label: '生命', val: '+' + info.hpGain, color: '#ff4757' }
   ]
-  let ry = py + 122
+  let ry = py + 148
   for (const r of rows) {
-    text(ctx, r.icon + ' ' + r.label, px + 38, ry, 13, COLORS.textDim, 'left')
-    text(ctx, r.val, px + pw - 38, ry, 14, r.color, 'right', true)
-    ry += 24
+    text(ctx, r.icon + ' ' + r.label, px + 46, ry, 14, COLORS.textDim, 'left')
+    text(ctx, r.val, px + pw - 46, ry, 15, r.color, 'right', true)
+    ry += 28
   }
-  // 距下一级经验
-  text(ctx, '距下一级还需 ' + (info.expNeed - info.expNow) + ' 经验', px + pw / 2, ry + 4, 12, COLORS.blue)
-  // 好的按钮(下移: 弹窗底=py+250, 按钮底到 py+250-16; 关闭弹窗带缩小淡出动画)
-  drawBtn(ctx, makeBtn(px + 45, py + ph - 56, pw - 90, 40, '好的', () => {
+  // 距下一级经验(py+232, 好的按钮顶 py+248 上方, 不重叠)
+  text(ctx, '距下一级还需 ' + (info.expNeed - info.expNow) + ' 经验', px + pw / 2, py + 232, 13, COLORS.blue)
+  // 好的按钮(下移: 按钮 y=py+248~288, 弹窗底 py+300; 关闭弹窗带缩小淡出动画)
+  drawBtn(ctx, makeBtn(px + 55, py + 248, pw - 110, 40, '好的', () => {
     modalAnim = { start: Date.now(), dur: 200, closing: true }  // 先播关闭动画
   }, ui.BTN.primary))
   ctx.restore()
