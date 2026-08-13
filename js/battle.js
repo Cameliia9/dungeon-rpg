@@ -320,9 +320,9 @@ function draw() {
   const cxp = 16         // 卡片x
   const L = layoutY()
   const { mh, py, ph, btn1, btn2, btn3, btnCardY, btnCardH, logY, logH } = L
-  // 攻击前冲位移 + 受击抖动(正弦插值: 只有主动方冲出去再弹回, 受击方只抖动; 后手方带delay等先手方撞完)
-  const my = L.my + cardOffset(cardAnim.monster.lunge) + joltOffset('monster')
-  const py2 = py + cardOffset(cardAnim.player.lunge) + joltOffset('player')
+  // 攻击前冲位移(正弦插值: 只有主动方冲出去再弹回, 受击方完全不动; 后手方带delay等先手方撞完)
+  const my = L.my + cardOffset(cardAnim.monster.lunge)
+  const py2 = py + cardOffset(cardAnim.player.lunge)
 
   // 入场动画: 怪卡->玩家卡->操作区->日志 交错淡入(对齐其他场景风格)
   const dur = 700
@@ -473,18 +473,6 @@ function tickTurn() {
   if (!turnQueue.length && turnBusy) turnBusy = false
 }
 
-// 受击反馈: 轻微抖动(碰撞瞬间, 幅度小不夸张)
-let hitJolt = { monster: null, player: null }    // {t0, dur}
-function playHitJolt(side) { hitJolt[side] = { t0: Date.now(), dur: 240 } }
-// 抖动位移: 低频正弦衰减(±2px, 轻轻震一下)
-function joltOffset(side) {
-  const j = hitJolt[side]
-  if (!j) return 0
-  const t = (Date.now() - j.t0) / j.dur
-  if (t >= 1) { hitJolt[side] = null; return 0 }
-  return Math.sin(t * Math.PI * 4) * 2 * (1 - t)
-}
-
 function resetFx() {
   fxList = []
   shake = null
@@ -494,7 +482,6 @@ function resetFx() {
   }
   turnQueue = []
   turnBusy = false
-  hitJolt = { monster: null, player: null }
 }
 function spawnFx(f) { fxList.push({ t0: Date.now(), ...f }) }
 // 特效位置 = 怪物/玩家身上(图标处), 不是卡片中心
@@ -515,18 +502,16 @@ function cardOffset(anim) {
   return anim.to * Math.sin(Math.PI * t)
 }
 
-// 玩家攻击命中怪: 只有玩家卡前冲撞怪(怪物不动) + 怪物轻微抖动 + 命中闪光 + 伤害飘字
+// 玩家攻击命中怪: 只有玩家卡前冲撞怪(怪物不动) + 命中闪光 + 伤害飘字
 function fxPlayerHit(dmg, crit, delay) {
   playCardAnim('player', 'lunge', -20, delay)   // 玩家向上冲撞怪物
-  playHitJolt('monster')                        // 怪物受击轻抖
   spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
   spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
 }
-// 怪物攻击命中玩家: 只有怪物卡前冲撞玩家(玩家不动) + 玩家轻微抖动 + 命中闪光 + 飘字
+// 怪物攻击命中玩家: 只有怪物卡前冲撞玩家(玩家不动) + 命中闪光 + 飘字
 function fxMonsterHit(dmg, crit, skill, delay) {
   playCardAnim('monster', 'lunge', 24, delay)   // 怪向下冲撞玩家
-  playHitJolt('player')                         // 玩家受击轻抖
   spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: crit || skill ? 440 : 320, crit, skill })
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
