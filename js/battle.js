@@ -502,16 +502,14 @@ function cardOffset(anim) {
   return anim.to * Math.sin(Math.PI * t)
 }
 
-// 玩家攻击命中怪: 只有玩家卡前冲撞怪(怪物不动) + 命中闪光 + 伤害飘字
-function fxPlayerHit(dmg, crit, delay) {
-  playCardAnim('player', 'lunge', -20, delay)   // 玩家向上冲撞怪物
+// 玩家攻击命中怪: 命中闪光 + 伤害飘字(动画由调度器负责, 避免重复启动)
+function fxPlayerHit(dmg, crit) {
   spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
   spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
 }
-// 怪物攻击命中玩家: 只有怪物卡前冲撞玩家(玩家不动) + 命中闪光 + 飘字
-function fxMonsterHit(dmg, crit, skill, delay) {
-  playCardAnim('monster', 'lunge', 24, delay)   // 怪向下冲撞玩家
+// 怪物攻击命中玩家: 命中闪光 + 飘字(动画由调度器负责)
+function fxMonsterHit(dmg, crit, skill) {
   spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: crit || skill ? 440 : 320, crit, skill })
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
