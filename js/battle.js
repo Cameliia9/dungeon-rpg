@@ -426,41 +426,42 @@ function resetFx() {
   hitOff = { monster: 0, player: 0 }
 }
 function spawnFx(f) { fxList.push({ t0: Date.now(), ...f }) }
+// 特效位置 = 怪物/玩家身上(图标处), 不是卡片中心
 const fxMonCx = () => S.LW / 2
-const fxMonCy = () => layoutY().my + 110
+const fxMonCy = () => layoutY().my + 44    // 怪物图标中心
 const fxPlyCx = () => S.LW / 2
-const fxPlyCy = () => layoutY().py + 70
+const fxPlyCy = () => layoutY().py + 30    // 玩家🧝图标中心
 
-// 玩家攻击命中怪: 玩家卡前冲 + 怪卡后仰 + 命中环 + 伤害飘字; 暴击屏幕震动
+// 玩家攻击命中怪: 玩家卡前冲 + 怪卡后仰 + 命中闪光 + 伤害飘字; 暴击屏幕震动
 function fxPlayerHit(dmg, crit) {
   lungeOff.player = -16
   hitOff.monster = 8
-  spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: 380, crit })
-  spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 40, dur: 700, dmg, crit })
+  spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
+  spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
 }
-// 怪物攻击命中玩家: 怪卡前冲 + 玩家卡后仰 + 命中环 + 飘字; 暴击/技能震动更强
+// 怪物攻击命中玩家: 怪卡前冲 + 玩家卡后仰 + 命中闪光 + 飘字; 暴击/技能震动更强
 function fxMonsterHit(dmg, crit, skill) {
   lungeOff.monster = 16
   hitOff.player = -8
-  spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: 380, crit, skill })
-  spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 40, dur: 700, dmg, crit })
+  spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: crit || skill ? 440 : 320, crit, skill })
+  spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
   if (skill) shake = { t0: Date.now(), dur: 480, power: 10 }
 }
 // 闪避 MISS 飘字
 function fxDodge(side) {
   const x = side === 'monster' ? fxMonCx() : fxPlyCx()
-  const y = (side === 'monster' ? fxMonCy() : fxPlyCy()) - 30
+  const y = (side === 'monster' ? fxMonCy() : fxPlyCy()) - 24
   spawnFx({ kind: 'miss', x, y, dur: 600 })
 }
 // 中毒紫字
 function fxPoison(dmg) {
-  spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 40, dur: 800, dmg, poison: true })
+  spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 800, dmg, poison: true })
 }
 // 回复绿字
 function fxHeal(amount) {
-  spawnFx({ kind: 'heal', x: fxPlyCx(), y: fxPlyCy() - 40, dur: 700, amount })
+  spawnFx({ kind: 'heal', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, amount })
 }
 // 胜利/死亡大特效
 function fxVictory() {
@@ -496,16 +497,29 @@ function drawFx(ctx) {
     const t = (now - f.t0) / f.dur
     if (t <= 0 || t >= 1) continue
     if (f.kind === 'ring') {
-      // 扩散圆环(暴击/技能金色或紫色, 普通白色)
-      const r = 26 + 48 * t
-      ctx.globalAlpha = (1 - t) * 0.85
-      ctx.strokeStyle = f.skill ? '#c040ff' : (f.crit ? '#ffcc00' : 'rgba(255,255,255,0.9)')
-      ctx.lineWidth = (f.crit || f.skill) ? 4 : 3
-      ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2); ctx.stroke()
+      // 命中闪光: 中心光斑 + 四向星芒(普通白色/暴击金色/技能紫色), 快速扩散淡出
+      const e = 1 - t                      // 1->0
+      const col = f.skill ? '#c040ff' : (f.crit ? '#ffcc00' : '#ffffff')
+      // 中心光斑(小, 短促)
+      ctx.globalAlpha = e * 0.9
+      ctx.fillStyle = col
+      ctx.beginPath(); ctx.arc(f.x, f.y, 3 + 9 * t, 0, Math.PI * 2); ctx.fill()
+      // 四向星芒(随扩散变长变淡)
+      ctx.globalAlpha = e * 0.7
+      ctx.strokeStyle = col
+      ctx.lineWidth = (f.crit || f.skill) ? 2.5 : 2
+      const len = 10 + 26 * t
+      for (let i = 0; i < 4; i++) {
+        const ang = i * Math.PI / 2
+        ctx.beginPath()
+        ctx.moveTo(f.x + Math.cos(ang) * 5, f.y + Math.sin(ang) * 5)
+        ctx.lineTo(f.x + Math.cos(ang) * len, f.y + Math.sin(ang) * len)
+        ctx.stroke()
+      }
+      // 暴击/技能: 外圈淡晕
       if (f.crit || f.skill) {
-        ctx.globalAlpha = (1 - t) * 0.35
-        ctx.fillStyle = f.skill ? '#a030ff' : '#ffaa00'
-        ctx.beginPath(); ctx.arc(f.x, f.y, r * 0.7, 0, Math.PI * 2); ctx.fill()
+        ctx.globalAlpha = e * 0.25
+        ctx.beginPath(); ctx.arc(f.x, f.y, 12 + 30 * t, 0, Math.PI * 2); ctx.fill()
       }
     } else if (f.kind === 'dmg') {
       // 伤害飘字: 上浮+淡出; 暴击金色大号, 中毒紫色
