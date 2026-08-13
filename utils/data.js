@@ -82,29 +82,29 @@ const monsters = {
 
   // ---- 11-15层 暗影回廊 ----
   shadow: [
-    { name: '暗影蝙蝠', hp: 349, attack: 53, defense: 19, exp: 114, gold: 26, level: 10, critChance: 0.12, dodgeChance: 0.28, desc: '在黑暗中飞行的吸血蝙蝠，极难命中', icon: '🦇' },
-    { name: '暗影刺客', hp: 425, attack: 65, defense: 23, exp: 126, gold: 30, level: 11, critChance: 0.25, dodgeChance: 0.22, desc: '来去无踪的暗杀者，暴击极高', icon: '🥷' },
-    { name: '怨灵', hp: 468, attack: 71, defense: 25, exp: 120, gold: 29, level: 11, critChance: 0.15, dodgeChance: 0.25, desc: '虚幻的亡灵，刀剑难以触及', icon: '👻' },
-    { name: '暗影狼', hp: 493, attack: 74, defense: 27, exp: 135, gold: 32, level: 12, critChance: 0.15, dodgeChance: 0.12, desc: '由暗影凝成的狼群猎手', icon: '🐺' },
-    { name: '夜魔', hp: 510, attack: 78, defense: 28, exp: 147, gold: 36, level: 13, critChance: 0.18, dodgeChance: 0.08, desc: '暗影回廊的巡逻者，双目血红', icon: '👿' }
+    { name: '暗影蝙蝠', hp: 349, attack: 95, defense: 19, exp: 114, gold: 26, level: 10, critChance: 0.12, dodgeChance: 0.28, desc: '在黑暗中飞行的吸血蝙蝠，极难命中', icon: '🦇' },
+    { name: '暗影刺客', hp: 425, attack: 100, defense: 23, exp: 126, gold: 30, level: 11, critChance: 0.25, dodgeChance: 0.22, desc: '来去无踪的暗杀者，暴击极高', icon: '🥷' },
+    { name: '怨灵', hp: 468, attack: 105, defense: 25, exp: 120, gold: 29, level: 11, critChance: 0.15, dodgeChance: 0.25, desc: '虚幻的亡灵，刀剑难以触及', icon: '👻' },
+    { name: '暗影狼', hp: 493, attack: 110, defense: 27, exp: 135, gold: 32, level: 12, critChance: 0.15, dodgeChance: 0.12, desc: '由暗影凝成的狼群猎手', icon: '🐺' },
+    { name: '夜魔', hp: 510, attack: 115, defense: 28, exp: 147, gold: 36, level: 13, critChance: 0.18, dodgeChance: 0.08, desc: '暗影回廊的巡逻者，双目血红', icon: '👿' }
   ],
 
   // ---- 16-20层 深渊火狱 ----
   abyss: [
-    { name: '小恶魔', hp: 519, attack: 68, defense: 26, exp: 156, gold: 38, level: 14, critChance: 0.12, dodgeChance: 0.10, desc: '尖牙利爪的深渊幼魔', icon: '😈' },
-    { name: '地狱犬', hp: 646, attack: 84, defense: 32, exp: 168, gold: 42, level: 15, critChance: 0.15, dodgeChance: 0.10, desc: '三头燃火的深渊猎犬', icon: '🐕' },
-    { name: '熔岩怪', hp: 706, attack: 92, defense: 35, exp: 177, gold: 44, level: 16, critChance: 0.08, dodgeChance: 0, desc: '由滚烫熔岩构成的庞然大物', icon: '🌋' },
-    { name: '火元素', hp: 800, attack: 98, defense: 37, exp: 189, gold: 48, level: 17, critChance: 0.18, dodgeChance: 0.05, desc: '纯粹火焰构成的元素生物', icon: '🔥' },
-    { name: '炎魔', hp: 850, attack: 100, defense: 38, exp: 210, gold: 54, level: 18, critChance: 0.20, dodgeChance: 0.03, desc: '来自深渊的火焰恶魔', icon: '👹' }
+    { name: '小恶魔', hp: 519, attack: 130, defense: 26, exp: 156, gold: 38, level: 14, critChance: 0.12, dodgeChance: 0.10, desc: '尖牙利爪的深渊幼魔', icon: '😈' },
+    { name: '地狱犬', hp: 646, attack: 138, defense: 32, exp: 168, gold: 42, level: 15, critChance: 0.15, dodgeChance: 0.10, desc: '三头燃火的深渊猎犬', icon: '🐕' },
+    { name: '熔岩怪', hp: 706, attack: 146, defense: 35, exp: 177, gold: 44, level: 16, critChance: 0.08, dodgeChance: 0, desc: '由滚烫熔岩构成的庞然大物', icon: '🌋' },
+    { name: '火元素', hp: 800, attack: 152, defense: 37, exp: 189, gold: 48, level: 17, critChance: 0.18, dodgeChance: 0.05, desc: '纯粹火焰构成的元素生物', icon: '🔥' },
+    { name: '炎魔', hp: 850, attack: 158, defense: 38, exp: 210, gold: 54, level: 18, critChance: 0.20, dodgeChance: 0.03, desc: '来自深渊的火焰恶魔', icon: '👹' }
   ],
 
   // ---- 21-25层 龙之巢穴 ----
   dragon: [
-    { name: '幼龙', hp: 757, attack: 85, defense: 34, exp: 222, gold: 58, level: 19, critChance: 0.15, dodgeChance: 0.10, desc: '尚未成年的小龙，已具龙威', icon: '🐲' },
-    { name: '龙人战士', hp: 935, attack: 105, defense: 42, exp: 240, gold: 62, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士', icon: '🐉' },
-    { name: '龙人法师', hp: 1020, attack: 115, defense: 46, exp: 252, gold: 66, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者', icon: '🧙' },
-    { name: '亚龙', hp: 1046, attack: 118, defense: 47, exp: 264, gold: 70, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙', icon: '🦖' },
-    { name: '精英龙裔', hp: 1250, attack: 130, defense: 48, exp: 285, gold: 74, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
+    { name: '幼龙', hp: 757, attack: 170, defense: 34, exp: 222, gold: 58, level: 19, critChance: 0.15, dodgeChance: 0.10, desc: '尚未成年的小龙，已具龙威', icon: '🐲' },
+    { name: '龙人战士', hp: 935, attack: 180, defense: 42, exp: 240, gold: 62, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士', icon: '🐉' },
+    { name: '龙人法师', hp: 1020, attack: 188, defense: 46, exp: 252, gold: 66, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者', icon: '🧙' },
+    { name: '亚龙', hp: 1046, attack: 192, defense: 47, exp: 264, gold: 70, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙', icon: '🦖' },
+    { name: '精英龙裔', hp: 1250, attack: 198, defense: 48, exp: 285, gold: 74, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
   ]
 }
 
@@ -144,7 +144,7 @@ const bosses = [
   },
   {
     name: '死灵法师',
-    hp: 800, attack: 90, defense: 30, exp: 680, gold: 270,
+    hp: 800, attack: 110, defense: 30, exp: 680, gold: 270,
     level: 11,
     floorOfAppearance: 15,
     critChance: 0.18, dodgeChance: 0.08,
@@ -159,7 +159,7 @@ const bosses = [
   },
   {
     name: '深渊恶魔',
-    hp: 1200, attack: 125, defense: 40, exp: 1080, gold: 430,
+    hp: 1200, attack: 150, defense: 40, exp: 1080, gold: 430,
     level: 14,
     floorOfAppearance: 20,
     critChance: 0.22, dodgeChance: 0.05,
@@ -175,7 +175,7 @@ const bosses = [
   },
   {
     name: '远古邪龙',
-    hp: 1700, attack: 158, defense: 50, exp: 1600, gold: 680,
+    hp: 1700, attack: 185, defense: 50, exp: 1600, gold: 680,
     level: 18,
     floorOfAppearance: 25,
     critChance: 0.20, dodgeChance: 0.15,
