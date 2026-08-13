@@ -297,7 +297,9 @@ class Monster {
 class Battle {
   constructor(player, monster) {
     this.player = player
-    this.monster = monster
+    // ⚠️ 防御: 探索状态存档恢复(explore_state)的怪物是 JSON 反序列化普通对象, 没有 takeDamage 等原型方法
+    // 传入不是 Monster 实例时用 new Monster() 重建(否则点战斗报 m.takeDamage is not a function)
+    this.monster = monster instanceof Monster ? monster : new Monster(monster)
     this.logs = []
     this.turn = 0
     // 玩家中毒状态：poisonTurns > 0 时每回合扣血
