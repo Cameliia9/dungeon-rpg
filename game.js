@@ -328,6 +328,7 @@ function touchSettings(x, y) {
     return
   }
   // 开关按钮(音效/音乐行)
+  // ⚠️ 与绘制同步: 音效开关 y=rowY, 音乐开关 y=rowY+rowH*2+12(中间隔音效音量行44+12)
   let rowY = panelTop + 42
   const rowH = 44
   if (x > cx + cw / 2 - 96 && x < cx + cw / 2 - 24) {
@@ -337,16 +338,16 @@ function touchSettings(x, y) {
       if (!st.sfxOn) audio.play('click')
       return
     }
-    if (y > rowY + rowH + 12 && y < rowY + rowH + 42) {
+    if (y > rowY + rowH * 2 + 12 && y < rowY + rowH * 2 + 42) {
       const st = audio.getSettings()
       audio.setSettings({ bgmOn: !st.bgmOn })
       return
     }
   }
-  // 滑条轨道区域(音效行滑条 y+26, 音乐行滑条 y+26)
+  // 滑条轨道区域(与绘制同步: 音效滑条 y=rowY+rowH+26, 音乐滑条 y=rowY+rowH*3+12+26)
   const sliderX = cx - cw / 2 + 22, sliderW = cw - 44
-  const sfxSliderY = panelTop + 42 + rowH + 26
-  const bgmSliderY = panelTop + 42 + rowH * 2 + 12 + 26
+  const sfxSliderY = rowY + rowH + 26
+  const bgmSliderY = rowY + rowH * 3 + 12 + 26
   if (y > sfxSliderY - 14 && y < sfxSliderY + 14 && x > sliderX - 10 && x < sliderX + sliderW + 10) {
     const val = Math.max(0, Math.min(1, (x - sliderX) / sliderW))
     audio.setSettings({ sfxVol: val })
