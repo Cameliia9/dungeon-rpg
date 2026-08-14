@@ -13,7 +13,7 @@
 const SETTINGS_KEY = 'audio_settings'
 
 // 音效文件映射(文件名不含扩展名)
-const SFX_FILES = ['click', 'hit', 'crit', 'dodge', 'hurt', 'levelup', 'enhance', 'coin', 'victory', 'defeat', 'boss']
+const SFX_FILES = ['click', 'hit', 'crit', 'dodge', 'hurt', 'bounce', 'levelup', 'enhance', 'coin', 'victory', 'defeat', 'boss']
 
 let settings = { sfxOn: true, bgmOn: true, sfxVol: 0.8, bgmVol: 0.5 }
 let bgmCtx = null        // BGM InnerAudioContext(单实例循环)

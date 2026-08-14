@@ -83,11 +83,12 @@ function updateLogoAnim() {
         a.deformX = d * 1.15
         a.deformY = -d * 0.85
         if (a.bounces === 1) a.vx += (Math.random() < 0.5 ? -1 : 1) * 340  // 首次落地给横向推动, 开始四处弹
+        audio.play('bounce')  // 撞地弹跳音
       }
     }
     // 撞左右墙: 反弹 + 横向压扁(横缩+纵伸)
-    if (a.x <= half) { a.x = half; if (a.vx < 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16) } }
-    else if (a.x >= LW - half) { a.x = LW - half; if (a.vx > 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16) } }
+    if (a.x <= half) { a.x = half; if (a.vx < 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16); audio.play('bounce') } }
+    else if (a.x >= LW - half) { a.x = LW - half; if (a.vx > 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16); audio.play('bounce') } }
     // 撞顶: 轻反弹(几乎不弹, 只挡一下; 无压扁形变)
     if (a.y <= half) { a.y = half; if (a.vy < 0) a.vy = -a.vy * 0.4 }
     // 弹跳衰减到足够小 → 缓动落位(阈值更低, 弹够才落位)
@@ -112,6 +113,7 @@ function updateLogoAnim() {
       a.deformX = 0   // 落位即静止, 无果冻形变(用户: 没有图案复位这段)
       a.deformY = 0
       logoSettledAt = Date.now()  // 图案复位后标题立即出现, 按钮逐个浮现(用户指定)
+      audio.startBgm()  // logo落位, 元素开始浮现 → 开始播放BGM
     }
   } else if (a.phase === 'done') {
     // 形变恒0(无注入), 防御性衰减
@@ -131,6 +133,7 @@ function skipLogoAnim() {
   a.deformX = 0
   a.deformY = 0
   logoSettledAt = Date.now()
+  audio.startBgm()  // 跳过弹跳也立即开始BGM
 }
 
 // ==================== 全局状态 ====================
@@ -163,8 +166,12 @@ function switchScene(name) {
   panels = null
   btns = []
   sceneEnterTime = Date.now()
-  // BGM: 所有场景常驻(设置面板内暂停避免干扰滑条试听)
+  // BGM: 所有场景常驻; 主菜单特殊——logo弹跳期间静音, 落位后(startLogoAnim完成/skip)才播
   if (name === 'settings') audio.stopBgm()
+  else if (name === 'menu') {
+    audio.stopBgm()  // 菜单BGM由弹跳落位触发
+    if (!logoReady) audio.startBgm()  // logo加载失败: 无弹跳动画, 直接播
+  }
   else audio.startBgm()
   if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()

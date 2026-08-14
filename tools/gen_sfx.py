@@ -61,6 +61,9 @@ write_wav('dodge', tone(500, 0.18, 0.5, 'sine', 8, slide_to=1400))
 # hurt: 玩家受击(低沉噗)
 write_wav('hurt', seq(tone(140, 0.15, 0.7, 'triangle', 14), tone(90, 0.08, 0.5, 'triangle', 16)))
 
+# bounce: logo弹跳音(短促上滑音, 轻巧)
+write_wav('bounce', seq(tone(220, 0.06, 0.5, 'square', 20), tone(330, 0.09, 0.45, 'square', 14)))
+
 # levelup: 欢快上行琶音 C5-E5-G5-C6
 write_wav('levelup', seq(tone(523, 0.10, 0.6, 'square', 10), tone(659, 0.10, 0.6, 'square', 10), tone(784, 0.10, 0.6, 'square', 10), tone(1047, 0.25, 0.7, 'square', 6)))
 
