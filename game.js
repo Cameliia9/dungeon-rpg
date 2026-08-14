@@ -77,7 +77,7 @@ function updateLogoAnim() {
   const half = LOGO_SIZE / 2
 
   if (a.phase === 'bounce') {
-    const G = 2300, REST = 0.68, WALL = 0.88
+    const G = 2000, REST = 0.68, WALL = 0.88
     a.vy += G * dt
     a.x += a.vx * dt
     a.y += a.vy * dt
