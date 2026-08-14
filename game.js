@@ -179,8 +179,10 @@ function switchScene(name) {
   btns = []
   sceneEnterTime = Date.now()
   // BGM: 所有场景常驻; 主菜单特殊——logo弹跳期间静音, 落位后(startLogoAnim完成/skip)才播
-  if (name === 'settings') audio.stopBgm()
-  else if (name === 'menu') audio.stopBgm()  // ⚠️ 无条件停(不判断logoReady: 加载中也是false会误播), 兜底在loadLogo的onerror
+  // 战斗特殊——切战斗BGM(保存普通BGM进度, 退出后seek恢复不重播)
+  if (name === 'settings') audio.stopAll()
+  else if (name === 'menu') audio.stopAll()  // ⚠️ 无条件停(不判断logoReady: 加载中也是false会误播), 兜底在loadLogo的onerror
+  else if (name === 'battle') audio.startBattleBgm()
   else audio.startBgm()
   if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()
