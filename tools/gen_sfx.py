@@ -61,8 +61,18 @@ write_wav('dodge', tone(500, 0.18, 0.5, 'sine', 8, slide_to=1400))
 # hurt: 玩家受击(低沉噗)
 write_wav('hurt', seq(tone(140, 0.15, 0.7, 'triangle', 14), tone(90, 0.08, 0.5, 'triangle', 16)))
 
-# bounce: logo弹跳音(短促上滑音, 轻巧)
-write_wav('bounce', seq(tone(220, 0.06, 0.5, 'square', 20), tone(330, 0.09, 0.45, 'square', 14)))
+# bounce: 果冻弹跳(快速上滑+轻微颤音, Q弹感; 三段衰减模拟duang~duang)
+def jelly(f0, f1, dur, vol, vib):
+    n = int(SR * dur)
+    out = []
+    for i in range(n):
+        t = i / SR
+        f = f0 + (f1 - f0) * (i / n)
+        wob = 1 + vib * math.sin(2 * math.pi * 22 * t)  # 果冻抖动
+        env = math.exp(-9 * t)
+        out.append(math.sin(2 * math.pi * f * wob * t) * env * vol)
+    return out
+write_wav('bounce', seq(jelly(240, 460, 0.08, 0.7, 0.05), jelly(460, 620, 0.06, 0.45, 0.06), jelly(620, 700, 0.05, 0.25, 0.07)))
 
 # levelup: 欢快上行琶音 C5-E5-G5-C6
 write_wav('levelup', seq(tone(523, 0.10, 0.6, 'square', 10), tone(659, 0.10, 0.6, 'square', 10), tone(784, 0.10, 0.6, 'square', 10), tone(1047, 0.25, 0.7, 'square', 6)))

@@ -30,7 +30,10 @@ let logoImg = null, logoReady = false
 function loadLogo() {
   logoImg = wx.createImage()
   logoImg.onload = () => { logoReady = true }
-  logoImg.onerror = () => { logoImg = null }
+  logoImg.onerror = () => {
+    logoImg = null
+    audio.startBgm()  // logo加载失败: 无弹跳动画, 直接播BGM
+  }
   logoImg.src = 'app-icon.png'
 }
 loadLogo()
@@ -168,10 +171,7 @@ function switchScene(name) {
   sceneEnterTime = Date.now()
   // BGM: 所有场景常驻; 主菜单特殊——logo弹跳期间静音, 落位后(startLogoAnim完成/skip)才播
   if (name === 'settings') audio.stopBgm()
-  else if (name === 'menu') {
-    audio.stopBgm()  // 菜单BGM由弹跳落位触发
-    if (!logoReady) audio.startBgm()  // logo加载失败: 无弹跳动画, 直接播
-  }
+  else if (name === 'menu') audio.stopBgm()  // ⚠️ 无条件停(不判断logoReady: 加载中也是false会误播), 兜底在loadLogo的onerror
   else audio.startBgm()
   if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()
