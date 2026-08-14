@@ -112,14 +112,14 @@ function updateLogoAnim() {
     }
   } else if (a.phase === 'settle') {
     a.settleT += dt
-    const t = Math.min(1, a.settleT / 1.5)
+    const t = Math.min(1, a.settleT / 2.0)
     const e = ui.easeOut(t)
     const tx = LW / 2, ty = LH * 0.24
     a.x = a.startX + (tx - a.startX) * e
     a.y = a.startY + (ty - a.startY) * e
     a.deformX *= Math.exp(-9 * dt)
     a.deformY *= Math.exp(-9 * dt)
-    if (a.settleT >= 1.5) {
+    if (a.settleT >= 2.0) {
       a.phase = 'done'
       a.x = tx; a.y = ty
       a.deformX = 0   // 落位即静止, 无果冻形变(用户: 没有图案复位这段)
