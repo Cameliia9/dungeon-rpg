@@ -40,8 +40,8 @@ function init() {
   loadSettings()
 }
 
-/** 播放音效(name 见 SFX_FILES) */
-function play(name) {
+/** 播放音效(name 见 SFX_FILES; vol 可选 0~1 单次音量, 默认满音量=设置音量) */
+function play(name, vol) {
   if (!settings.sfxOn) return
   if (!SFX_FILES.includes(name)) return
   try {
@@ -52,7 +52,9 @@ function play(name) {
       ctx.volume = settings.sfxVol
       sfxPool[name] = ctx
     }
-    ctx.volume = settings.sfxVol  // 实时应用音量
+    // 单次音量 = 全局设置音量 × 本次音量系数(如弹跳音按撞击力度渐弱)
+    const v = vol === undefined ? 1 : Math.max(0, Math.min(1, vol))
+    ctx.volume = settings.sfxVol * v  // 实时应用音量
     try { ctx.stop() } catch (e) {}  // 重播前重置(支持连续触发)
     ctx.play()
   } catch (e) {}

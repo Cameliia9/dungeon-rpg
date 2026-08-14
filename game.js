@@ -41,7 +41,16 @@ loadLogo()
 // Logo弹跳动画(弹性方块): 进入主菜单从上方掉下, 全屏弹跳衰减, 最后缓动落到中间
 let logoAnim = null
 let logoSettledAt = 0  // logo落位完成时间(之后标题/按钮才逐渐浮现); 必须声明否则严格模式ReferenceError
+let lastBounceAt = 0   // bounce 音效冷却时间戳(最后几下密集小弹跳防重叠连音)
 const LOGO_SIZE = 76
+// 弹跳音: 按撞击速度控制音量(越大力越响→越来越轻), 速度太小静音(小球快停时无声音)
+// 冷却 140ms 防止音效(190ms)未放完就被截断重播 → 碎片连音(用户报"最后几下声音连在一起")
+function playBounceSound(sp) {
+  const now = Date.now()
+  if (sp < 150 || now - lastBounceAt < 140) return
+  lastBounceAt = now
+  audio.play('bounce', Math.min(1, sp / 800))
+}
 function startLogoAnim() {
   logoSettledAt = 0
   logoAnim = {
@@ -68,7 +77,7 @@ function updateLogoAnim() {
   const half = LOGO_SIZE / 2
 
   if (a.phase === 'bounce') {
-    const G = 2600, REST = 0.68, WALL = 0.88
+    const G = 2300, REST = 0.68, WALL = 0.88
     a.vy += G * dt
     a.x += a.vx * dt
     a.y += a.vy * dt
@@ -86,12 +95,12 @@ function updateLogoAnim() {
         a.deformX = d * 1.15
         a.deformY = -d * 0.85
         if (a.bounces === 1) a.vx += (Math.random() < 0.5 ? -1 : 1) * 340  // 首次落地给横向推动, 开始四处弹
-        audio.play('bounce')  // 撞地弹跳音
+        playBounceSound(Math.abs(a.vy))  // 撞地弹跳音(按速度渐弱, 小弹跳静音防连音)
       }
     }
     // 撞左右墙: 反弹 + 横向压扁(横缩+纵伸)
-    if (a.x <= half) { a.x = half; if (a.vx < 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16); audio.play('bounce') } }
-    else if (a.x >= LW - half) { a.x = LW - half; if (a.vx > 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16); audio.play('bounce') } }
+    if (a.x <= half) { a.x = half; if (a.vx < 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16); playBounceSound(Math.abs(a.vx)) } }
+    else if (a.x >= LW - half) { a.x = LW - half; if (a.vx > 0) { a.vx = -a.vx * WALL; a.deformX = Math.min(a.deformX, -0.2); a.deformY = Math.max(a.deformY, 0.16); playBounceSound(Math.abs(a.vx)) } }
     // 撞顶: 轻反弹(几乎不弹, 只挡一下; 无压扁形变)
     if (a.y <= half) { a.y = half; if (a.vy < 0) a.vy = -a.vy * 0.4 }
     // 弹跳衰减到足够小 → 缓动落位(阈值更低, 弹够才落位)
