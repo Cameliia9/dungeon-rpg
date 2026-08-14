@@ -5,6 +5,7 @@
 const ui = require('./ui')
 const { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn } = ui
 const Data = require('../utils/data')
+const audio = require('./audio')
 
 let S = null
 let type = null   // shop | inventory | forge
@@ -267,6 +268,7 @@ function handleItem(it) {
       p.inventory.splice(it.invIdx, 1)
       p.gold += price
       S.savePlayer()
+      audio.play('coin')  // 回收金币音
       wx.showToast({ title: '回收 ' + orig.name + ' +' + price + '金', icon: 'success' })
       build()
       return
@@ -286,6 +288,7 @@ function handleItem(it) {
     p.gold -= it.price
     p.inventory.push({ ...it })
     S.savePlayer()
+    audio.play('coin')  // 购买金币音
     wx.showToast({ title: '购买 ' + it.name, icon: 'success' })
   } else if (type === 'inventory') {
     if (it.type === 'potion') {
@@ -318,6 +321,7 @@ function handleItem(it) {
     S.savePlayer()
     // 手机震动(强化成功反馈)
     try { wx.vibrateShort({ type: 'light' }) } catch (e) { try { wx.vibrateShort() } catch (e2) {} }
+    audio.play('enhance')  // 强化成功音
     // 强化弹窗(对齐升级弹窗: 弹入动画 + 属性变化 + 关闭动画)
     forgeModal = {
       item,

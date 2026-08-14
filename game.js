@@ -7,6 +7,7 @@ const ui = require('./js/ui')
 const { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn } = ui
 const GE = require('./utils/game-engine')
 const Data = require('./utils/data')
+const audio = require('./js/audio')
 
 // ==================== 画布 ====================
 // 显式设置 canvas 物理尺寸 = 逻辑尺寸 × DPR，再 scale(DPR)
@@ -162,10 +163,14 @@ function switchScene(name) {
   panels = null
   btns = []
   sceneEnterTime = Date.now()
+  // BGM: 所有场景常驻(设置面板内暂停避免干扰滑条试听)
+  if (name === 'settings') audio.stopBgm()
+  else audio.startBgm()
   if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()
   else if (name === 'game') buildGame()
   else if (name === 'explore') buildExplore()
+  else if (name === 'settings') buildSettings()
   else if (name === 'battle') {
     if (!battle) battle = require('./js/battle')
   }
@@ -186,7 +191,7 @@ function buildMenu() {
   }, savedGame ? ui.BTN.gold : ui.BTN.disabled)
   if (!savedGame) contBtn.disabled = true  // 无存档彻底禁用
   btns.push(contBtn); y += bh + 16
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '⚙️ 设置', () => wx.showToast({ title: '暂无设置项', icon: 'none' }), ui.BTN.secondary)); y += bh + 16
+  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '⚙️ 设置', () => switchScene('settings'), ui.BTN.secondary)); y += bh + 16
   btns.push(makeBtn(cx - bw / 2, y, bw, bh, '🚪 退出', () => wx.exitMiniProgram(), ui.BTN.disabled))
 }
 
@@ -251,6 +256,120 @@ function drawMenu() {
 
 // ==================== 难度选择 ====================
 // 对齐原版: 标题32 说明14 按钮220 交错 0/0.06/0.12/0.18/0.24/0.3s
+// ==================== 设置面板(音效/音乐开关 + 音量滑条) ====================
+let settingsDrag = null  // 拖动中的滑条: 'sfx' | 'bgm' | null
+function buildSettings() {
+  btns = []
+  settingsDrag = null
+  audio.init()
+}
+function drawSettings() {
+  ctx.fillStyle = bgGradient()
+  ctx.fillRect(0, 0, LW, LH)
+  const dur = 500, dist = 20
+  const p1 = ui.animProgress(sceneEnterTime, 0, dur)
+  text(ctx, '⚙️ 设置', LW / 2, LH * 0.14 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
+
+  const st = audio.getSettings()
+  const cw = Math.min(300, LW - 60), cx = LW / 2
+  // 面板背景
+  const panelTop = LH * 0.22, panelH = 300
+  roundRect(ctx, cx - cw / 2, panelTop, cw, panelH, 14, '#151528', '#2a2a4a', 1.5)
+
+  let y = panelTop + 42
+  const rowH = 44
+  // 音效开关行
+  text(ctx, '🔊 音效', cx - cw / 2 + 22, y + 12, 15, COLORS.text, 'left')
+  const sfxOn = st.sfxOn
+  drawBtn(ctx, makeBtn(cx + cw / 2 - 96, y, 72, 30, sfxOn ? '开' : '关', () => {
+    audio.setSettings({ sfxOn: !sfxOn })
+    if (!sfxOn) audio.play('click')
+  }, sfxOn ? ui.BTN.gold : ui.BTN.secondary))
+  // 音效音量滑条
+  y += rowH
+  text(ctx, '音效音量', cx - cw / 2 + 22, y + 14, 13, COLORS.textDim, 'left')
+  drawSlider(ctx, cx - cw / 2 + 22, y + 26, cw - 44, st.sfxVol, '#ffd700')
+  // 音乐开关行
+  y += rowH + 12
+  const bgmOn = st.bgmOn
+  text(ctx, '🎵 音乐', cx - cw / 2 + 22, y + 12, 15, COLORS.text, 'left')
+  drawBtn(ctx, makeBtn(cx + cw / 2 - 96, y, 72, 30, bgmOn ? '开' : '关', () => {
+    audio.setSettings({ bgmOn: !bgmOn })
+  }, bgmOn ? ui.BTN.gold : ui.BTN.secondary))
+  // 音乐音量滑条
+  y += rowH
+  text(ctx, '音乐音量', cx - cw / 2 + 22, y + 14, 13, COLORS.textDim, 'left')
+  drawSlider(ctx, cx - cw / 2 + 22, y + 26, cw - 44, st.bgmVol, '#5aa7ff')
+
+  // 返回按钮
+  drawBtn(ctx, makeBtn(cx - 90, panelTop + panelH + 24, 180, 42, '↩️ 返回', () => switchScene('menu'), ui.BTN.secondary))
+}
+
+// 音量滑条(轨道+填充+圆钮)
+function drawSlider(ctx, x, y, w, val, color) {
+  const trackH = 5, cy = y + trackH / 2
+  roundRect(ctx, x, cy - trackH / 2, w, trackH, 2.5, '#333350')  // 轨道
+  roundRect(ctx, x, cy - trackH / 2, w * val, trackH, 2.5, color)  // 填充
+  // 圆钮
+  const nx = x + w * val
+  ctx.beginPath()
+  ctx.arc(nx, cy, 9, 0, Math.PI * 2)
+  ctx.fillStyle = '#ffffff'
+  ctx.fill()
+}
+
+// 设置面板触摸: 开关按钮走 hitBtn, 滑条拖动
+function touchSettings(x, y) {
+  const cw = Math.min(300, LW - 60), cx = LW / 2
+  const panelTop = LH * 0.22, panelH = 300
+  // 返回按钮
+  if (x > cx - 90 && x < cx + 90 && y > panelTop + panelH + 24 && y < panelTop + panelH + 66) {
+    switchScene('menu')
+    return
+  }
+  // 开关按钮(音效/音乐行)
+  let rowY = panelTop + 42
+  const rowH = 44
+  if (x > cx + cw / 2 - 96 && x < cx + cw / 2 - 24) {
+    if (y > rowY && y < rowY + 30) {
+      const st = audio.getSettings()
+      audio.setSettings({ sfxOn: !st.sfxOn })
+      if (!st.sfxOn) audio.play('click')
+      return
+    }
+    if (y > rowY + rowH + 12 && y < rowY + rowH + 42) {
+      const st = audio.getSettings()
+      audio.setSettings({ bgmOn: !st.bgmOn })
+      return
+    }
+  }
+  // 滑条轨道区域(音效行滑条 y+26, 音乐行滑条 y+26)
+  const sliderX = cx - cw / 2 + 22, sliderW = cw - 44
+  const sfxSliderY = panelTop + 42 + rowH + 26
+  const bgmSliderY = panelTop + 42 + rowH * 2 + 12 + 26
+  if (y > sfxSliderY - 14 && y < sfxSliderY + 14 && x > sliderX - 10 && x < sliderX + sliderW + 10) {
+    const val = Math.max(0, Math.min(1, (x - sliderX) / sliderW))
+    audio.setSettings({ sfxVol: val })
+    settingsDrag = 'sfx'
+    audio.play('click')
+    return
+  }
+  if (y > bgmSliderY - 14 && y < bgmSliderY + 14 && x > sliderX - 10 && x < sliderX + sliderW + 10) {
+    const val = Math.max(0, Math.min(1, (x - sliderX) / sliderW))
+    audio.setSettings({ bgmVol: val })
+    settingsDrag = 'bgm'
+    return
+  }
+}
+function touchMoveSettings(x, y) {
+  if (!settingsDrag) return
+  const cw = Math.min(300, LW - 60), cx = LW / 2
+  const sliderX = cx - cw / 2 + 22, sliderW = cw - 44
+  const val = Math.max(0, Math.min(1, (x - sliderX) / sliderW))
+  audio.setSettings(settingsDrag === 'sfx' ? { sfxVol: val } : { bgmVol: val })
+}
+function touchEndSettings() { settingsDrag = null }
+
 function buildDifficulty() {
   btns = []
   // 对齐原版: 每个难度按钮带属性描述(HP/ATK/GOLD/敌人倍率)
@@ -399,6 +518,7 @@ function draw() {
   if (scene === 'menu') drawMenu()
   else if (scene === 'difficulty') drawDifficulty()
   else if (scene === 'game') drawGame()
+  else if (scene === 'settings') drawSettings()
   else if (scene === 'explore' && explore) explore.draw()
   else if (scene === 'battle' && battle) battle.draw()
 }
@@ -430,8 +550,10 @@ wx.onTouchStart((e) => {
   }
   if (scene === 'menu' || scene === 'difficulty' || scene === 'game') {
     const b = hitBtn(btns, x, y)
-    if (b && !b.disabled) b.cb()
+    if (b && !b.disabled) { audio.play('click'); b.cb() }  // 按钮点击音
     else if (scene === 'menu' && logoAnim && logoSettledAt === 0) skipLogoAnim()  // 轻触跳过弹跳
+  } else if (scene === 'settings') {
+    touchSettings(x, y)
   } else if (scene === 'explore' && explore) {
     explore.touch(x, y)
   } else if (scene === 'battle' && battle) {
@@ -445,13 +567,15 @@ wx.onTouchMove((e) => {
   if (!t) return
   const { x, y } = normTouch(t)
   if (panels) { if (panels.touchMove) panels.touchMove(x, y); return }
-  if (scene === 'battle' && battle && battle.touchMove) battle.touchMove(x, y)
+  if (scene === 'settings') touchMoveSettings(x, y)
+  else if (scene === 'battle' && battle && battle.touchMove) battle.touchMove(x, y)
   else if (scene === 'explore' && explore && explore.touchMove) explore.touchMove(x, y)
 })
 
 wx.onTouchEnd(() => {
   if (panels) { if (panels.touchEnd) panels.touchEnd(); return }
-  if (scene === 'battle' && battle && battle.touchEnd) battle.touchEnd()
+  if (scene === 'settings') touchEndSettings()
+  else if (scene === 'battle' && battle && battle.touchEnd) battle.touchEnd()
   else if (scene === 'explore' && explore && explore.touchEnd) explore.touchEnd()
 })
 
@@ -462,6 +586,8 @@ if (wx.onMouseWheel) wx.onMouseWheel((e) => {
 
 // 启动
 if (loadGame()) savedGame = true
+audio.init()
+audio.startBgm()  // 启动即播放背景音乐(受设置控制)
 switchScene('menu')
 
 // 渲染循环带异常保护，避免单帧错误卡死

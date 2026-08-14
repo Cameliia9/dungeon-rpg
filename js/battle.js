@@ -4,6 +4,7 @@
 const ui = require('./ui')
 const { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn } = ui
 const GE = require('../utils/game-engine')
+const audio = require('./audio')
 
 let S = null
 let battle = null
@@ -278,6 +279,7 @@ function victory() {
       expNow: p.exp, expNeed: p.expToLevel()
     }
     modalAnim = { start: Date.now(), dur: 300 }  // 弹窗弹入动画起点
+    audio.play('levelup')  // 升级音
   }
   p.poisonTurns = 0
   result = 'victory'
@@ -629,6 +631,7 @@ function fxPlayerHit(dmg, crit) {
   spawnFx({ kind: 'ring', x: fxMonCx(), y: fxMonCy(), dur: crit ? 420 : 320, crit })
   spawnFx({ kind: 'dmg', x: fxMonCx(), y: fxMonCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
+  audio.play(crit ? 'crit' : 'hit')  // 玩家攻击命中: 暴击金属声/普通打击声
 }
 // 怪物攻击命中玩家: 玩家受击白闪 + 命中闪光 + 飘字(动画由调度器负责)
 function fxMonsterHit(dmg, crit, skill) {
@@ -637,12 +640,14 @@ function fxMonsterHit(dmg, crit, skill) {
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
   if (skill) shake = { t0: Date.now(), dur: 480, power: 10 }
+  audio.play(skill ? 'boss' : (crit ? 'crit' : 'hurt'))  // Boss技能威胁音/暴击/受击
 }
 // 闪避 MISS 飘字
 function fxDodge(side) {
   const x = side === 'monster' ? fxMonCx() : fxPlyCx()
   const y = (side === 'monster' ? fxMonCy() : fxPlyCy()) - 24
   spawnFx({ kind: 'miss', x, y, dur: 600 })
+  audio.play('dodge')  // 闪避滑音
 }
 // 中毒紫字
 function fxPoison(dmg) {
@@ -658,11 +663,13 @@ function fxVictory() {
   for (let i = 0; i < 3; i++) {
     spawnFx({ kind: 'ring', x: fxMonCx() + (Math.random() * 80 - 40), y: fxMonCy() + (Math.random() * 50 - 25), dur: 420, crit: true })
   }
+  audio.play('victory')  // 胜利音
 }
 function fxDefeat() {
   shake = { t0: Date.now(), dur: 520, power: 11 }
   spawnFx({ kind: 'ring', x: fxPlyCx(), y: fxPlyCy(), dur: 460, crit: true })
   spawnFx({ kind: 'ring', x: fxPlyCx() + 30, y: fxPlyCy() - 30, dur: 520, skill: true })
+  audio.play('defeat')  // 失败音
 }
 
 // 每帧: 卡片动画清理 + 特效更新

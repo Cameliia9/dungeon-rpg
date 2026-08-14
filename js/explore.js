@@ -5,6 +5,7 @@ const ui = require('./ui')
 const { COLORS, roundRect, text, hpBar, makeBtn, drawBtn, hitBtn } = ui
 const GE = require('../utils/game-engine')
 const Data = require('../utils/data')
+const audio = require('./audio')
 
 let S = null // 共享状态
 
@@ -301,6 +302,7 @@ function pickSide(side) {
   if (!evt) return
   const key = side + 'State'
   activeSide = side
+  audio.play('click')  // 点门音效
   // 启动展开动画(选中放大/另一侧缩小)
   cardAnim = { phase: 'expand', start: Date.now(), side: side, dur: 350 }
   const p = S.player
@@ -757,6 +759,7 @@ function buyMerchant(side, idx) {
     p.inventory.push({ ...item })
   }
   S.savePlayer()
+  audio.play('coin')  // 商人购买金币音
   wx.showToast({ title: '购买成功！', icon: 'success' })
 }
 
