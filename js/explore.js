@@ -33,7 +33,8 @@ function saveExploreState() {
       leftEvent, rightEvent,
       leftState, rightState,
       trapResult,
-      footerExpanded
+      footerExpanded,
+      gate: gate ? { toFloor: gate.toFloor } : null
     })
   } catch (e) {}
 }
@@ -42,8 +43,18 @@ function restoreExploreState() {
   if (!p) return false
   try {
     const st = wx.getStorageSync(EXPLORE_KEY)
-    // 层数匹配且有事件才恢复(楼梯/Boss场景另一侧可为null)
-    if (st && st.floor === p.floor && (st.leftEvent || st.rightEvent)) {
+    // 层数匹配且有事件或大门才恢复(楼梯/Boss场景另一侧可为null)
+    if (st && st.floor === p.floor && (st.leftEvent || st.rightEvent || st.gate)) {
+      // 大门状态: 恢复后仍显示大门(点推开进目标主题)
+      if (st.gate) {
+        gate = { toFloor: st.gate.toFloor || 1 }
+        leftEvent = null; rightEvent = null
+        leftState = 'door'; rightState = 'door'
+        activeSide = null
+        cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
+        return true
+      }
+      gate = null
       leftEvent = st.leftEvent || null
       rightEvent = st.rightEvent || null
       leftState = st.leftState || 'door'
@@ -68,10 +79,14 @@ function init(shared) {
   S = shared
   enterTime = Date.now()
   if (!skipRegen) {
-    // 优先恢复现场(防逃课), 无存档才重新随机
+    // 优先恢复现场(防逃课), 无存档才显示大门(点推开进第一主题)
     if (!restoreExploreState()) {
-      generateEvents()
-      saveExploreState()
+      gate = { toFloor: 1 }  // 进入地牢大门
+      leftEvent = null; rightEvent = null
+      leftState = 'door'; rightState = 'door'
+      activeSide = null
+      cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
+      saveExploreState()  // 持久化大门状态(退出重进保持大门)
     }
   } else {
     skipRegen = false
@@ -80,6 +95,9 @@ function init(shared) {
 }
 
 let skipRegen = false
+// 大门状态: 非null时探索页显示主题大门大卡片(无信息卡/事件卡), 点"推开"进入下一主题
+// { toFloor: 目标层数 } — 进入地牢=1, Boss打完=当前层+1
+let gate = null
 
 function ctx() { return S.ctx }
 
@@ -136,6 +154,22 @@ function generateEvents() {
 function buttons() { return [] }
 
 function touch(x, y) {
+  // 大门状态: 推开按钮→进入下一主题; footer区域(退出/折叠/面板)仍放行; 卡片区忽略
+  if (gate) {
+    const gw = S.LW * 0.84, gy = 118
+    const gh = S.LH - FOOTER_H_EXPAND - 15 - gy
+    const gc = gy + gh / 2
+    const bw = gw * 0.6, bh = 44
+    const bx = (S.LW - bw) / 2
+    const by = gc + 76
+    if (x > bx && x < bx + bw && y > by && y < by + bh) {
+      openGate()
+      return
+    }
+    // 非footer区域(卡片区/顶部)在大门状态下忽略
+    if (y < S.LH - footerH()) return
+    // footer 区域: 落到下方原有逻辑
+  }
   const fh = footerH()
   const fy = S.LH - fh
   // 状态栏折叠箭头（顶部居中箭头区域, 带平滑动画）
@@ -446,6 +480,17 @@ function descend() {
   generateEvents()
 }
 
+// 推开大门: 进入下一主题(进地牢=第1层不动; Boss打完=floor+1走descend逻辑)
+function openGate() {
+  const p = S.player
+  if (gate.toFloor > p.floor) {
+    descend()
+  } else {
+    generateEvents()
+  }
+  gate = null
+}
+
 function startBattle(side, isBoss) {
   const evt = side === 'left' ? leftEvent : rightEvent
   const m = isBoss ? GE.getBossForFloor(S.player.floor, S.player.difficulty) : evt.monster
@@ -458,8 +503,9 @@ function startBattle(side, isBoss) {
     // 战斗结束回调: 返回探索场景并保留双门状态
     skipRegen = true
     if (S.bossDefeated) {
-      if (side === 'left') { leftEvent = { type: 'stairs' }; rightEvent = null }
-      else { rightEvent = { type: 'stairs' }; leftEvent = null }
+      // Boss 击败 → 通往下一主题的大门(不再是楼梯)
+      gate = { toFloor: S.player.floor + 1 }
+      leftEvent = null; rightEvent = null
       leftState = 'door'; rightState = 'door'
       S.bossDefeated = false
     } else {
@@ -520,6 +566,12 @@ function buildStatic(p) {
 function draw() {
   const ctx = S.ctx
   const p = S.player
+  // 大门状态: 显示主题大门大卡片(无信息卡/事件卡), 推开后进入下一主题
+  if (gate) {
+    drawGate()
+    drawFooter()
+    return
+  }
   // 静态头部: 楼层/房间变化时重建, 平时drawImage合成(省每帧重绘)
   const key = p.floor + '|' + p.roomsExplored
   if (staticKey !== key) { staticKey = key; buildStatic(p) }
@@ -539,6 +591,55 @@ function draw() {
 
   // ============ 底部状态栏(≈25%: 500~667) ============
   drawFooter()
+}
+
+// ===== 主题大门(进入地牢/Boss打完的过渡大卡片) =====
+// 布局: 背景铺满 + 顶部标题行(同探索页) + 居中大门大卡片(无信息卡/事件卡)
+function drawGate() {
+  const ctx = S.ctx
+  const p = S.player
+  const targetTheme = Data.getThemeForFloor(gate.toFloor)
+  const isEntry = gate.toFloor === 1  // 进入地牢大门 vs Boss后大门
+
+  // 背景: 探索页同款分区
+  ctx.fillStyle = '#0f0f1a'
+  ctx.fillRect(0, 0, S.LW, S.LH)
+  roundRect(ctx, 0, 0, S.LW, 90, 0, ui.cardFill(ctx, 0, 0, S.LW, 90))
+  // 顶部: 返回箭头 + 标题
+  text(ctx, '←', 26, 72, 22, '#ffffff', 'center', true)
+  text(ctx, '探索地牢', S.LW / 2, 72, 20, '#ffffff', 'center', true)
+  // 分割线
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.moveTo(0, 90)
+  ctx.lineTo(S.LW, 90)
+  ctx.stroke()
+
+  // 大门大卡片: 居中, 上接分割线下方, 下接状态栏顶
+  const gx = S.LW * 0.08
+  const gw = S.LW * 0.84
+  const gy = 118
+  const gh = S.LH - FOOTER_H_EXPAND - 15 - gy  // 667: 118~373 高255
+  const gc = gy + gh / 2
+  // 卡片背景(金色边框突出大门)
+  roundRect(ctx, gx, gy, gw, gh, 20, ui.cardFill(ctx, gx, gy, gw, gh), isEntry ? COLORS.goldBright : '#e0c080', 2)
+  // 顶部大门图标(手动居中, 大号)
+  centerEmoji(ctx, '🚪', S.LW / 2, gc - 78, 64, COLORS.gold)
+  // 标题
+  text(ctx, isEntry ? '地牢之门' : '通往下一地域', S.LW / 2, gc - 22, 24, COLORS.gold, 'center', true)
+  // 主题名(带图标, 金色)
+  const themeLine = targetTheme.icon + ' ' + targetTheme.name
+  text(ctx, themeLine, S.LW / 2, gc + 14, 18, '#ffffff', 'center', true)
+  // 描述(截断防溢出)
+  let desc = targetTheme.desc || ''
+  while (desc.length > 1 && ui.textWidth(ctx, desc, 13) > gw - 48) desc = desc.slice(0, -1)
+  text(ctx, desc, S.LW / 2, gc + 46, 13, COLORS.textDim, 'center')
+  // 推开按钮(金色)
+  const bw = gw * 0.6, bh = 44
+  const bx = (S.LW - bw) / 2
+  const by = gc + 76
+  drawBtn(ctx, makeBtn(bx, by, bw, bh, '🚪 推开大门', () => openGate(), { ...ui.BTN.gold, r: 22 }))
 }
 
 function leftX() { return S.LW * 0.05 }
