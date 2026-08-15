@@ -435,10 +435,10 @@ const STORY_LINES = [
 ]
 const STORY_FINAL = '前进吧,冒险者。'
 const STORY_ICON_Y = LH * 0.105   // 🧝 图标中线
-const STORY_TITLE_Y = LH * 0.105 + 58
-const STORY_BODY_Y0 = LH * 0.105 + 104  // 正文首行中线
-const STORY_LINE_H = 23
-const STORY_BTN_Y = STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H + 46  // 正文底+金色句行距+间距
+const STORY_TITLE_Y = LH * 0.105 + 62
+const STORY_BODY_Y0 = LH * 0.105 + 110  // 正文首行中线
+const STORY_LINE_H = 26                  // 行距(15px 字阅读舒适)
+const STORY_BTN_Y = STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H + 52  // 正文底+金色句行距+间距
 
 function buildStory() {
   btns = []
@@ -454,27 +454,27 @@ function drawStory() {
   const pTitle = ui.animProgress(sceneEnterTime, 0, dur)
   if (pTitle > 0) {
     ctx.globalAlpha = pTitle
-    text(ctx, '🧝', LW / 2, STORY_ICON_Y, 52, '#ffffff', 'center')
-    text(ctx, '📜 星辉圣冠', LW / 2, STORY_TITLE_Y, 22, COLORS.gold, 'center', true)
+    text(ctx, '🧝', LW / 2, STORY_ICON_Y, 56, '#ffffff', 'center')
+    text(ctx, '📜 星辉圣冠', LW / 2, STORY_TITLE_Y, 26, COLORS.gold, 'center', true)
     ctx.globalAlpha = 1
   }
-  // 正文逐行浮现(每行交错 200ms, 一点点出来)
+  // 正文逐行浮现(每行浮现600ms + 停留400ms阅读, 符合人的阅读节奏)
   STORY_LINES.forEach((line, idx) => {
-    const p = ui.animProgress(sceneEnterTime, 350 + idx * 200, 700)
+    const p = ui.animProgress(sceneEnterTime, 400 + idx * 1000, 600)
     if (p <= 0) return
     ctx.globalAlpha = p
-    text(ctx, line, LW / 2, STORY_BODY_Y0 + idx * STORY_LINE_H, 13, '#c8c8d8', 'center')
+    text(ctx, line, LW / 2, STORY_BODY_Y0 + idx * STORY_LINE_H, 15, '#c8c8d8', 'center')
     ctx.globalAlpha = 1
   })
   // 最后"前进吧,冒险者"(金色强调, 最后浮现)
-  const pFinal = ui.animProgress(sceneEnterTime, 350 + STORY_LINES.length * 200, 700)
+  const pFinal = ui.animProgress(sceneEnterTime, 400 + STORY_LINES.length * 1000, 700)
   if (pFinal > 0) {
     ctx.globalAlpha = pFinal
-    text(ctx, STORY_FINAL, LW / 2, STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H, 15, COLORS.gold, 'center', true)
+    text(ctx, STORY_FINAL, LW / 2, STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H, 18, COLORS.gold, 'center', true)
     ctx.globalAlpha = 1
   }
   // 开始远征按钮(文字全部浮现完才出现)
-  const pBtn = ui.animProgress(sceneEnterTime, 350 + (STORY_LINES.length + 1) * 200 + 400, 700)
+  const pBtn = ui.animProgress(sceneEnterTime, 400 + (STORY_LINES.length + 1) * 1000 + 600, 700)
   if (pBtn > 0 && btns[0]) drawBtn(ctx, btns[0], null, pBtn)
 }
 
