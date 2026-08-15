@@ -60,7 +60,7 @@ def render():
         t = j / SR
         env = math.exp(-1.6 * t)
         mix[j] += (osc('sine', f(36), t) + 0.5 * osc('sine', f(48), t) + 0.3 * osc('sine', f(60), t)) * env * 0.16
-    # 低音(锯齿, 极低, 厚重持续)
+    # 低音(极低根音, 三角波厚实不刺——锯齿波高次谐波在22050采样下混叠出嘶声, 用户报刺耳)
     for bar in range(N_BARS):
         t0 = bar * BAR
         m = BASS[bar]
@@ -68,7 +68,7 @@ def render():
         for j in range(s0, s1):
             t = j / SR - t0
             env = min(1, t / 0.1) * math.exp(-0.4 * t)
-            mix[j] += osc('saw', f(m), t) * env * 0.20
+            mix[j] += osc('triangle', f(m), t) * env * 0.16
     # pad(正弦, 暗, 慢起慢落)
     for bar in range(N_BARS):
         t0 = bar * BAR
