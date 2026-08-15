@@ -387,7 +387,13 @@ function touchSettings(x, y) {
       return
     }
   }
-  // ⚠️ 测试Boss战按钮 touch 已移除(2026-08-15, 与绘制同步隐藏)
+  // ⚠️ 隐藏的Boss战测试入口(2026-08-15): 按钮不绘制, 但此触摸区域保留——
+  // 只有开发者知道: 点音乐音量滑条下方的原按钮位置即可直达Boss战(startTestBoss)
+  const bossBtnY = rowY + rowH * 4 + 12 + 20
+  if (x > cx - cw / 2 + 22 && x < cx - cw / 2 + 22 + cw - 44 && y > bossBtnY && y < bossBtnY + 36) {
+    startTestBoss()
+    return
+  }
   // 滑条轨道区域(与绘制同步: 音效滑条 y=rowY+rowH+26, 音乐滑条 y=rowY+rowH*3+12+26)
   const sliderX = cx - cw / 2 + 22, sliderW = cw - 44
   const sfxSliderY = rowY + rowH + 26
