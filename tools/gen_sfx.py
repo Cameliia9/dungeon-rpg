@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """合成微信小游戏音效 + 8-bit BGM(WAV 16-bit 22050Hz 单声道)
-音效: click/hit/crit/dodge/hurt/levelup/enhance/coin/victory/defeat/boss/bossatk
+音效: click/hit/crit/dodge/hurt/levelup/enhance/coin/victory/defeat/boss
 BGM: 8-bit 风格循环旋律
 """
 import wave, math, struct, os, random
@@ -99,31 +99,7 @@ for i in range(n):
     boss.append(math.sin(2 * math.pi * f * t) * env * 0.8)
 write_wav('boss', boss)
 
-# bossatk: Boss 攻击玩家重锤(迭代史: v1 85→50纯低频手机放不出 → v2 三角波太软 → v3.1 方波单音不够重
-#   → v4 正弦叠加RMS低更轻 → v5.1 方波160满幅"尖锐" → v6 纯正弦150"太闷"(手机放不出<200Hz)
-#   → v7 三角波叠层RMS又低 → v8 方波+低通"又尖锐"(移动平均衰减慢,320/480/800谐波残留)
-#   → v11 定稿: 主频上移到手机响区! 手机扬声器低音区=200-500Hz, <200Hz物理放不出
-#   正弦240→180Hz下滑(响区=重) + 480Hz正弦谐波层0.35(厚度不闷,正弦无高频不尖) + 40ms噪声0.35音头)
-# v11 = 正弦240→180 0.30s慢衰减 + 480Hz正弦0.35 + 40ms噪声0.35, 归一化0.95 (RMS-11.4/中频-13.8/高频-28)
-def _bossatk_body():
-    _n_body = int(SR * 0.30)
-    _b = [0.0] * _n_body
-    for _i in range(_n_body):
-        _t = _i / SR
-        _env = math.exp(-5 * _t)
-        _f1 = 240 + (180 - 240) * (_i / _n_body)
-        _b[_i] = math.sin(2 * math.pi * _f1 * _t) * _env
-        _b[_i] += math.sin(2 * math.pi * 480 * _t) * _env * 0.35
-    _noise_n = int(SR * 0.04)
-    for _i in range(_noise_n):
-        _t = _i / SR
-        _b[_i] += random.uniform(-1, 1) * math.exp(-60 * _t) * 0.35
-    return _b
-def _norm(samples, peak=0.95):
-    _mx = max(1e-9, max(abs(s) for s in samples))
-    _k = peak / _mx
-    return [s * _k for s in samples]
-write_wav('bossatk', _norm(_bossatk_body()))
+# bossatk 已废弃(2026-08-15): Boss普攻音效用户放弃专属设计,恢复与小怪hurt相同——勿再加回
 
 # ---------- BGM: 8-bit 风格循环(约 13 秒) ----------
 # 简单小调旋律: A4 C5 E5 G5 琶音 + 低音 A3
