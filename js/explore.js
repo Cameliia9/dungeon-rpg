@@ -501,6 +501,8 @@ function openGate() {
       generateEvents()
     }
     gate = null
+    // ⚠️ 刷新入场时间: 推开大门后信息卡/事件卡逐渐浮现(事件卡滑入动画基于 enterTime)
+    enterTime = Date.now()
   }, 1210)
 }
 
@@ -557,23 +559,33 @@ function buildStatic(p) {
     c.moveTo(0, 90)
     c.lineTo(S.LW, 90)
     c.stroke()
-    // 楼层信息卡
-    const theme = Data.getThemeForFloor(p.floor)
-    const infoY = 118, infoH = 96
-    roundRect(c, 16, infoY, S.LW - 32, infoH, 20, ui.cardFill(c, 16, infoY, S.LW - 32, infoH), 'rgba(255,255,255,0.06)', 1)
-    const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
-    const seg2 = theme.icon + ' ' + theme.name
-    const w1 = ui.textWidth(c, seg1, 18)
-    const w2 = ui.textWidth(c, seg2, 14)
-    const lineW = w1 + 16 + w2
-    const lx = (S.LW - lineW) / 2
-    text(c, seg1, lx + w1 / 2, infoY + 28, 18, '#e0c080', 'center', true)
-    text(c, seg2, lx + w1 + 16 + w2 / 2, infoY + 28, 14, '#ffffff', 'center', true)
-    text(c, theme.desc || '', S.LW / 2, infoY + 56, 13, '#8a8a9a', 'center')
-    text(c, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 78, 11, '#8a8a9a', 'center')
+    // ⚠️ 楼层信息卡不在 staticCanvas 里画了(2026-08-15): 拆到 draw() 动态绘制,
+    // 推开大门后信息卡/事件卡需要逐渐浮现动画(用户"推开以后信息卡和事件卡也应该逐渐出来")
   } catch (e) {
     staticCanvas = null
   }
+}
+
+// 楼层信息卡(动态绘制: 推开大门后淡入浮现; 数据随 floor/roomsExplored 变化)
+function drawInfoCard(ctx, p) {
+  // 渐入: 推开大门后 700ms 淡入(enterTime 在 openGate 切层时刷新)
+  const infoP = ui.animProgress(enterTime, 0, 700)
+  const theme = Data.getThemeForFloor(p.floor)
+  const infoY = 118, infoH = 96
+  const prevAlpha = ctx.globalAlpha
+  ctx.globalAlpha = prevAlpha * infoP
+  roundRect(ctx, 16, infoY, S.LW - 32, infoH, 20, ui.cardFill(ctx, 16, infoY, S.LW - 32, infoH), 'rgba(255,255,255,0.06)', 1)
+  const seg1 = '🏰 地牢第 ' + p.floor + ' 层'
+  const seg2 = theme.icon + ' ' + theme.name
+  const w1 = ui.textWidth(ctx, seg1, 18)
+  const w2 = ui.textWidth(ctx, seg2, 14)
+  const lineW = w1 + 16 + w2
+  const lx = (S.LW - lineW) / 2
+  text(ctx, seg1, lx + w1 / 2, infoY + 28, 18, '#e0c080', 'center', true)
+  text(ctx, seg2, lx + w1 + 16 + w2 / 2, infoY + 28, 14, '#ffffff', 'center', true)
+  text(ctx, theme.desc || '', S.LW / 2, infoY + 56, 13, '#8a8a9a', 'center')
+  text(ctx, '已探索 ' + p.roomsExplored + ' / ' + roomsPerFloor + ' 个房间', S.LW / 2, infoY + 78, 11, '#8a8a9a', 'center')
+  ctx.globalAlpha = prevAlpha
 }
 
 function draw() {
@@ -592,6 +604,8 @@ function draw() {
   ctx.fillStyle = '#0f0f1a'
   ctx.fillRect(0, STATIC_H, S.LW, S.LH - STATIC_H)
   if (staticCanvas) ctx.drawImage(staticCanvas, 0, 0, S.LW, STATIC_H)
+  // 楼层信息卡(动态绘制, 推开大门后淡入浮现)
+  drawInfoCard(ctx, p)
 
   // ============ 中间探索区(≈50%: 167~500) ============
   const cardTop = 214 + 15
