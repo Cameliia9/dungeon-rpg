@@ -159,7 +159,10 @@ function buttons() { return [] }
 function touch(x, y) {
   // 大门状态: 推开按钮→进入下一主题; footer区域(退出/折叠/面板)仍放行; 卡片区忽略
   if (gate) {
-    const gw = S.LW * 0.84, gy = 118
+    // ⚠️ 与 drawGate 同公式: 入场动画期间按钮位置随 enterOff 偏移(绘制=touch 一致)
+    const enterP = ui.animProgress(enterTime, 0, 900)
+    const enterOff = (1 - enterP) * 40
+    const gw = S.LW * 0.84, gy = 118 + enterOff
     const gh = S.LH - FOOTER_H_EXPAND - 15 - gy
     const gc = gy + gh / 2
     const bw = gw * 0.6, bh = 44
@@ -605,17 +608,22 @@ function draw() {
 
 // ===== 主题大门(进入地牢/Boss打完的过渡大卡片) =====
 // 布局: 背景铺满 + 顶部标题行(同探索页) + 居中大门大卡片(无信息卡/事件卡)
+// 入场动画: 卡片从下方滑入+淡入(900ms, 与探索页其他动画同速); ⚠️ touch 必须同步 enterOff 偏移
 function drawGate() {
   const ctx = S.ctx
   const p = S.player
   const targetTheme = Data.getThemeForFloor(gate.toFloor)
   const isEntry = gate.toFloor === 1  // 进入地牢大门 vs Boss后大门
 
+  // 入场动画: 下方40px滑入 + 淡入
+  const enterP = ui.animProgress(enterTime, 0, 900)
+  const enterOff = (1 - enterP) * 40
+
   // 推开动画: 卡片原地缓慢淡出(无位移, 用户"原地消失"要求); prevAlpha 乘算叠加
-  let fadeA = 1
+  let fadeA = enterP  // 入场淡入 × 推开淡出 乘算
   if (gateAnim) {
     const t = Math.min(1, (Date.now() - gateAnim.start) / gateAnim.dur)
-    fadeA = 1 - ui.easeOut(t)
+    fadeA = enterP * (1 - ui.easeOut(t))
   }
 
   // 背景: 探索页同款分区
@@ -633,10 +641,10 @@ function drawGate() {
   ctx.lineTo(S.LW, 90)
   ctx.stroke()
 
-  // 大门大卡片: 居中, 上接分割线下方, 下接状态栏顶(动画时原地淡出)
+  // 大门大卡片: 居中, 上接分割线下方, 下接状态栏顶(入场从下方滑入/动画时原地淡出)
   const gx = S.LW * 0.08
   const gw = S.LW * 0.84
-  const gy = 118
+  const gy = 118 + enterOff
   const gh = S.LH - FOOTER_H_EXPAND - 15 - gy  // 667: 118~373 高255
   const gc = gy + gh / 2
   // 卡片背景(金色边框突出大门); 推开动画时整卡淡出
