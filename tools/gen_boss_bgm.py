@@ -1,57 +1,56 @@
 # -*- coding: utf-8 -*-
-"""生成 Boss 战 BGM(换曲): 史诗主题曲(BPM 150, A小调, 8小节 ≈ 12.8s 循环)
-与普通战斗曲区分: 鲜明的Boss主题旋律(级进+跳进, 有记忆点, 非机械警报音)
-声部: 主题旋律(三角波+低八度叠奏=史诗感) + 8分推进低音 + 史诗pad
-     + 4-on-floor大鼓 + 军鼓2/4 + 8分hat + 段尾铜钹
-和弦: Am - F - C - G | Am - F - G - E (经典史诗循环, E大导回Am)
+"""生成 Boss 战 BGM(v3): 沉重压迫史诗(BPM 116, D小调, 8小节 ≈ 16.6s 循环)
+v2(A小调150)被用户否'感觉有点欢快'——快节奏+大调色彩和弦+上行琶音+密集hat
+v3 改进: 慢速(116) + D小调暗色进行(Dm-Bb-Gm-A) + 低音区级进下行叹息旋律
+     + 去hat(无高频活泼节拍) + 每拍根音重击 + 铜钹史诗点缀
 """
 import wave, math, struct, os, random
 
 SR = 22050
 OUT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'sfx'))
 os.makedirs(OUT, exist_ok=True)
-random.seed(53)
+random.seed(59)
 
 def f(m): return 440.0 * 2 ** ((m - 69) / 12)
 
-BPM = 150
-BEAT = 60.0 / BPM          # 0.4s
-BAR = BEAT * 4             # 1.6s
+BPM = 116
+BEAT = 60.0 / BPM          # 0.517s
+BAR = BEAT * 4             # 2.07s
 N_BARS = 8
 TOTAL = BAR * N_BARS
 
-# 史诗pad(三和弦 + 高八度, 音域宽)
+# 暗色史诗pad(低八度根音 + 三和弦)
 CHORDS = [
-    (45, 48, 52, 57),  # Am: A2 C3 E3 A3
-    (41, 45, 48, 53),  # F:  F2 A2 C3 F3
-    (48, 52, 55, 60),  # C:  C3 E3 G3 C4
-    (43, 47, 50, 55),  # G:  G2 B2 D3 G3
-    (45, 48, 52, 57),
-    (41, 45, 48, 53),
-    (43, 47, 50, 55),
-    (40, 44, 47, 52),  # E:  E2 G#2 B2 E3 (E大导回)
+    (38, 41, 45, 50),  # Dm: D2 F2 A2 D3
+    (34, 46, 50, 53),  # Bb: Bb1 Bb2 D3 F3
+    (31, 43, 46, 50),  # Gm: G1 G2 Bb2 D3
+    (33, 45, 49, 52),  # A:  A1 A2 C#3 E3 (A大, 导音压迫)
+    (38, 41, 45, 50),
+    (34, 46, 50, 53),
+    (31, 43, 46, 50),
+    (33, 45, 49, 52),
 ]
-# 低音(8分音符根音-五度推进, 有能量)
+# 低音(每拍根音重击, 第4拍五度)
 BASS = [
-    [45, 52, 45, 52, 45, 52, 45, 52],  # Am: A2 E3
-    [41, 48, 41, 48, 41, 48, 41, 48],  # F
-    [48, 55, 48, 55, 48, 55, 48, 55],  # C
-    [43, 50, 43, 50, 43, 50, 43, 50],  # G
-    [45, 52, 45, 52, 45, 52, 45, 52],
-    [41, 48, 41, 48, 41, 48, 41, 48],
-    [43, 50, 43, 50, 43, 50, 43, 50],
-    [40, 47, 40, 47, 40, 47, 40, 47],  # E
+    [38, 38, 38, 45],  # Dm
+    [34, 34, 34, 41],  # Bb
+    [31, 31, 31, 38],  # Gm
+    [33, 33, 33, 40],  # A
+    [38, 38, 38, 45],
+    [34, 34, 34, 41],
+    [31, 31, 31, 38],
+    [33, 33, 33, 40],
 ]
-# Boss 主题旋律(8分音符, 级进+跳进, 有记忆点; None=休止)
+# 旋律(低音区级进下行 = 沉重叹息, 不欢快)
 MELODY = [
-    [69, 72, 76, 72, 69, 67, 64, None],  # A4 C5 E5 C5 A4 G4 E4 -
-    [65, 69, 72, 69, 65, 64, 65, None],  # F4 A4 C5 A4 F4 E4 F4 -
-    [72, 76, 79, 76, 72, 71, 67, None],  # C5 E5 G5 E5 C5 B4 G4 -
-    [67, 71, 74, 71, 67, 66, 67, None],  # G4 B4 D5 B4 G4 F#4 G4 -
-    [69, 72, 76, 72, 69, 67, 64, None],
-    [65, 69, 72, 69, 65, 64, 65, None],
-    [67, 71, 74, 71, 67, 66, 67, None],
-    [68, 71, 76, 71, 68, 67, 68, None],  # G#4 B4 E5 ... (E大, 导音张力)
+    [62, 60, 58, 57],  # D4 C4 Bb3 A3
+    [57, 53, 50, 46],  # A3 F3 D3 Bb2
+    [55, 51, 50, 48],  # F3 Eb3 D3 C3
+    [49, 48, 45, 43],  # C#3 C3 A2 G2 (半音张力)
+    [62, 60, 58, 57],
+    [57, 53, 50, 46],
+    [55, 51, 50, 48],
+    [49, 48, 45, 50],  # C#3 C3 A2 D3 (回主音)
 ]
 
 def osc(wave_type, freq, t):
@@ -64,53 +63,47 @@ def osc(wave_type, freq, t):
 def render():
     n = int(TOTAL * SR)
     mix = [0.0] * n
-    # 低音(三角波8分音符, 推进感)
+    # 低音(三角波, 每拍根音重击)
     for bar in range(N_BARS):
         t0 = bar * BAR
         for i, midi in enumerate(BASS[bar]):
-            start = t0 + i * BEAT * 0.5
-            s0, s1 = int(start * SR), min(n, int((start + BEAT * 0.42) * SR))
+            start = t0 + i * BEAT
+            s0, s1 = int(start * SR), min(n, int((start + BEAT * 0.85) * SR))
             for j in range(s0, s1):
                 t = j / SR - start
-                env = math.exp(-7 * t) * min(1, t / 0.004)
-                mix[j] += osc('triangle', f(midi), t) * env * 0.17
-    # 史诗pad(正弦, 整小节)
+                env = math.exp(-2.5 * t) * min(1, t / 0.006)
+                mix[j] += osc('triangle', f(midi), t) * env * 0.18
+    # 暗色pad(正弦, 整小节)
     for bar in range(N_BARS):
         t0 = bar * BAR
         s0, s1 = int(t0 * SR), int((t0 + BAR) * SR)
         for m in CHORDS[bar]:
             for j in range(s0, s1):
                 t = j / SR - t0
-                env = min(1, t / 0.15) * min(1, (BAR - t) / 0.35)
+                env = min(1, t / 0.25) * min(1, (BAR - t) / 0.5)
                 mix[j] += osc('sine', f(m), t) * env * 0.07
-    # 主题旋律(三角波主音 + 低八度叠奏 = 史诗感)
+    # 旋律(三角波, 低音区下行, 长音短音交替)
     for bar in range(N_BARS):
         t0 = bar * BAR
         for i, midi in enumerate(MELODY[bar]):
-            if midi is None: continue
-            start = t0 + i * BEAT * 0.5
-            s0, s1 = int(start * SR), min(n, int((start + BEAT * 0.42) * SR))
+            start = t0 + i * BEAT
+            dur = BEAT * (0.5 if i % 2 == 0 else 0.9)  # 奇拍长音(叹息)
+            s0, s1 = int(start * SR), min(n, int((start + dur) * SR))
             for j in range(s0, s1):
                 t = j / SR - start
-                env = math.exp(-6 * t) * min(1, t / 0.008)
-                mix[j] += osc('triangle', f(midi), t) * env * 0.11     # 主音
-                mix[j] += osc('triangle', f(midi - 12), t) * env * 0.05  # 低八度叠奏
-    # 鼓: 4-on-floor大鼓 + 军鼓2/4 + 8分hat + 段尾铜钹
-    def kick(t0):
-        s0, s1 = int(t0 * SR), min(n, int((t0 + 0.13) * SR))
+                env = math.exp(-3.2 * t) * min(1, t / 0.01)
+                mix[j] += osc('triangle', f(midi), t) * env * 0.11
+    # 鼓: 4-on-floor大鼓(1强) + 军鼓2/4 + 铜钹(段尾) — 无hat(去欢快感)
+    def kick(t0, vol):
+        s0, s1 = int(t0 * SR), min(n, int((t0 + 0.14) * SR))
         for j in range(s0, s1):
             t = j / SR - t0
-            mix[j] += math.sin(2 * math.pi * (95 - 55 * t) * t) * math.exp(-25 * t) * 0.30
+            mix[j] += math.sin(2 * math.pi * (85 - 50 * t) * t) * math.exp(-22 * t) * vol
     def snare(t0):
-        s0, s1 = int(t0 * SR), min(n, int((t0 + 0.10) * SR))
+        s0, s1 = int(t0 * SR), min(n, int((t0 + 0.11) * SR))
         for j in range(s0, s1):
             t = j / SR - t0
-            mix[j] += random.uniform(-1, 1) * math.exp(-42 * t) * 0.17
-    def hat(t0):
-        s0, s1 = int(t0 * SR), min(n, int((t0 + 0.035) * SR))
-        for j in range(s0, s1):
-            t = j / SR - t0
-            mix[j] += random.uniform(-1, 1) * math.exp(-95 * t) * 0.05
+            mix[j] += random.uniform(-1, 1) * math.exp(-40 * t) * 0.17
     def crash(t0):
         s0, s1 = int(t0 * SR), min(n, int((t0 + 0.55) * SR))
         for j in range(s0, s1):
@@ -118,10 +111,9 @@ def render():
             mix[j] += random.uniform(-1, 1) * math.exp(-9 * t) * 0.09
     for bar in range(N_BARS):
         t0 = bar * BAR
-        for i in range(4): kick(t0 + i * BEAT)
+        kick(t0, 0.30); kick(t0 + BEAT, 0.14); kick(t0 + 2 * BEAT, 0.20); kick(t0 + 3 * BEAT, 0.14)
         snare(t0 + BEAT); snare(t0 + 3 * BEAT)
-        for i in range(8): hat(t0 + i * BEAT * 0.5)
-        if bar % 4 == 3: crash(t0 + 3 * BEAT + 0.12)  # 4/8小节末铜钹
+        if bar % 4 == 3: crash(t0 + 3 * BEAT + 0.12)
     peak = max(1e-9, max(abs(v) for v in mix))
     gain = min(1.0, 0.9 / peak)
     return [v * gain for v in mix]
@@ -133,4 +125,4 @@ with wave.open(path, 'w') as w:
     w.setsampwidth(2)
     w.setframerate(SR)
     w.writeframes(b''.join(struct.pack('<h', max(-32767, min(32767, int(v * 32767)))) for v in samples))
-print(f'boss_bgm.wav  时长{TOTAL:.1f}s  {os.path.getsize(path)//1024}KB  BPM={BPM}  A小调史诗主题曲')
+print(f'boss_bgm.wav  时长{TOTAL:.1f}s  {os.path.getsize(path)//1024}KB  BPM={BPM}  D小调沉重压迫')
