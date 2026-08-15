@@ -538,6 +538,13 @@ function draw() {
 function leftX() { return S.LW * 0.05 }
 function rightX() { return S.LW * 0.52 }
 
+// ⚠️ 大号 emoji 图标统一手动居中: textAlign 'center' 对 emoji 的宽度测量与实际渲染
+// 不一致(真机偏左/偏右, 用户报"图案不在卡片居中"), 用 textWidth 半宽偏移 + left 对齐
+function centerEmoji(ctx, str, cx, y, size, color) {
+  const sw = ui.textWidth(ctx, str, size)
+  text(ctx, str, cx - sw / 2, y, size, color || COLORS.text, 'left')
+}
+
 function drawCard(x, y, w, h, side, slideIn) {
   const ctx = S.ctx
   const p = S.player
@@ -620,29 +627,35 @@ function drawCard(x, y, w, h, side, slideIn) {
   if (state === 'door') {
     if (evt && evt.type === 'stairs') {
       // 楼梯卡: 🪜 + 发现楼梯！(金色粗体) + 金色按钮
-      text(ctx, '🪜', cx, cy - 55, 44)
+      centerEmoji(ctx, '🪜', cx, cy - 55, 44)
       text(ctx, '发现楼梯！', cx, cy - 6, 16, '#f0c040', 'center', true)
       drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 38, w * 0.68, 38, '⬇️ 下到 ' + (p.floor + 1) + ' 层', () => descend(), { ...ui.BTN.gold, r: 19 }))
     } else if (evt && evt.type === 'boss') {
       // Boss卡: 👑 + ⚠️ Boss拦路！(红粗) + 描述 + 红色按钮
-      text(ctx, '👑', cx, cy - 55, 44)
-      text(ctx, '⚠️ Boss 拦路！', cx, cy - 8, 16, '#ff5555', 'center', true)
+      centerEmoji(ctx, '👑', cx, cy - 55, 44)
+      let bossTitle = '⚠️ Boss 拦路！'
+      while (bossTitle.length > 1 && ui.textWidth(ctx, bossTitle, 16) > cw - 24) bossTitle = bossTitle.slice(0, -1)  // 防溢出
+      text(ctx, bossTitle, cx, cy - 8, 16, '#ff5555', 'center', true)
       text(ctx, '击败它才能继续前进', cx, cy + 16, 11, COLORS.textDim)
       drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 38, w * 0.68, 38, '⚔️ 挑战 Boss', () => startBattle(side, true), { ...ui.BTN.danger, r: 19 }))
     } else {
       // 普通门: 浅棕色木门图标(大) + 红色大圆角前进按钮
-      text(ctx, '🚪', cx, cy - 48, 52)
+      centerEmoji(ctx, '🚪', cx, cy - 48, 52)
       drawBtn(ctx, makeBtn(cx - w * 0.42, cy + 32, w * 0.84, 44, '前进探索', () => pickSide(side), { ...ui.BTN.primary, size: 15 }))
     }
   } else if (state === 'deadend') {
     // 死路: 🚧 + 死路 + 描述 + 灰色返回按钮
-    text(ctx, '🚧', cx, cy - 56, 36)
+    // ⚠️ 图标手动居中(textAlign center 对 emoji 测量不准会偏) + 上移防顶超卡边
+    centerEmoji(ctx, '🚧', cx, cy - 54, 36)
     text(ctx, '死路', cx, cy - 8, 16, COLORS.gold, 'center', true)
-    text(ctx, '前方没有路了，只能从另一边前进', cx, cy + 16, 11, COLORS.textDim)
-    drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 42, w * 0.68, 34, '💨 返回', () => blockSide(side), ui.BTN.secondary))
+    // ⚠️ 描述必须截断: 原"前方没有路了..."≈209px > 卡宽~161px, 文字溢出卡片(用户报)
+    let deadDesc = '前方没有路了，只能从另一边前进'
+    while (deadDesc.length > 1 && ui.textWidth(ctx, deadDesc, 11) > cw - 24) deadDesc = deadDesc.slice(0, -1)
+    text(ctx, deadDesc, cx, cy + 16, 11, COLORS.textDim)
+    drawBtn(ctx, makeBtn(cx - w * 0.34, cy + 38, w * 0.68, 34, '💨 返回', () => blockSide(side), ui.BTN.secondary))
   } else if (state === 'blocked') {
     // 封锁: 🔒 + 此路不通
-    text(ctx, '🔒', cx, cy - 30, 36)
+    centerEmoji(ctx, '🔒', cx, cy - 30, 36)
     text(ctx, '此路不通', cx, cy + 20, 13, '#555565')
   } else if (state === 'result') {
     drawResultCard(cx, cy, evt, w)
@@ -679,8 +692,9 @@ function drawResultCard(cx, cy, evt, w) {
     case 'camp': icon = '🏕️'; title = '休息营地'; desc = '安全休息，生命回满'; descColor = '#2ecc71'; break
   }
   // 对齐原版: 图标36px + 标题16px金色粗体 + 描述12px彩色 + 好的按钮(红色80%)
-  text(ctx, icon, cx, cy - 58, 36)
+  centerEmoji(ctx, icon, cx, cy - 58, 36)
   text(ctx, title, cx, cy - 16, 16, COLORS.gold, 'center', true)
+  while (desc.length > 1 && ui.textWidth(ctx, desc, 12) > w - 24) desc = desc.slice(0, -1)  // 防溢出
   text(ctx, desc, cx, cy + 10, 12, descColor)
   const side = activeSide || 'left'
   drawBtn(ctx, makeBtn(cx - w * 0.4, cy + 34, w * 0.8, 34, '好的', () => finishSide(side), ui.BTN.primary))
@@ -689,12 +703,15 @@ function drawResultCard(cx, cy, evt, w) {
 function drawMonsterCard(cx, cy, m, w) {
   const ctx = S.ctx
   // 居中布局(大一点但不满): 图标44/名字20/属性14, 按钮0.8w
-  text(ctx, m.icon, cx, cy - 76, 44)
+  // ⚠️ 图标手动居中: textAlign center 对 emoji 测量不准, 真机图案会偏(用户报"图案不在卡片居中")
+  centerEmoji(ctx, m.icon, cx, cy - 76, 44)
   // 名字 + Lv(橙色小字)
   text(ctx, m.name, cx, cy - 32, 20, COLORS.gold, 'center', true)
   text(ctx, 'Lv.' + m.level, cx + ui.textWidth(ctx, m.name, 20) / 2 + 18, cy - 32, 14, '#ffaa00')
-  // 属性(暴击/闪避在战斗界面显示)
-  text(ctx, '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense, cx, cy - 4, 14, COLORS.textDim)
+  // 属性(暴击/闪避在战斗界面显示); ⚠️ 截断防溢出(后期怪血5位数+emoji可超卡宽)
+  let monAttr = '❤️' + m.hp + '  ⚔️' + m.attack + '  🛡️' + m.defense
+  while (monAttr.length > 1 && ui.textWidth(ctx, monAttr, 14) > w - 24) monAttr = monAttr.slice(0, -1)
+  text(ctx, monAttr, cx, cy - 4, 14, COLORS.textDim)
   // 战斗/逃跑按钮（上下排, 间距4px, 宽0.8w）
   const bw = w * 0.8
   const side = activeSide || 'left'
@@ -767,7 +784,7 @@ function drawAltarCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
   const p = S.player
   // 对齐原版祭坛卡
-  text(ctx, '🔮', cx, cy - 58, 36)
+  centerEmoji(ctx, '🔮', cx, cy - 58, 36)
   text(ctx, '遗物祭坛', cx, cy - 34, 16, COLORS.gold, 'center', true)
   text(ctx, '献祭' + evt.cost + '血（' + evt.altarCount + '/' + evt.maxCount + '次）', cx, cy - 12, 11, COLORS.textDim)
   const bw = w * 0.8
