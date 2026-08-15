@@ -99,18 +99,13 @@ for i in range(n):
     boss.append(math.sin(2 * math.pi * f * t) * env * 0.8)
 write_wav('boss', boss)
 
-# bossatk: Boss 攻击玩家(低频重锤下砸, 比 hurt 更沉更有压迫感; 迭代史: 曾用 110Hz 颤音与 boss 撞车→改下滑重击)
-def heavy(f0, f1, dur, vol, vib):
-    n = int(SR * dur)
-    out = []
-    for i in range(n):
-        t = i / SR
-        f = f0 + (f1 - f0) * (i / n)
-        wob = 1 + vib * math.sin(2 * math.pi * 18 * t)  # 低频威胁抖动
-        env = math.exp(-7 * t)
-        out.append(math.sin(2 * math.pi * f * wob * t) * env * vol)
-    return out
-write_wav('bossatk', seq(heavy(85, 50, 0.22, 0.9, 0.04), heavy(50, 62, 0.18, 0.55, 0.06)))
+# bossatk: Boss 攻击玩家重锤(手机可听频段; 迭代史: v1 85→50Hz 纯低频手机扬声器放不出→用户"根本没听到"→v2 上移)
+# v2 = 260Hz方波瞬态起音(砸击感) + 200→130Hz三角波下滑(重锤主体) + 120Hz余韵
+write_wav('bossatk', seq(
+    tone(260, 0.05, 0.75, 'square', 35),
+    tone(200, 0.20, 0.9, 'triangle', 9, 130),
+    tone(120, 0.16, 0.45, 'triangle', 8)
+))
 
 # ---------- BGM: 8-bit 风格循环(约 13 秒) ----------
 # 简单小调旋律: A4 C5 E5 G5 琶音 + 低音 A3
