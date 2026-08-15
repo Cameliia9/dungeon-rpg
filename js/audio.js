@@ -1,15 +1,22 @@
 /**
- * 音频管理: SFX 短音效 + 三套 BGM(主页/探索/战斗) + 音量控制 + 静音开关
+ * 音频管理: SFX 短音效 + BGM(单实例换src, 物理上不可能重叠) + 音量控制 + 静音开关
  * 微信小游戏 InnerAudioContext; 设置持久化到 storage
+ *
+ * ⚠️ 单实例设计(2026-08-15): 真机测试Boss战出现"所有音乐混在一起"——
+ * 多实例方案切歌时旧实例 stop() 在真机异步不立即生效, 多个 loop 同时响。
+ * 改为唯一 bgmCtx 换 src 播放, 同一实例不可能两首同响。
  *
  * 用法:
  *   audio.init()              — 启动时调用(读取设置)
  *   audio.play('hit')         — 播放音效(受音效音量/开关控制)
  *   audio.startBgm()          — 主页BGM(主菜单/难度选择, bgm.mp3)
- *   audio.startExploreBgm()   — 探索BGM(游戏主页/探索过程, explore_bgm.mp3 地牢探险风)
- *   audio.startBattleBgm()    — 进入战斗: 保存当前非战斗BGM进度+类型, 播战斗BGM(每场从头)
- *   audio.resumeBgm(delay)    — 战斗结束: 立即停战斗BGM, 停顿delay毫秒后恢复战斗前的BGM(进度接续)
- *   audio.stopAll()           — 停止全部BGM
+ *   audio.startExploreBgm()   — 探索BGM(游戏主页/探索过程, explore_bgm.mp3)
+ *   audio.startStoryBgm()     — 故事BGM(故事背景页, story_bgm.mp3)
+ *   audio.startBattleBgm()    — 进战斗: 保存当前BGM进度, 切战斗曲(每场从头)
+ *   audio.startBossBgm()      — Boss战: 切Boss曲(替换普通战斗曲)
+ *   audio.resumeBgm(delay)    — 战斗结束: 立即停战斗曲, delay毫秒后恢复战斗前的BGM(进度接续)
+ *   audio.playDefeatBgm()     — 死亡落幕曲(单次不循环)
+ *   audio.stopAll()           — 停止BGM(单实例)
  *   audio.getSettings() / audio.setSettings({}) — 音量/开关, 立即生效并持久化
  */
 const SETTINGS_KEY = 'audio_settings'
@@ -17,26 +24,23 @@ const SETTINGS_KEY = 'audio_settings'
 // 音效文件映射(文件名不含扩展名)
 const SFX_FILES = ['click', 'hit', 'crit', 'dodge', 'hurt', 'bounce', 'levelup', 'enhance', 'coin', 'victory', 'defeat', 'boss']
 
+// BGM 曲目表: key -> src(单实例换 src 用)
+const BGM_SRC = {
+  main: 'assets/sfx/bgm.mp3',
+  story: 'assets/sfx/story_bgm.mp3',
+  explore: 'assets/sfx/explore_bgm.mp3',
+  battle: 'assets/sfx/battle_bgm.mp3',
+  boss: 'assets/sfx/boss_bgm.mp3',
+  defeat: 'assets/sfx/defeat_bgm.mp3'
+}
+
 let settings = { sfxOn: true, bgmOn: true, sfxVol: 0.8, bgmVol: 0.5 }
-let mainBgmCtx = null       // 主页BGM bgm.mp3(主菜单/难度)
-let storyBgmCtx = null      // 故事BGM story_bgm.mp3(故事背景页, 传说叙事风)
-let exploreBgmCtx = null    // 探索BGM explore_bgm.mp3(游戏主页/探索过程)
-let battleBgmCtx = null     // 战斗BGM battle_bgm.mp3(独立实例)
-let bossBgmCtx = null       // Boss战BGM boss_bgm.mp3(压迫史诗, 独立实例)
-let defeatBgmCtx = null     // 失败BGM defeat_bgm.mp3(死亡落幕曲, 一次性不循环)
+let bgmCtx = null           // 唯一 BGM InnerAudioContext(换 src 复用)
+let currentBgm = ''         // 当前在播曲目 key('' = 无)
 let bgmResumePos = 0        // 进战斗前保存的进度(战斗结束恢复用)
-let bgmResumeKind = 'main'  // 进战斗前在播的BGM: 'main' | 'explore'
+let bgmResumeKind = ''      // 进战斗前在播的曲目 key(''|'main'|'explore')
 let bgmResumeTimer = null   // 战斗结束延迟恢复定时器
 let sfxPool = {}            // name -> InnerAudioContext 实例(复用, 播放前 stop 重置)
-
-function makeBgmCtx(src) {
-  const ctx = wx.createInnerAudioContext()
-  ctx.src = src
-  ctx.loop = true
-  ctx.onEnded(() => {})  // 占位, 防 iOS 无 onEnded 处理警告
-  ctx.onTimeUpdate(() => {})  // 触发 currentTime 持续更新(进度保存需要)
-  return ctx
-}
 
 function loadSettings() {
   try {
@@ -79,110 +83,67 @@ function play(name, vol) {
   } catch (e) {}
 }
 
+/**
+ * 核心: 唯一 BGM 实例播放指定曲目(换 src 自动停旧曲, 物理上不可能重叠)
+ * opts.resumePos — 播放前 seek 到该位置(战斗结束接续用)
+ */
+function playBgm(key, opts) {
+  opts = opts || {}
+  if (!BGM_SRC[key]) return
+  try {
+    if (!bgmCtx) {
+      bgmCtx = wx.createInnerAudioContext()
+      bgmCtx.onEnded(() => {})
+      bgmCtx.onTimeUpdate(() => {})  // 触发 currentTime 持续更新(进度保存需要)
+    }
+    if (currentBgm !== key) {
+      currentBgm = key
+      bgmCtx.src = BGM_SRC[key]  // 换 src: 同一实例停止旧曲, 不可能两首同响
+    }
+    bgmCtx.loop = key !== 'defeat'  // 死亡曲单次
+    bgmCtx.volume = settings.bgmVol
+    if (opts.resumePos != null && opts.resumePos > 0.5) {
+      try { bgmCtx.seek(opts.resumePos) } catch (e) {}
+    }
+    try { bgmCtx.play() } catch (e) {}
+  } catch (e) {}
+}
+
 /** 主页BGM(主菜单/难度选择) */
 function startBgm() {
-  try {
-    if (!mainBgmCtx) mainBgmCtx = makeBgmCtx('assets/sfx/bgm.mp3')
-    try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
-    try { if (storyBgmCtx) storyBgmCtx.pause() } catch (e) {}
-    try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}  // 同场景只播一首
-    mainBgmCtx.volume = settings.bgmVol
-    if (settings.bgmOn) {
-      // 主页不接续战斗进度(战斗只在探索发生, 恢复走 startExploreBgm)
-      if (bgmResumeKind === 'main') bgmResumePos = 0
-      try { mainBgmCtx.play() } catch (e) {}
-    } else {
-      try { mainBgmCtx.stop() } catch (e) {}
-    }
-  } catch (e) {}
+  playBgm('main')
 }
 
-/** 探索BGM(游戏主页/探索过程, 地牢探险风); 战斗结束后从保存进度接续 */
+/** 探索BGM(游戏主页/探索过程); 战斗结束后从保存进度接续 */
 function startExploreBgm() {
-  try {
-    if (!exploreBgmCtx) exploreBgmCtx = makeBgmCtx('assets/sfx/explore_bgm.mp3')
-    try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
-    try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}  // 同场景只播一首
-    try { if (storyBgmCtx) storyBgmCtx.pause() } catch (e) {}  // 故事页BGM也要停
-    exploreBgmCtx.volume = settings.bgmVol
-    if (settings.bgmOn) {
-      // 战斗结束后从保存进度继续(不从头重播); 已消费的进度不再 seek
-      if (bgmResumeKind === 'explore' && bgmResumePos > 0.5) {
-        try { exploreBgmCtx.seek(bgmResumePos) } catch (e) {}
-      }
-      if (bgmResumeKind === 'explore') bgmResumePos = 0  // 消费进度(无论是否seek)
-      try { exploreBgmCtx.play() } catch (e) {}
-    } else {
-      try { exploreBgmCtx.stop() } catch (e) {}
-    }
-  } catch (e) {}
+  const pos = (bgmResumeKind === 'explore' && bgmResumePos > 0) ? bgmResumePos : null
+  if (bgmResumeKind === 'explore') bgmResumePos = 0  // 消费进度(无论是否seek)
+  playBgm('explore', pos != null ? { resumePos: pos } : {})
 }
 
-/** 故事BGM(故事背景页, 传说叙事风; 一次性场景从头播) */
+/** 故事BGM(故事背景页, 一次性场景从头播) */
 function startStoryBgm() {
-  try {
-    if (!storyBgmCtx) storyBgmCtx = makeBgmCtx('assets/sfx/story_bgm.mp3')
-    try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
-    try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}
-    try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}
-    storyBgmCtx.volume = settings.bgmVol
-    if (settings.bgmOn) {
-      try { storyBgmCtx.seek(0) } catch (e) {}  // 故事页每次从头
-      try { storyBgmCtx.play() } catch (e) {}
-    } else {
-      try { storyBgmCtx.stop() } catch (e) {}
-    }
-  } catch (e) {}
+  playBgm('story')
 }
 
-/** 进入Boss战: 停普通战斗BGM, 切Boss专属BGM(压迫史诗, 从头播) */
-function startBossBgm() {
-  try {
-    try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}  // 普通战斗曲停
-    if (!bossBgmCtx) bossBgmCtx = makeBgmCtx('assets/sfx/boss_bgm.mp3')
-    bossBgmCtx.volume = settings.bgmVol
-    if (settings.bgmOn) {
-      try { bossBgmCtx.seek(0) } catch (e) {}  // 每场Boss战从头
-      try { bossBgmCtx.play() } catch (e) {}
-    } else {
-      try { bossBgmCtx.stop() } catch (e) {}
-    }
-  } catch (e) {}
-}
-
-/** 进入战斗: 保存当前非战斗BGM(探索优先)进度+类型并暂停, 战斗BGM从头播 */
+/** 进入战斗: 保存当前BGM进度+曲目, 切普通战斗曲(每场从头) */
 function startBattleBgm() {
-  try {
-    clearTimeout(bgmResumeTimer)
-    // 判断刚在播的是探索还是主页BGM(currentTime 持续增长者为活跃)
-    const exActive = exploreBgmCtx && (exploreBgmCtx.currentTime || 0) > 0.3
-    bgmResumeKind = exActive ? 'explore' : 'main'
-    const src = exActive ? exploreBgmCtx : mainBgmCtx
-    if (src) {
-      try { bgmResumePos = src.currentTime || 0 } catch (e) { bgmResumePos = 0 }
-    } else {
-      bgmResumePos = 0
-    }
-    try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}
-    try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}
-    try { if (bossBgmCtx) bossBgmCtx.stop() } catch (e) {}  // 普通战斗曲开始前停Boss曲(防任意顺序重叠)
-    // 战斗BGM(独立实例, 从头播)
-    if (!battleBgmCtx) battleBgmCtx = makeBgmCtx('assets/sfx/battle_bgm.mp3')
-    battleBgmCtx.volume = settings.bgmVol
-    if (settings.bgmOn) {
-      try { battleBgmCtx.seek(0) } catch (e) {}  // 每场战斗从头开始
-      try { battleBgmCtx.play() } catch (e) {}
-    } else {
-      try { battleBgmCtx.stop() } catch (e) {}
-    }
-  } catch (e) {}
+  clearTimeout(bgmResumeTimer)
+  bgmResumeKind = currentBgm === 'main' ? 'main' : 'explore'  // 战斗只从探索/主页进入
+  bgmResumePos = (bgmCtx && bgmCtx.currentTime) ? bgmCtx.currentTime : 0
+  playBgm('battle')
 }
 
-/** 战斗结束: 立即停战斗BGM(普通+Boss); delay>0 时停顿delay毫秒再恢复战斗前的BGM(进度接续) */
+/** Boss战: 切Boss曲(替换普通战斗曲, 从头) */
+function startBossBgm() {
+  playBgm('boss')
+}
+
+/** 战斗结束: 立即停战斗曲(换空), delay毫秒后恢复战斗前的BGM(进度接续) */
 function resumeBgm(delay) {
   clearTimeout(bgmResumeTimer)
-  try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}  // 战斗音乐立即结束
-  try { if (bossBgmCtx) bossBgmCtx.stop() } catch (e) {}
+  try { if (bgmCtx) bgmCtx.stop() } catch (e) {}  // 战斗音乐立即结束
+  currentBgm = ''
   if (delay && delay > 0) {
     bgmResumeTimer = setTimeout(() => { _resumeNow() }, delay)
   } else {
@@ -192,39 +153,24 @@ function resumeBgm(delay) {
 
 function _resumeNow() {
   if (bgmResumeKind === 'explore') startExploreBgm()
-  else startBgm()
+  else if (bgmResumeKind === 'main') startBgm()
+  else startExploreBgm()  // 无记录(如设置页测Boss)回探索曲
 }
 
-/** 失败/死亡BGM(落幕哀歌, 一次性不循环; 死亡瞬间播, 回菜单由 stopAll 截停) */
+/** 死亡落幕曲(单次不循环) */
 function playDefeatBgm() {
-  try {
-    if (!defeatBgmCtx) {
-      defeatBgmCtx = wx.createInnerAudioContext()
-      defeatBgmCtx.src = 'assets/sfx/defeat_bgm.mp3'
-      defeatBgmCtx.loop = false
-      defeatBgmCtx.onEnded(() => {})
-    }
-    defeatBgmCtx.volume = settings.bgmVol
-    if (settings.bgmOn) {
-      try { defeatBgmCtx.seek(0) } catch (e) {}  // 每次死亡从头
-      try { defeatBgmCtx.play() } catch (e) {}
-    }
-  } catch (e) {}
+  playBgm('defeat')
 }
 
-/** 停止全部BGM(主页+故事+探索+战斗+Boss+失败) */
+/** 停止BGM(单实例) */
 function stopAll() {
-  try { if (mainBgmCtx) mainBgmCtx.stop() } catch (e) {}
-  try { if (storyBgmCtx) storyBgmCtx.stop() } catch (e) {}
-  try { if (exploreBgmCtx) exploreBgmCtx.stop() } catch (e) {}
-  try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
-  try { if (bossBgmCtx) bossBgmCtx.stop() } catch (e) {}
-  try { if (defeatBgmCtx) defeatBgmCtx.stop() } catch (e) {}
+  try { if (bgmCtx) bgmCtx.stop() } catch (e) {}
+  currentBgm = ''
 }
 
 /** 停止主页BGM(兼容旧调用) */
 function stopBgm() {
-  try { if (mainBgmCtx) mainBgmCtx.stop() } catch (e) {}
+  stopAll()
 }
 
 /** 应用设置变化(音量/开关), 持久化 */
@@ -235,33 +181,10 @@ function setSettings(patch) {
   if (patch.bgmVol !== undefined) settings.bgmVol = Math.max(0, Math.min(1, patch.bgmVol))
   saveSettings()
   // 立即生效: BGM 按开关/音量调整; 音效下次播放生效
-  if (mainBgmCtx) {
-    try { mainBgmCtx.volume = settings.bgmVol } catch (e) {}
-    if (settings.bgmOn) { try { mainBgmCtx.play() } catch (e) {} }
-    else { try { mainBgmCtx.stop() } catch (e) {} }
-  }
-  if (exploreBgmCtx) {
-    try { exploreBgmCtx.volume = settings.bgmVol } catch (e) {}
-    if (settings.bgmOn) { try { exploreBgmCtx.play() } catch (e) {} }
-    else { try { exploreBgmCtx.stop() } catch (e) {} }
-  }
-  if (battleBgmCtx) {
-    try { battleBgmCtx.volume = settings.bgmVol } catch (e) {}
-    if (settings.bgmOn) { try { battleBgmCtx.play() } catch (e) {} }
-    else { try { battleBgmCtx.stop() } catch (e) {} }
-  }
-  if (bossBgmCtx) {
-    try { bossBgmCtx.volume = settings.bgmVol } catch (e) {}
-    if (settings.bgmOn) { try { bossBgmCtx.play() } catch (e) {} }
-    else { try { bossBgmCtx.stop() } catch (e) {} }
-  }
-  if (storyBgmCtx) {
-    try { storyBgmCtx.volume = settings.bgmVol } catch (e) {}
-    if (settings.bgmOn) { try { storyBgmCtx.play() } catch (e) {} }
-    else { try { storyBgmCtx.stop() } catch (e) {} }
-  }
-  if (defeatBgmCtx) {
-    try { defeatBgmCtx.volume = settings.bgmVol } catch (e) {}
+  if (bgmCtx) {
+    try { bgmCtx.volume = settings.bgmVol } catch (e) {}
+    if (settings.bgmOn) { try { bgmCtx.play() } catch (e) {} }
+    else { try { bgmCtx.stop() } catch (e) {} }
   }
 }
 
