@@ -41,6 +41,7 @@ loadLogo()
 // Logo弹跳动画(弹性方块): 进入主菜单从上方掉下, 全屏弹跳衰减, 最后缓动落到中间
 let logoAnim = null
 let logoSettledAt = 0  // logo落位完成时间(之后标题/按钮才逐渐浮现); 必须声明否则严格模式ReferenceError
+let storySkipAt = 0    // 故事页轻触跳过: 0=动画中 | 1=已跳过或自然播完(立即全显, 按钮可点); 必须声明否则严格模式ReferenceError
 let lastBounceAt = 0   // bounce 音效冷却时间戳(最后几下密集小弹跳防重叠连音)
 const LOGO_SIZE = 76
 // 弹跳音: 按撞击速度控制音量(越大力越响→越来越轻), 速度太小静音(小球快停时无声音)
@@ -439,6 +440,7 @@ const STORY_TITLE_Y = LH * 0.16 + 62
 const STORY_BODY_Y0 = LH * 0.16 + 110  // 正文首行中线
 const STORY_LINE_H = 26                  // 行距(15px 字阅读舒适)
 const STORY_BTN_Y = STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H + 52  // 正文底+金色句行距+间距
+const STORY_END = 500 + (STORY_LINES.length + 1) * 1600 + 800 + 700  // 按钮完全浮现时刻(~18s), 自然完成判定用
 
 function buildStory() {
   btns = []
@@ -449,9 +451,13 @@ function buildStory() {
 function drawStory() {
   ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
+  // 自然播放完成(按钮已完全浮现)标记, 之后触摸不再拦截(按钮正常可点)
+  if (storySkipAt === 0 && ui.animProgress(sceneEnterTime, STORY_END, 1) >= 1) storySkipAt = 1
+  // 时间基准: 轻触跳过/自然完成后用"极远的过去"→ 所有 delay 立即满足, 文字按钮瞬间全显
+  const base = storySkipAt === 0 ? sceneEnterTime : sceneEnterTime - 100000
   const dur = 900
   // 图标 + 标题(先浮现)
-  const pTitle = ui.animProgress(sceneEnterTime, 0, dur)
+  const pTitle = ui.animProgress(base, 0, dur)
   if (pTitle > 0) {
     ctx.globalAlpha = pTitle
     text(ctx, '🧝', LW / 2, STORY_ICON_Y, 56, '#ffffff', 'center')
@@ -460,22 +466,24 @@ function drawStory() {
   }
   // 正文逐行浮现(每行浮现800ms + 停留800ms阅读, 一行一行慢慢来)
   STORY_LINES.forEach((line, idx) => {
-    const p = ui.animProgress(sceneEnterTime, 500 + idx * 1600, 800)
+    const p = ui.animProgress(base, 500 + idx * 1600, 800)
     if (p <= 0) return
     ctx.globalAlpha = p
     text(ctx, line, LW / 2, STORY_BODY_Y0 + idx * STORY_LINE_H, 15, '#c8c8d8', 'center')
     ctx.globalAlpha = 1
   })
   // 最后"前进吧,冒险者"(金色强调, 最后浮现)
-  const pFinal = ui.animProgress(sceneEnterTime, 500 + STORY_LINES.length * 1600, 800)
+  const pFinal = ui.animProgress(base, 500 + STORY_LINES.length * 1600, 800)
   if (pFinal > 0) {
     ctx.globalAlpha = pFinal
     text(ctx, STORY_FINAL, LW / 2, STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H, 18, COLORS.gold, 'center', true)
     ctx.globalAlpha = 1
   }
   // 开始远征按钮(文字全部浮现完才出现)
-  const pBtn = ui.animProgress(sceneEnterTime, 500 + (STORY_LINES.length + 1) * 1600 + 800, 700)
+  const pBtn = ui.animProgress(base, 500 + (STORY_LINES.length + 1) * 1600 + 800, 700)
   if (pBtn > 0 && btns[0]) drawBtn(ctx, btns[0], null, pBtn)
+  // 轻触跳过提示(动画进行中显示, 跳过/完成后消失)
+  if (storySkipAt === 0) text(ctx, '轻触跳过', LW - 16, LH - 20, 12, 'rgba(255,255,255,0.35)', 'right')
 }
 
 // ==================== 面板层(商店/背包/铁匠铺) ====================
@@ -629,9 +637,20 @@ wx.onTouchStart((e) => {
     return
   }
   if (scene === 'menu' || scene === 'difficulty' || scene === 'story' || scene === 'game') {
+    // ⚠️ logo 弹跳动画期间: 任何触摸都只跳过动画(含按钮位置), 不触发按钮跳界面
+    // (用户: 轻触跳过期间碰到按钮会直接跳转, 应该触摸完停在正常主页)
+    if (scene === 'menu' && logoAnim && logoSettledAt === 0) {
+      skipLogoAnim()
+      return
+    }
+    // ⚠️ 故事页文字浮现期间: 任何触摸都只跳过动画(轻触跳过=立即全显), 不触发按钮
+    // (storySkipAt===0 动画中; 跳过/自然播完=1; 非0时按钮正常)
+    if (scene === 'story' && storySkipAt === 0) {
+      storySkipAt = 1
+      return
+    }
     const b = hitBtn(btns, x, y)
     if (b && !b.disabled && b.cb) { audio.play('click'); b.cb() }
-    else if (scene === 'menu' && logoAnim && logoSettledAt === 0) skipLogoAnim()  // 轻触跳过弹跳
   } else if (scene === 'settings') {
     touchSettings(x, y)
   } else if (scene === 'explore' && explore) {
