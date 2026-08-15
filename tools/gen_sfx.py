@@ -101,6 +101,32 @@ write_wav('boss', boss)
 
 # bossatk 已废弃(2026-08-15): Boss普攻音效用户放弃专属设计,恢复与小怪hurt相同——勿再加回
 
+# gateOpen: 石门缓慢推开(0.72s, 大门动画同长)
+# 正弦250→150Hz下滑(下沉隆隆) + ±1%失谐层(厚重) + 10点移动平均低通噪声(石面摩擦)
+# 测量: RMS-11.9 / >800Hz -31.6(无尖) / <200Hz -14.8(低频重)
+def _gateopen():
+    _n = int(SR * 0.72)
+    _o = [0.0] * _n
+    for _i in range(_n):
+        _t = _i / SR
+        _f = 250 + (150 - 250) * (_i / _n)
+        _env = math.exp(-2.2 * _t)
+        _o[_i] += math.sin(2 * math.pi * _f * _t) * _env * 0.85
+        _o[_i] += math.sin(2 * math.pi * _f * 1.01 * _t) * _env * 0.3
+    _raw = [random.uniform(-1, 1) for _ in range(_n)]
+    _acc = 0
+    _win = 10
+    for _i in range(_n):
+        _acc += _raw[_i]
+        if _i >= _win: _acc -= _raw[_i - _win]
+        _o[_i] += (_acc / min(_win, _i + 1)) * math.exp(-3.0 * _i / SR) * 0.5
+    return _o
+def _norm(samples, peak=0.92):
+    _mx = max(1e-9, max(abs(s) for s in samples))
+    _k = peak / _mx
+    return [s * _k for s in samples]
+write_wav('gateOpen', _norm(_gateopen()))
+
 # ---------- BGM: 8-bit 风格循环(约 13 秒) ----------
 # 简单小调旋律: A4 C5 E5 G5 琶音 + 低音 A3
 NOTE = {'A3': 220, 'C4': 262, 'D4': 294, 'E4': 330, 'G4': 392, 'A4': 440, 'C5': 523, 'E5': 659, 'G5': 784, 'A5': 880, 'R': 0}

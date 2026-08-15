@@ -98,6 +98,9 @@ let skipRegen = false
 // 大门状态: 非null时探索页显示主题大门大卡片(无信息卡/事件卡), 点"推开"进入下一主题
 // { toFloor: 目标层数 } — 进入地牢=1, Boss打完=当前层+1
 let gate = null
+// 推开动画: 非null时卡片缓慢淡出(石门推开), 动画结束才真正切层
+// { start, dur } — dur 与 gateOpen 音效时长一致(~0.75s)
+let gateAnim = null
 
 function ctx() { return S.ctx }
 
@@ -480,15 +483,21 @@ function descend() {
   generateEvents()
 }
 
-// 推开大门: 进入下一主题(进地牢=第1层不动; Boss打完=floor+1走descend逻辑)
+// 推开大门(动画版): 点击后播放石门推开动画+音效, 动画结束才真正进入下一主题
 function openGate() {
-  const p = S.player
-  if (gate.toFloor > p.floor) {
-    descend()
-  } else {
-    generateEvents()
-  }
-  gate = null
+  if (gateAnim) return  // 动画播放中防重复触发
+  gateAnim = { start: Date.now(), dur: 750 }
+  audio.play('gateOpen')  // 石门缓慢推开音效
+  setTimeout(() => {
+    gateAnim = null
+    const p = S.player
+    if (gate.toFloor > p.floor) {
+      descend()
+    } else {
+      generateEvents()
+    }
+    gate = null
+  }, 760)
 }
 
 function startBattle(side, isBoss) {
@@ -601,6 +610,15 @@ function drawGate() {
   const targetTheme = Data.getThemeForFloor(gate.toFloor)
   const isEntry = gate.toFloor === 1  // 进入地牢大门 vs Boss后大门
 
+  // 推开动画: 卡片缓慢淡出+轻微上移(石门推开感); prevAlpha 乘算叠加
+  let fadeA = 1, fadeY = 0
+  if (gateAnim) {
+    const t = Math.min(1, (Date.now() - gateAnim.start) / gateAnim.dur)
+    const e = ui.easeOut(t)
+    fadeA = 1 - e
+    fadeY = -36 * e  // 卡片缓慢上移消失
+  }
+
   // 背景: 探索页同款分区
   ctx.fillStyle = '#0f0f1a'
   ctx.fillRect(0, 0, S.LW, S.LH)
@@ -616,13 +634,15 @@ function drawGate() {
   ctx.lineTo(S.LW, 90)
   ctx.stroke()
 
-  // 大门大卡片: 居中, 上接分割线下方, 下接状态栏顶
+  // 大门大卡片: 居中, 上接分割线下方, 下接状态栏顶(动画时整体上移淡出)
   const gx = S.LW * 0.08
   const gw = S.LW * 0.84
-  const gy = 118
-  const gh = S.LH - FOOTER_H_EXPAND - 15 - gy  // 667: 118~373 高255
+  const gy = 118 + fadeY
+  const gh = S.LH - FOOTER_H_EXPAND - 15 - (118 + fadeY)
   const gc = gy + gh / 2
-  // 卡片背景(金色边框突出大门)
+  // 卡片背景(金色边框突出大门); 推开动画时整卡淡出
+  const prevAlpha = ctx.globalAlpha
+  ctx.globalAlpha = prevAlpha * fadeA
   roundRect(ctx, gx, gy, gw, gh, 20, ui.cardFill(ctx, gx, gy, gw, gh), isEntry ? COLORS.goldBright : '#e0c080', 2)
   // 顶部大门图标(手动居中, 大号)
   centerEmoji(ctx, '🚪', S.LW / 2, gc - 78, 64, COLORS.gold)
@@ -640,6 +660,7 @@ function drawGate() {
   const bx = (S.LW - bw) / 2
   const by = gc + 76
   drawBtn(ctx, makeBtn(bx, by, bw, bh, '🚪 推开大门', () => openGate(), { ...ui.BTN.gold, r: 22 }))
+  ctx.globalAlpha = prevAlpha
 }
 
 function leftX() { return S.LW * 0.05 }
