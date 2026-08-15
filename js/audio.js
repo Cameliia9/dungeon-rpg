@@ -5,8 +5,8 @@
  * 用法:
  *   audio.init()              — 启动时调用(读取设置)
  *   audio.play('hit')         — 播放音效(受音效音量/开关控制)
- *   audio.startBgm()          — 主页BGM(主菜单/难度选择, bgm.wav)
- *   audio.startExploreBgm()   — 探索BGM(游戏主页/探索过程, explore_bgm.wav 地牢探险风)
+ *   audio.startBgm()          — 主页BGM(主菜单/难度选择, bgm.mp3)
+ *   audio.startExploreBgm()   — 探索BGM(游戏主页/探索过程, explore_bgm.mp3 地牢探险风)
  *   audio.startBattleBgm()    — 进入战斗: 保存当前非战斗BGM进度+类型, 播战斗BGM(每场从头)
  *   audio.resumeBgm(delay)    — 战斗结束: 立即停战斗BGM, 停顿delay毫秒后恢复战斗前的BGM(进度接续)
  *   audio.stopAll()           — 停止全部BGM
@@ -18,12 +18,12 @@ const SETTINGS_KEY = 'audio_settings'
 const SFX_FILES = ['click', 'hit', 'crit', 'dodge', 'hurt', 'bounce', 'levelup', 'enhance', 'coin', 'victory', 'defeat', 'boss']
 
 let settings = { sfxOn: true, bgmOn: true, sfxVol: 0.8, bgmVol: 0.5 }
-let mainBgmCtx = null       // 主页BGM bgm.wav(主菜单/难度)
-let storyBgmCtx = null      // 故事BGM story_bgm.wav(故事背景页, 传说叙事风)
-let exploreBgmCtx = null    // 探索BGM explore_bgm.wav(游戏主页/探索过程)
-let battleBgmCtx = null     // 战斗BGM battle_bgm.wav(独立实例)
-let bossBgmCtx = null       // Boss战BGM boss_bgm.wav(压迫史诗, 独立实例)
-let defeatBgmCtx = null     // 失败BGM defeat_bgm.wav(死亡落幕曲, 一次性不循环)
+let mainBgmCtx = null       // 主页BGM bgm.mp3(主菜单/难度)
+let storyBgmCtx = null      // 故事BGM story_bgm.mp3(故事背景页, 传说叙事风)
+let exploreBgmCtx = null    // 探索BGM explore_bgm.mp3(游戏主页/探索过程)
+let battleBgmCtx = null     // 战斗BGM battle_bgm.mp3(独立实例)
+let bossBgmCtx = null       // Boss战BGM boss_bgm.mp3(压迫史诗, 独立实例)
+let defeatBgmCtx = null     // 失败BGM defeat_bgm.mp3(死亡落幕曲, 一次性不循环)
 let bgmResumePos = 0        // 进战斗前保存的进度(战斗结束恢复用)
 let bgmResumeKind = 'main'  // 进战斗前在播的BGM: 'main' | 'explore'
 let bgmResumeTimer = null   // 战斗结束延迟恢复定时器
@@ -67,7 +67,7 @@ function play(name, vol) {
     let ctx = sfxPool[name]
     if (!ctx) {
       ctx = wx.createInnerAudioContext()
-      ctx.src = 'assets/sfx/' + name + '.wav'
+      ctx.src = 'assets/sfx/' + name + '.mp3'
       ctx.volume = settings.sfxVol
       sfxPool[name] = ctx
     }
@@ -82,7 +82,7 @@ function play(name, vol) {
 /** 主页BGM(主菜单/难度选择) */
 function startBgm() {
   try {
-    if (!mainBgmCtx) mainBgmCtx = makeBgmCtx('assets/sfx/bgm.wav')
+    if (!mainBgmCtx) mainBgmCtx = makeBgmCtx('assets/sfx/bgm.mp3')
     try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
     try { if (storyBgmCtx) storyBgmCtx.pause() } catch (e) {}
     try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}  // 同场景只播一首
@@ -100,7 +100,7 @@ function startBgm() {
 /** 探索BGM(游戏主页/探索过程, 地牢探险风); 战斗结束后从保存进度接续 */
 function startExploreBgm() {
   try {
-    if (!exploreBgmCtx) exploreBgmCtx = makeBgmCtx('assets/sfx/explore_bgm.wav')
+    if (!exploreBgmCtx) exploreBgmCtx = makeBgmCtx('assets/sfx/explore_bgm.mp3')
     try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
     try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}  // 同场景只播一首
     try { if (storyBgmCtx) storyBgmCtx.pause() } catch (e) {}  // 故事页BGM也要停
@@ -121,7 +121,7 @@ function startExploreBgm() {
 /** 故事BGM(故事背景页, 传说叙事风; 一次性场景从头播) */
 function startStoryBgm() {
   try {
-    if (!storyBgmCtx) storyBgmCtx = makeBgmCtx('assets/sfx/story_bgm.wav')
+    if (!storyBgmCtx) storyBgmCtx = makeBgmCtx('assets/sfx/story_bgm.mp3')
     try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
     try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}
     try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}
@@ -139,7 +139,7 @@ function startStoryBgm() {
 function startBossBgm() {
   try {
     try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}  // 普通战斗曲停
-    if (!bossBgmCtx) bossBgmCtx = makeBgmCtx('assets/sfx/boss_bgm.wav')
+    if (!bossBgmCtx) bossBgmCtx = makeBgmCtx('assets/sfx/boss_bgm.mp3')
     bossBgmCtx.volume = settings.bgmVol
     if (settings.bgmOn) {
       try { bossBgmCtx.seek(0) } catch (e) {}  // 每场Boss战从头
@@ -167,7 +167,7 @@ function startBattleBgm() {
     try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}
     try { if (bossBgmCtx) bossBgmCtx.stop() } catch (e) {}  // 普通战斗曲开始前停Boss曲(防任意顺序重叠)
     // 战斗BGM(独立实例, 从头播)
-    if (!battleBgmCtx) battleBgmCtx = makeBgmCtx('assets/sfx/battle_bgm.wav')
+    if (!battleBgmCtx) battleBgmCtx = makeBgmCtx('assets/sfx/battle_bgm.mp3')
     battleBgmCtx.volume = settings.bgmVol
     if (settings.bgmOn) {
       try { battleBgmCtx.seek(0) } catch (e) {}  // 每场战斗从头开始
@@ -200,7 +200,7 @@ function playDefeatBgm() {
   try {
     if (!defeatBgmCtx) {
       defeatBgmCtx = wx.createInnerAudioContext()
-      defeatBgmCtx.src = 'assets/sfx/defeat_bgm.wav'
+      defeatBgmCtx.src = 'assets/sfx/defeat_bgm.mp3'
       defeatBgmCtx.loop = false
       defeatBgmCtx.onEnded(() => {})
     }
