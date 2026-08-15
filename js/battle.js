@@ -365,10 +365,11 @@ function draw() {
 
   // ============ 1. 怪物卡 (对齐原版: icon 48px 居中 + 名字 + Lv掉落 + 生命值 + 血条 + 攻防暴闪) ============
   ctx.globalAlpha = a1
-  roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : COLORS.cardBorder, isBoss ? 2 : 1.5)
+  const hasAffix = !!monster.affix
+  roundRect(ctx, cxp, my, cw, mh, 12, ui.cardFill(ctx, cxp, my, cw, mh), isBoss ? COLORS.red : (hasAffix ? '#ffd700' : COLORS.cardBorder), (isBoss || hasAffix) ? 2 : 1.5)
   text(ctx, monster.icon || '👹', cx, my + 44, 48)
   if (isBoss) text(ctx, '⚠️ BOSS ⚠️', cx, my + 82, 11, '#ff4444', 'center', true)
-  text(ctx, monster.name, cx, my + 104, 20, isBoss ? '#ff5555' : COLORS.gold, 'center', true)
+  text(ctx, monster.name, cx, my + 104, 20, hasAffix ? '#ffd700' : (isBoss ? '#ff5555' : COLORS.gold), 'center', true)
   text(ctx, 'Lv.' + monster.level + (isBoss && monster.loot ? ' · 掉落：' + monster.loot.name : ''), cx, my + 128, 12, COLORS.textDim)
   // 生命值行
   text(ctx, '生命值', cxp + 16, my + 154, 12, COLORS.textDim, 'left')

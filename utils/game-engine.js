@@ -272,8 +272,8 @@ class Monster {
     if (affix.poison) this.poison = true
     if (affix.expMul) this.expMul = affix.expMul
     if (affix.goldMul) this.goldMul = affix.goldMul
-    // 名字加前缀
-    this.name = affix.name + this.name
+    // 名字加前缀（词缀●怪名）
+    this.name = affix.name + '●' + this.name
     this.desc = `${affix.desc}。${this.desc}`
   }
 
