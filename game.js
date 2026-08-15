@@ -323,9 +323,7 @@ function drawSettings() {
   text(ctx, '音乐音量', cx - cw / 2 + 22, y + 14, 13, COLORS.textDim, 'left')
   drawSlider(ctx, cx - cw / 2 + 22, y + 26, cw - 44, st.bgmVol, '#5aa7ff')
 
-  // Boss战测试按钮(开发测试入口: 一键直达当前层Boss, 不用手动打过去)
-  y += rowH + 20
-  drawBtn(ctx, makeBtn(cx - cw / 2 + 22, y, cw - 44, 36, '👑 测试Boss战', () => startTestBoss(), ui.BTN.danger))
+  // ⚠️ 测试Boss战按钮已隐藏(2026-08-15): 开发测试入口, 发布前不展示; startTestBoss 保留备用
 
   // 返回按钮
   drawBtn(ctx, makeBtn(cx - 90, panelTop + panelH + 24, 180, 42, '↩️ 返回', () => switchScene('menu'), ui.BTN.secondary))
@@ -389,12 +387,7 @@ function touchSettings(x, y) {
       return
     }
   }
-  // Boss战测试按钮(与绘制同步: 音乐滑条行 rowY+rowH*4+12+20 起, 高36)
-  const bossBtnY = rowY + rowH * 4 + 12 + 20
-  if (x > cx - cw / 2 + 22 && x < cx - cw / 2 + 22 + cw - 44 && y > bossBtnY && y < bossBtnY + 36) {
-    startTestBoss()
-    return
-  }
+  // ⚠️ 测试Boss战按钮 touch 已移除(2026-08-15, 与绘制同步隐藏)
   // 滑条轨道区域(与绘制同步: 音效滑条 y=rowY+rowH+26, 音乐滑条 y=rowY+rowH*3+12+26)
   const sliderX = cx - cw / 2 + 22, sliderW = cw - 44
   const sfxSliderY = rowY + rowH + 26
