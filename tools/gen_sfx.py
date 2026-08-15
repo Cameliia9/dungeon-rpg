@@ -100,21 +100,27 @@ for i in range(n):
 write_wav('boss', boss)
 
 # bossatk: Boss 攻击玩家重锤(迭代史: v1 85→50纯低频手机放不出 → v2 三角波太软 → v3.1 方波单音不够重
-#   → v4 正弦叠加RMS低更轻 → v5.1 方波160满幅"尖锐"被否 → v6 定稿: 纯低频正弦=沉重感)
-# v6 = 正弦150→110Hz下滑 0.35s 慢衰减(大鼓sub感, 沉重) + 15ms极弱噪声起音 + 100Hz正弦短尾
-# ⚠️ 沉重感=低频主导+高频近零: >800Hz -40dB / <200Hz -11dB; 方波谐波刺耳(用户"很尖锐"否过 v5.1)
+#   → v4 正弦叠加RMS低更轻 → v5.1 方波160满幅"尖锐" → v6 纯正弦"太闷" → v7 三角波叠层RMS又低
+#   → v8 定稿: 方波+低通滤波=电子低音鼓thump: 响(-9.3dB) + 有厚度(中频-14.2不闷) + 不尖(>800Hz -28.3))
+# v8 = 方波160Hz 0.34s慢衰减 → 20点移动平均低通(≈490Hz, 滤高次谐波) + 30ms弱噪声音头 + 110Hz三角短尾
 def _bossatk_body():
-    _b = tone(150, 0.35, 1.0, 'sine', 4, slide_to=110)
-    _noise_n = int(SR * 0.015)
+    _b = tone(160, 0.34, 1.0, 'square', 5)
+    _win = 20
+    _acc = sum(_b[:_win]) / _win
+    _out = [_acc]
+    for _i in range(_win, len(_b)):
+        _acc += (_b[_i] - _b[_i - _win]) / _win
+        _out.append(_acc)
+    _noise_n = int(SR * 0.03)
     for _i in range(_noise_n):
         _t = _i / SR
-        _b[_i] += random.uniform(-1, 1) * math.exp(-80 * _t) * 0.12
-    return _b
+        _out[_i] += random.uniform(-1, 1) * math.exp(-60 * _t) * 0.18
+    return _out
 def _norm(samples, peak=0.95):
     _mx = max(1e-9, max(abs(s) for s in samples))
     _k = peak / _mx
     return [s * _k for s in samples]
-write_wav('bossatk', _norm(seq(_bossatk_body(), tone(100, 0.12, 0.35, 'sine', 6))))
+write_wav('bossatk', _norm(seq(_bossatk_body(), tone(110, 0.08, 0.3, 'triangle', 7))))
 
 # ---------- BGM: 8-bit 风格循环(约 13 秒) ----------
 # 简单小调旋律: A4 C5 E5 G5 琶音 + 低音 A3
