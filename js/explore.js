@@ -450,6 +450,10 @@ function startBattle(side, isBoss) {
   const evt = side === 'left' ? leftEvent : rightEvent
   const m = isBoss ? GE.getBossForFloor(S.player.floor, S.player.difficulty) : evt.monster
   const battle = require('./battle')
+  S.battleSide = side
+  // ⚠️ 必须先 switchScene 再 battle.start: switchScene('battle') 会分发普通战斗BGM,
+  // start 里 isBoss 再切Boss曲——顺序颠倒会导致两首战斗曲重叠(用户实测)
+  S.switchScene('battle')
   battle.start(S, m, isBoss, () => {
     // 战斗结束回调: 返回探索场景并保留双门状态
     skipRegen = true
@@ -463,8 +467,6 @@ function startBattle(side, isBoss) {
     }
     S.switchScene('explore')
   })
-  S.battleSide = side
-  S.switchScene('battle')
 }
 
 // ==================== 绘制 ====================

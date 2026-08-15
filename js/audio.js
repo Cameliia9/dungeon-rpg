@@ -165,6 +165,7 @@ function startBattleBgm() {
     }
     try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}
     try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}
+    try { if (bossBgmCtx) bossBgmCtx.stop() } catch (e) {}  // 普通战斗曲开始前停Boss曲(防任意顺序重叠)
     // 战斗BGM(独立实例, 从头播)
     if (!battleBgmCtx) battleBgmCtx = makeBgmCtx('assets/sfx/battle_bgm.wav')
     battleBgmCtx.volume = settings.bgmVol

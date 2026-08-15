@@ -344,8 +344,10 @@ function startTestBoss() {
     switchScene,
     bossDefeated: false
   }
+  // ⚠️ 先 switchScene 再 battle.start(与探索页一致): switchScene 分发普通战斗BGM,
+  // start 里 isBoss 再切Boss曲, 顺序颠倒会两首战斗曲重叠
+  switchScene('battle')
   battle.start(shared, m, true, () => switchScene('game'))
-  switchScene('battle')  // 分发战斗BGM; battle.start 内 isBoss 再切Boss曲
 }
 
 // 音量滑条(轨道+填充+圆钮)
