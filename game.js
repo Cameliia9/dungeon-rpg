@@ -178,15 +178,17 @@ function switchScene(name) {
   panels = null
   btns = []
   sceneEnterTime = Date.now()
-  // BGM: 主菜单/难度=主页BGM; 游戏主页/探索=探索BGM(地牢探险风); 战斗=战斗BGM
+  // BGM: 主菜单/难度/故事=主页BGM; 游戏主页/探索=探索BGM(地牢探险风); 战斗=战斗BGM
   // 主菜单特殊——logo弹跳期间静音, 落位后(startLogoAnim完成/skip)才播
   if (name === 'settings') audio.stopAll()
   else if (name === 'menu') audio.stopAll()  // ⚠️ 无条件停(不判断logoReady: 加载中也是false会误播), 兜底在loadLogo的onerror
   else if (name === 'battle') audio.startBattleBgm()
   else if (name === 'difficulty') audio.startBgm()  // 难度选择用主页BGM
+  else if (name === 'story') audio.startBgm()  // 故事背景延续主页BGM(沉稳)
   else audio.startExploreBgm()  // game/explore: 探索BGM(战斗结束后从保存进度接续)
   if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()
+  else if (name === 'story') buildStory()
   else if (name === 'game') buildGame()
   else if (name === 'explore') buildExplore()
   else if (name === 'settings') buildSettings()
@@ -416,7 +418,64 @@ function startNew(difficulty) {
   if (difficulty === 'nightmare') { player.maxHp = 90; player.hp = 90; player.baseAttack = 10; player.gold = 20 }
   savePlayer()
   try { wx.removeStorageSync('explore_state') } catch (e) {}  // 新游戏清除探索存档
-  switchScene('game')
+  switchScene('story')  // 先展示故事背景, 点"开始远征"再进游戏主页
+}
+
+// ==================== 故事背景(选完难度后, 文字逐行浮现, 最后"前进吧,冒险者") ====================
+const STORY_LINES = [
+  '千年前,精灵一族将至宝「星辉圣冠」',
+  '封存于大陆深处的地牢,世代守卫看护。',
+  '一场灾变后,封印崩坏,地牢被黑暗吞噬——',
+  '入口是🫧黏液沼泽,越深处越是骇人:',
+  '💀骸骨墓穴、🌑暗影回廊、🔥深渊火狱,',
+  '直至最深处,🐉远古邪龙盘踞的龙之巢穴。',
+  '千年过去,大地枯死。你,最后的精灵冒险者,',
+  '握着祖传的剑,踏入通往地底的深渊,',
+  '一层层向下,直到星辉圣冠重新闪耀。'
+]
+const STORY_FINAL = '前进吧,冒险者。'
+const STORY_ICON_Y = LH * 0.105   // 🧝 图标中线
+const STORY_TITLE_Y = LH * 0.105 + 58
+const STORY_BODY_Y0 = LH * 0.105 + 104  // 正文首行中线
+const STORY_LINE_H = 23
+const STORY_BTN_Y = STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H + 46  // 正文底+金色句行距+间距
+
+function buildStory() {
+  btns = []
+  const bw = Math.min(220, LW * 0.7), bh = 46, cx = LW / 2
+  btns.push(makeBtn(cx - bw / 2, STORY_BTN_Y, bw, bh, '⚔️ 开始远征', () => switchScene('game'), ui.BTN.primary))
+}
+
+function drawStory() {
+  ctx.fillStyle = bgGradient()
+  ctx.fillRect(0, 0, LW, LH)
+  const dur = 900
+  // 图标 + 标题(先浮现)
+  const pTitle = ui.animProgress(sceneEnterTime, 0, dur)
+  if (pTitle > 0) {
+    ctx.globalAlpha = pTitle
+    text(ctx, '🧝', LW / 2, STORY_ICON_Y, 52, '#ffffff', 'center')
+    text(ctx, '📜 星辉圣冠', LW / 2, STORY_TITLE_Y, 22, COLORS.gold, 'center', true)
+    ctx.globalAlpha = 1
+  }
+  // 正文逐行浮现(每行交错 200ms, 一点点出来)
+  STORY_LINES.forEach((line, idx) => {
+    const p = ui.animProgress(sceneEnterTime, 350 + idx * 200, 700)
+    if (p <= 0) return
+    ctx.globalAlpha = p
+    text(ctx, line, LW / 2, STORY_BODY_Y0 + idx * STORY_LINE_H, 13, '#c8c8d8', 'center')
+    ctx.globalAlpha = 1
+  })
+  // 最后"前进吧,冒险者"(金色强调, 最后浮现)
+  const pFinal = ui.animProgress(sceneEnterTime, 350 + STORY_LINES.length * 200, 700)
+  if (pFinal > 0) {
+    ctx.globalAlpha = pFinal
+    text(ctx, STORY_FINAL, LW / 2, STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H, 15, COLORS.gold, 'center', true)
+    ctx.globalAlpha = 1
+  }
+  // 开始远征按钮(文字全部浮现完才出现)
+  const pBtn = ui.animProgress(sceneEnterTime, 350 + (STORY_LINES.length + 1) * 200 + 400, 700)
+  if (pBtn > 0 && btns[0]) drawBtn(ctx, btns[0], null, pBtn)
 }
 
 // ==================== 面板层(商店/背包/铁匠铺) ====================
@@ -537,6 +596,7 @@ function draw() {
   if (panels) { panels.draw(); return }
   if (scene === 'menu') drawMenu()
   else if (scene === 'difficulty') drawDifficulty()
+  else if (scene === 'story') drawStory()
   else if (scene === 'game') drawGame()
   else if (scene === 'settings') drawSettings()
   else if (scene === 'explore' && explore) explore.draw()
@@ -568,9 +628,9 @@ wx.onTouchStart((e) => {
     panels.touch(x, y)
     return
   }
-  if (scene === 'menu' || scene === 'difficulty' || scene === 'game') {
+  if (scene === 'menu' || scene === 'difficulty' || scene === 'story' || scene === 'game') {
     const b = hitBtn(btns, x, y)
-    if (b && !b.disabled) { audio.play('click'); b.cb() }  // 按钮点击音
+    if (b && !b.disabled && b.cb) { audio.play('click'); b.cb() }
     else if (scene === 'menu' && logoAnim && logoSettledAt === 0) skipLogoAnim()  // 轻触跳过弹跳
   } else if (scene === 'settings') {
     touchSettings(x, y)
