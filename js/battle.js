@@ -300,6 +300,7 @@ function victory() {
 function defeat() {
   result = 'defeat'
   audio.stopAll()  // 死亡: 战斗音乐停(普通BGM保持暂停, 回菜单由菜单逻辑接管)
+  audio.playDefeatBgm()  // 死亡: 播落幕哀歌(一次性, 回菜单 stopAll 截停)
   logs.push('💀 你被打倒了...')
   wx.removeStorageSync('dungeon_save')
   try { wx.removeStorageSync('explore_state') } catch (e) {}  // 死亡清除探索存档

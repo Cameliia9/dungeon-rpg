@@ -21,6 +21,7 @@ let settings = { sfxOn: true, bgmOn: true, sfxVol: 0.8, bgmVol: 0.5 }
 let mainBgmCtx = null       // 主页BGM bgm.wav(主菜单/难度)
 let exploreBgmCtx = null    // 探索BGM explore_bgm.wav(游戏主页/探索过程)
 let battleBgmCtx = null     // 战斗BGM battle_bgm.wav(独立实例)
+let defeatBgmCtx = null     // 失败BGM defeat_bgm.wav(死亡落幕曲, 一次性不循环)
 let bgmResumePos = 0        // 进战斗前保存的进度(战斗结束恢复用)
 let bgmResumeKind = 'main'  // 进战斗前在播的BGM: 'main' | 'explore'
 let bgmResumeTimer = null   // 战斗结束延迟恢复定时器
@@ -156,11 +157,29 @@ function _resumeNow() {
   else startBgm()
 }
 
-/** 停止全部BGM(主页+探索+战斗) */
+/** 失败/死亡BGM(落幕哀歌, 一次性不循环; 死亡瞬间播, 回菜单由 stopAll 截停) */
+function playDefeatBgm() {
+  try {
+    if (!defeatBgmCtx) {
+      defeatBgmCtx = wx.createInnerAudioContext()
+      defeatBgmCtx.src = 'assets/sfx/defeat_bgm.wav'
+      defeatBgmCtx.loop = false
+      defeatBgmCtx.onEnded(() => {})
+    }
+    defeatBgmCtx.volume = settings.bgmVol
+    if (settings.bgmOn) {
+      try { defeatBgmCtx.seek(0) } catch (e) {}  // 每次死亡从头
+      try { defeatBgmCtx.play() } catch (e) {}
+    }
+  } catch (e) {}
+}
+
+/** 停止全部BGM(主页+探索+战斗+失败) */
 function stopAll() {
   try { if (mainBgmCtx) mainBgmCtx.stop() } catch (e) {}
   try { if (exploreBgmCtx) exploreBgmCtx.stop() } catch (e) {}
   try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
+  try { if (defeatBgmCtx) defeatBgmCtx.stop() } catch (e) {}
 }
 
 /** 停止主页BGM(兼容旧调用) */
@@ -191,8 +210,11 @@ function setSettings(patch) {
     if (settings.bgmOn) { try { battleBgmCtx.play() } catch (e) {} }
     else { try { battleBgmCtx.stop() } catch (e) {} }
   }
+  if (defeatBgmCtx) {
+    try { defeatBgmCtx.volume = settings.bgmVol } catch (e) {}
+  }
 }
 
 function getSettings() { return { ...settings } }
 
-module.exports = { init, play, startBgm, stopBgm, startExploreBgm, startBattleBgm, resumeBgm, stopAll, setSettings, getSettings, SFX_FILES }
+module.exports = { init, play, startBgm, stopBgm, startExploreBgm, startBattleBgm, resumeBgm, playDefeatBgm, stopAll, setSettings, getSettings, SFX_FILES }
