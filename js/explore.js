@@ -484,9 +484,10 @@ function descend() {
 }
 
 // 推开大门(动画版): 点击后播放石门推开动画+音效, 动画结束才真正进入下一主题
+// ⚠️ 用户要求"原地消失": 卡片只淡出不位移; "消失速度过快"→ dur 1200ms 缓慢
 function openGate() {
   if (gateAnim) return  // 动画播放中防重复触发
-  gateAnim = { start: Date.now(), dur: 750 }
+  gateAnim = { start: Date.now(), dur: 1200 }
   audio.play('gateOpen')  // 石门缓慢推开音效
   setTimeout(() => {
     gateAnim = null
@@ -497,7 +498,7 @@ function openGate() {
       generateEvents()
     }
     gate = null
-  }, 760)
+  }, 1210)
 }
 
 function startBattle(side, isBoss) {
@@ -610,13 +611,11 @@ function drawGate() {
   const targetTheme = Data.getThemeForFloor(gate.toFloor)
   const isEntry = gate.toFloor === 1  // 进入地牢大门 vs Boss后大门
 
-  // 推开动画: 卡片缓慢淡出+轻微上移(石门推开感); prevAlpha 乘算叠加
-  let fadeA = 1, fadeY = 0
+  // 推开动画: 卡片原地缓慢淡出(无位移, 用户"原地消失"要求); prevAlpha 乘算叠加
+  let fadeA = 1
   if (gateAnim) {
     const t = Math.min(1, (Date.now() - gateAnim.start) / gateAnim.dur)
-    const e = ui.easeOut(t)
-    fadeA = 1 - e
-    fadeY = -36 * e  // 卡片缓慢上移消失
+    fadeA = 1 - ui.easeOut(t)
   }
 
   // 背景: 探索页同款分区
@@ -634,11 +633,11 @@ function drawGate() {
   ctx.lineTo(S.LW, 90)
   ctx.stroke()
 
-  // 大门大卡片: 居中, 上接分割线下方, 下接状态栏顶(动画时整体上移淡出)
+  // 大门大卡片: 居中, 上接分割线下方, 下接状态栏顶(动画时原地淡出)
   const gx = S.LW * 0.08
   const gw = S.LW * 0.84
-  const gy = 118 + fadeY
-  const gh = S.LH - FOOTER_H_EXPAND - 15 - (118 + fadeY)
+  const gy = 118
+  const gh = S.LH - FOOTER_H_EXPAND - 15 - gy  // 667: 118~373 高255
   const gc = gy + gh / 2
   // 卡片背景(金色边框突出大门); 推开动画时整卡淡出
   const prevAlpha = ctx.globalAlpha

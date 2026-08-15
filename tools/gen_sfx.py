@@ -101,25 +101,29 @@ write_wav('boss', boss)
 
 # bossatk 已废弃(2026-08-15): Boss普攻音效用户放弃专属设计,恢复与小怪hurt相同——勿再加回
 
-# gateOpen: 石门缓慢推开(0.72s, 大门动画同长)
-# 正弦250→150Hz下滑(下沉隆隆) + ±1%失谐层(厚重) + 10点移动平均低通噪声(石面摩擦)
-# 测量: RMS-11.9 / >800Hz -31.6(无尖) / <200Hz -14.8(低频重)
+# gateOpen: 石门缓慢推开(1.2s, 大门动画同长)
+# 迭代史: v1 正弦250→150下滑占85%→音调感"呜——"不像石门被否 → v2.1 定稿
+# v2.1 = 低通噪声摩擦占主体(石头刮石头) + 7Hz振幅调制(石面凹凸一卡一卡) + 220→180Hz隆隆垫底(沉重)
+#       + 慢起包络(门刚被推动); 测量: RMS-13.7 / >800Hz -25.6 / <200Hz -16.6
 def _gateopen():
-    _n = int(SR * 0.72)
-    _o = [0.0] * _n
-    for _i in range(_n):
-        _t = _i / SR
-        _f = 250 + (150 - 250) * (_i / _n)
-        _env = math.exp(-2.2 * _t)
-        _o[_i] += math.sin(2 * math.pi * _f * _t) * _env * 0.85
-        _o[_i] += math.sin(2 * math.pi * _f * 1.01 * _t) * _env * 0.3
+    _n = int(SR * 1.2)
     _raw = [random.uniform(-1, 1) for _ in range(_n)]
+    _sm = [0.0] * _n
     _acc = 0
-    _win = 10
+    _win = 16
     for _i in range(_n):
         _acc += _raw[_i]
         if _i >= _win: _acc -= _raw[_i - _win]
-        _o[_i] += (_acc / min(_win, _i + 1)) * math.exp(-3.0 * _i / SR) * 0.5
+        _sm[_i] = _acc / min(_win, _i + 1)
+    _o = [0.0] * _n
+    for _i in range(_n):
+        _t = _i / SR
+        _f = 220 + (180 - 220) * (_i / _n)
+        _grain = 1 + 0.45 * math.sin(2 * math.pi * 7.0 * _t)
+        _env = min(1.0, _t / 0.3)
+        if _t > 0.9: _env *= math.exp(-3.0 * (_t - 0.9))
+        _o[_i] += _sm[_i] * _grain * _env * 1.15
+        _o[_i] += (math.sin(2 * math.pi * _f * _t) * 0.9 + math.sin(2 * math.pi * _f * 1.008 * _t) * 0.35) * _env * 0.4
     return _o
 def _norm(samples, peak=0.92):
     _mx = max(1e-9, max(abs(s) for s in samples))
