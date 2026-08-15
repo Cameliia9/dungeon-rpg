@@ -63,7 +63,7 @@ def osc(wave_type, freq, t):
 def render():
     n = int(TOTAL * SR)
     mix = [0.0] * n
-    # 主旋律(staccato 短音, 方波)
+    # 主旋律(staccato 短音, 三角波——原方波尖锐被否, 三角波圆润保留紧张感)
     for bar in range(N_BARS):
         t0 = bar * BAR
         for i, midi in enumerate(MELODY[bar]):
@@ -72,7 +72,7 @@ def render():
             for j in range(s0, s1):
                 t = j / SR - start
                 env = math.exp(-6 * t) * min(1, t / 0.005)
-                mix[j] += osc('square', f(midi), t) * env * 0.15
+                mix[j] += osc('triangle', f(midi), t) * env * 0.16
     # 低音(8分音符, 锯齿, 强)
     for bar in range(N_BARS):
         t0 = bar * BAR
@@ -83,7 +83,7 @@ def render():
                 t = j / SR - start
                 env = math.exp(-9 * t)
                 mix[j] += osc('saw', f(midi), t) * env * 0.22
-    # 16分琶音(轻, 密集脉冲感)
+    # 16分琶音(三角波, 轻——原方波高频密集最刺耳)
     for bar in range(N_BARS):
         t0 = bar * BAR
         for i, midi in enumerate(ARP[bar]):
@@ -92,7 +92,7 @@ def render():
             for j in range(s0, s1):
                 t = j / SR - start
                 env = math.exp(-16 * t)
-                mix[j] += osc('square', f(midi), t) * env * 0.03
+                mix[j] += osc('triangle', f(midi), t) * env * 0.022
     # 鼓
     def kick(t0):
         s0, s1 = int(t0 * SR), min(n, int((t0 + 0.12) * SR))
