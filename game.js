@@ -323,8 +323,29 @@ function drawSettings() {
   text(ctx, '音乐音量', cx - cw / 2 + 22, y + 14, 13, COLORS.textDim, 'left')
   drawSlider(ctx, cx - cw / 2 + 22, y + 26, cw - 44, st.bgmVol, '#5aa7ff')
 
+  // Boss战测试按钮(开发测试入口: 一键直达当前层Boss, 不用手动打过去)
+  y += rowH + 20
+  drawBtn(ctx, makeBtn(cx - cw / 2 + 22, y, cw - 44, 36, '👑 测试Boss战', () => startTestBoss(), ui.BTN.danger))
+
   // 返回按钮
   drawBtn(ctx, makeBtn(cx - 90, panelTop + panelH + 24, 180, 42, '↩️ 返回', () => switchScene('menu'), ui.BTN.secondary))
+}
+
+// Boss战测试(设置页入口): 直接进入当前层 Boss 战, 方便测试Boss音乐/技能/掉落
+function startTestBoss() {
+  if (!player) { wx.showToast({ title: '请先新游戏', icon: 'none' }); return }
+  const m = GE.getBossForFloor(player.floor, player.difficulty)
+  if (!battle) battle = require('./js/battle')
+  const shared = {
+    player, LW, LH, ctx, DPR,
+    savePlayer,
+    setPanels: (p) => { panels = p },
+    getPanels: () => panels,
+    switchScene,
+    bossDefeated: false
+  }
+  battle.start(shared, m, true, () => switchScene('game'))
+  switchScene('battle')  // 分发战斗BGM; battle.start 内 isBoss 再切Boss曲
 }
 
 // 音量滑条(轨道+填充+圆钮)
@@ -365,6 +386,12 @@ function touchSettings(x, y) {
       audio.setSettings({ bgmOn: !st.bgmOn })
       return
     }
+  }
+  // Boss战测试按钮(与绘制同步: 音乐滑条行 rowY+rowH*4+12+20 起, 高36)
+  const bossBtnY = rowY + rowH * 4 + 12 + 20
+  if (x > cx - cw / 2 + 22 && x < cx - cw / 2 + 22 + cw - 44 && y > bossBtnY && y < bossBtnY + 36) {
+    startTestBoss()
+    return
   }
   // 滑条轨道区域(与绘制同步: 音效滑条 y=rowY+rowH+26, 音乐滑条 y=rowY+rowH*3+12+26)
   const sliderX = cx - cw / 2 + 22, sliderW = cw - 44
