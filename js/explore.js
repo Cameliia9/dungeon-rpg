@@ -105,7 +105,11 @@ function buildSimpleEvent(type) {
     case 'deadend': return { type }
     case 'buffStone': return { type, attackBonus: 2 }
     case 'oldGear': return { type, defense: 2, gold: Math.floor(5 + floor * 2) }
-    case 'altar': return { type, cost: 30, maxCount: 3, altarCount: 0 }
+    case 'altar': {
+      // 献祭扣血随主题递增: 主题1=30, 每往后一个主题+20(主题2=50/3=70/4=90/5=110)
+      const themeNum = Math.ceil(floor / 5)  // 1-5层=主题1, 6-10=2, 11-15=3, 16-20=4, 21-25=5
+      return { type, cost: 30 + 20 * (themeNum - 1), maxCount: 3, altarCount: 0 }
+    }
     case 'camp': {
       const theme = Data.getThemeForFloor(floor)
       const goods = Data.themeMerchantGoods[theme.id]
