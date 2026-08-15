@@ -184,7 +184,7 @@ function switchScene(name) {
   else if (name === 'menu') audio.stopAll()  // ⚠️ 无条件停(不判断logoReady: 加载中也是false会误播), 兜底在loadLogo的onerror
   else if (name === 'battle') audio.startBattleBgm()
   else if (name === 'difficulty') audio.startBgm()  // 难度选择用主页BGM
-  else if (name === 'story') audio.startBgm()  // 故事背景延续主页BGM(沉稳)
+  else if (name === 'story') audio.startStoryBgm()  // 故事背景页: 专属传说叙事BGM(不是主页曲)
   else audio.startExploreBgm()  // game/explore: 探索BGM(战斗结束后从保存进度接续)
   if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()
@@ -458,23 +458,23 @@ function drawStory() {
     text(ctx, '📜 星辉圣冠', LW / 2, STORY_TITLE_Y, 26, COLORS.gold, 'center', true)
     ctx.globalAlpha = 1
   }
-  // 正文逐行浮现(每行浮现600ms + 停留400ms阅读, 符合人的阅读节奏)
+  // 正文逐行浮现(每行浮现800ms + 停留800ms阅读, 一行一行慢慢来)
   STORY_LINES.forEach((line, idx) => {
-    const p = ui.animProgress(sceneEnterTime, 400 + idx * 1000, 600)
+    const p = ui.animProgress(sceneEnterTime, 500 + idx * 1600, 800)
     if (p <= 0) return
     ctx.globalAlpha = p
     text(ctx, line, LW / 2, STORY_BODY_Y0 + idx * STORY_LINE_H, 15, '#c8c8d8', 'center')
     ctx.globalAlpha = 1
   })
   // 最后"前进吧,冒险者"(金色强调, 最后浮现)
-  const pFinal = ui.animProgress(sceneEnterTime, 400 + STORY_LINES.length * 1000, 700)
+  const pFinal = ui.animProgress(sceneEnterTime, 500 + STORY_LINES.length * 1600, 800)
   if (pFinal > 0) {
     ctx.globalAlpha = pFinal
     text(ctx, STORY_FINAL, LW / 2, STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H, 18, COLORS.gold, 'center', true)
     ctx.globalAlpha = 1
   }
   // 开始远征按钮(文字全部浮现完才出现)
-  const pBtn = ui.animProgress(sceneEnterTime, 400 + (STORY_LINES.length + 1) * 1000 + 600, 700)
+  const pBtn = ui.animProgress(sceneEnterTime, 500 + (STORY_LINES.length + 1) * 1600 + 800, 700)
   if (pBtn > 0 && btns[0]) drawBtn(ctx, btns[0], null, pBtn)
 }
 

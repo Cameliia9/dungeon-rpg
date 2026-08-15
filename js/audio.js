@@ -19,6 +19,7 @@ const SFX_FILES = ['click', 'hit', 'crit', 'dodge', 'hurt', 'bounce', 'levelup',
 
 let settings = { sfxOn: true, bgmOn: true, sfxVol: 0.8, bgmVol: 0.5 }
 let mainBgmCtx = null       // 主页BGM bgm.wav(主菜单/难度)
+let storyBgmCtx = null      // 故事BGM story_bgm.wav(故事背景页, 传说叙事风)
 let exploreBgmCtx = null    // 探索BGM explore_bgm.wav(游戏主页/探索过程)
 let battleBgmCtx = null     // 战斗BGM battle_bgm.wav(独立实例)
 let defeatBgmCtx = null     // 失败BGM defeat_bgm.wav(死亡落幕曲, 一次性不循环)
@@ -82,6 +83,7 @@ function startBgm() {
   try {
     if (!mainBgmCtx) mainBgmCtx = makeBgmCtx('assets/sfx/bgm.wav')
     try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
+    try { if (storyBgmCtx) storyBgmCtx.pause() } catch (e) {}
     try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}  // 同场景只播一首
     mainBgmCtx.volume = settings.bgmVol
     if (settings.bgmOn) {
@@ -100,6 +102,7 @@ function startExploreBgm() {
     if (!exploreBgmCtx) exploreBgmCtx = makeBgmCtx('assets/sfx/explore_bgm.wav')
     try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
     try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}  // 同场景只播一首
+    try { if (storyBgmCtx) storyBgmCtx.pause() } catch (e) {}  // 故事页BGM也要停
     exploreBgmCtx.volume = settings.bgmVol
     if (settings.bgmOn) {
       // 战斗结束后从保存进度继续(不从头重播); 已消费的进度不再 seek
@@ -110,6 +113,23 @@ function startExploreBgm() {
       try { exploreBgmCtx.play() } catch (e) {}
     } else {
       try { exploreBgmCtx.stop() } catch (e) {}
+    }
+  } catch (e) {}
+}
+
+/** 故事BGM(故事背景页, 传说叙事风; 一次性场景从头播) */
+function startStoryBgm() {
+  try {
+    if (!storyBgmCtx) storyBgmCtx = makeBgmCtx('assets/sfx/story_bgm.wav')
+    try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
+    try { if (mainBgmCtx) mainBgmCtx.pause() } catch (e) {}
+    try { if (exploreBgmCtx) exploreBgmCtx.pause() } catch (e) {}
+    storyBgmCtx.volume = settings.bgmVol
+    if (settings.bgmOn) {
+      try { storyBgmCtx.seek(0) } catch (e) {}  // 故事页每次从头
+      try { storyBgmCtx.play() } catch (e) {}
+    } else {
+      try { storyBgmCtx.stop() } catch (e) {}
     }
   } catch (e) {}
 }
@@ -174,9 +194,10 @@ function playDefeatBgm() {
   } catch (e) {}
 }
 
-/** 停止全部BGM(主页+探索+战斗+失败) */
+/** 停止全部BGM(主页+故事+探索+战斗+失败) */
 function stopAll() {
   try { if (mainBgmCtx) mainBgmCtx.stop() } catch (e) {}
+  try { if (storyBgmCtx) storyBgmCtx.stop() } catch (e) {}
   try { if (exploreBgmCtx) exploreBgmCtx.stop() } catch (e) {}
   try { if (battleBgmCtx) battleBgmCtx.stop() } catch (e) {}
   try { if (defeatBgmCtx) defeatBgmCtx.stop() } catch (e) {}
@@ -210,6 +231,11 @@ function setSettings(patch) {
     if (settings.bgmOn) { try { battleBgmCtx.play() } catch (e) {} }
     else { try { battleBgmCtx.stop() } catch (e) {} }
   }
+  if (storyBgmCtx) {
+    try { storyBgmCtx.volume = settings.bgmVol } catch (e) {}
+    if (settings.bgmOn) { try { storyBgmCtx.play() } catch (e) {} }
+    else { try { storyBgmCtx.stop() } catch (e) {} }
+  }
   if (defeatBgmCtx) {
     try { defeatBgmCtx.volume = settings.bgmVol } catch (e) {}
   }
@@ -217,4 +243,4 @@ function setSettings(patch) {
 
 function getSettings() { return { ...settings } }
 
-module.exports = { init, play, startBgm, stopBgm, startExploreBgm, startBattleBgm, resumeBgm, playDefeatBgm, stopAll, setSettings, getSettings, SFX_FILES }
+module.exports = { init, play, startBgm, stopBgm, startExploreBgm, startStoryBgm, startBattleBgm, resumeBgm, playDefeatBgm, stopAll, setSettings, getSettings, SFX_FILES }
