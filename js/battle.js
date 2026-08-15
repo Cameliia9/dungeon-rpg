@@ -209,7 +209,7 @@ function flee() {
     p.fleeFails = 0
     logs.push('你成功逃脱了！')
     result = 'fled'
-    audio.startBgm()  // 逃跑成功同样即时切回普通BGM(战斗音乐结束)
+    audio.resumeBgm(1500)  // 逃跑成功: 战斗BGM立即停, 停顿1.5s后恢复探索BGM
     S.savePlayer()
     // 不自动返回: 显示结果卡, 等玩家手动点返回探索
   } else {
@@ -284,7 +284,7 @@ function victory() {
   }
   p.poisonTurns = 0
   result = 'victory'
-  audio.startBgm()  // 胜利瞬间战斗BGM结束, 恢复普通BGM(从进战斗前进度继续)
+  audio.resumeBgm(1500)  // 胜利瞬间战斗BGM结束, 停顿1.5s后恢复探索BGM(从进战斗前进度继续)
   if (isBoss) S.bossDefeated = true  // Boss击败标记: 返回探索后显示楼梯进下一层
   S.lastReward = { gold: goldGain, exp: expGain, leveled: leveled, bossLoot: isBoss && monster.loot ? monster.loot : null }
   logs.push('🎉 击败 ' + monster.name + '！ +' + goldGain + '💰 +' + expGain + '经验')

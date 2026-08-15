@@ -178,12 +178,13 @@ function switchScene(name) {
   panels = null
   btns = []
   sceneEnterTime = Date.now()
-  // BGM: 所有场景常驻; 主菜单特殊——logo弹跳期间静音, 落位后(startLogoAnim完成/skip)才播
-  // 战斗特殊——切战斗BGM(保存普通BGM进度, 退出后seek恢复不重播)
+  // BGM: 主菜单/难度=主页BGM; 游戏主页/探索=探索BGM(地牢探险风); 战斗=战斗BGM
+  // 主菜单特殊——logo弹跳期间静音, 落位后(startLogoAnim完成/skip)才播
   if (name === 'settings') audio.stopAll()
   else if (name === 'menu') audio.stopAll()  // ⚠️ 无条件停(不判断logoReady: 加载中也是false会误播), 兜底在loadLogo的onerror
   else if (name === 'battle') audio.startBattleBgm()
-  else audio.startBgm()
+  else if (name === 'difficulty') audio.startBgm()  // 难度选择用主页BGM
+  else audio.startExploreBgm()  // game/explore: 探索BGM(战斗结束后从保存进度接续)
   if (name === 'menu') { buildMenu(); startLogoAnim() }
   else if (name === 'difficulty') buildDifficulty()
   else if (name === 'game') buildGame()

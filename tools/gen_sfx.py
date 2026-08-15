@@ -45,8 +45,8 @@ def seq(*parts):
     return out
 
 # ---------- 音效 ----------
-# click: 柔和嗒(三角波 1000→650 下滑, 短促不刺耳; 原方波1500Hz高频刺耳被否)
-write_wav('click', tone(1000, 0.06, 0.5, 'triangle', 30, 650))
+# click: 清脆咔嗒(正弦1400→900下滑 + 2000Hz瞬态, 干净不刺耳; 迭代: 方波1500刺耳→三角波1000闷→本版)
+write_wav('click', seq(tone(1400, 0.035, 0.45, 'sine', 55, 900), tone(2000, 0.02, 0.2, 'sine', 80)))
 
 # hit: 中频打击(方波 + 噪声爆点)
 hit_noise = [random.uniform(-1, 1) * math.exp(-60 * t) for t in [i / SR for i in range(int(SR * 0.08))]]
