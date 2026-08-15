@@ -34,6 +34,7 @@ function start(shared, m, boss, done) {
   dispMonHp = m.hp
   dispPlayerHp = S.player.hp
   resetFx()
+  if (isBoss) audio.startBossBgm()  // Boss战: 切专属压迫史诗BGM(替换普通战斗曲)
   logs.push(isBoss ? '👑 ' + m.name + ' 拦住了去路！' : m.icon + ' ' + m.name + ' 出现了！')
   syncLogs()
 }
