@@ -434,9 +434,9 @@ const STORY_LINES = [
   '一层层向下,直到星辉圣冠重新闪耀。'
 ]
 const STORY_FINAL = '前进吧,冒险者。'
-const STORY_ICON_Y = LH * 0.105   // 🧝 图标中线
-const STORY_TITLE_Y = LH * 0.105 + 62
-const STORY_BODY_Y0 = LH * 0.105 + 110  // 正文首行中线
+const STORY_ICON_Y = LH * 0.16   // 🧝 图标中线(整体下移, 原0.105)
+const STORY_TITLE_Y = LH * 0.16 + 62
+const STORY_BODY_Y0 = LH * 0.16 + 110  // 正文首行中线
 const STORY_LINE_H = 26                  // 行距(15px 字阅读舒适)
 const STORY_BTN_Y = STORY_BODY_Y0 + STORY_LINES.length * STORY_LINE_H + 52  // 正文底+金色句行距+间距
 
