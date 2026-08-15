@@ -607,7 +607,9 @@ if (wx.onMouseWheel) wx.onMouseWheel((e) => {
 // 启动
 if (loadGame()) savedGame = true
 audio.init()
-audio.startBgm()  // 启动即播放背景音乐(受设置控制)
+// ⚠️ 启动不播BGM: 直接进 menu, 由 switchScene('menu') 静音 + logo落位后才播。
+// 曾在这里 startBgm 再 switchScene('menu') stopAll——真机上 InnerAudioContext.play()
+// 是异步的, 紧跟的 stop() 拦不住刚发起的播放 → 一进去就响音乐(用户实测bug)
 switchScene('menu')
 
 // 渲染循环带异常保护，避免单帧错误卡死
