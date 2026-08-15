@@ -646,7 +646,7 @@ function fxMonsterHit(dmg, crit, skill) {
   spawnFx({ kind: 'dmg', x: fxPlyCx(), y: fxPlyCy() - 26, dur: 700, dmg, crit })
   if (crit) shake = { t0: Date.now(), dur: 320, power: 7 }
   if (skill) shake = { t0: Date.now(), dur: 480, power: 10 }
-  audio.play(skill ? 'boss' : (crit ? 'crit' : 'hurt'))  // Boss技能威胁音/暴击/受击
+  audio.play(skill ? 'boss' : (isBoss ? 'bossatk' : (crit ? 'crit' : 'hurt')))  // Boss技能威胁音/Boss普攻重锤/暴击/小怪受击
 }
 // 闪避 MISS 飘字
 function fxDodge(side) {

@@ -22,7 +22,7 @@
 const SETTINGS_KEY = 'audio_settings'
 
 // 音效文件映射(文件名不含扩展名)
-const SFX_FILES = ['click', 'hit', 'crit', 'dodge', 'hurt', 'bounce', 'levelup', 'enhance', 'coin', 'victory', 'defeat', 'boss']
+const SFX_FILES = ['click', 'hit', 'crit', 'dodge', 'hurt', 'bounce', 'levelup', 'enhance', 'coin', 'victory', 'defeat', 'boss', 'bossatk']
 
 // BGM 曲目表: key -> src(单实例换 src 用)
 const BGM_SRC = {

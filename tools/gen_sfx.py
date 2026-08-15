@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """合成微信小游戏音效 + 8-bit BGM(WAV 16-bit 22050Hz 单声道)
-音效: click/hit/crit/dodge/hurt/levelup/enhance/coin/victory/defeat/boss
+音效: click/hit/crit/dodge/hurt/levelup/enhance/coin/victory/defeat/boss/bossatk
 BGM: 8-bit 风格循环旋律
 """
 import wave, math, struct, os, random
@@ -98,6 +98,19 @@ for i in range(n):
     env = math.exp(-4 * t)
     boss.append(math.sin(2 * math.pi * f * t) * env * 0.8)
 write_wav('boss', boss)
+
+# bossatk: Boss 攻击玩家(低频重锤下砸, 比 hurt 更沉更有压迫感; 迭代史: 曾用 110Hz 颤音与 boss 撞车→改下滑重击)
+def heavy(f0, f1, dur, vol, vib):
+    n = int(SR * dur)
+    out = []
+    for i in range(n):
+        t = i / SR
+        f = f0 + (f1 - f0) * (i / n)
+        wob = 1 + vib * math.sin(2 * math.pi * 18 * t)  # 低频威胁抖动
+        env = math.exp(-7 * t)
+        out.append(math.sin(2 * math.pi * f * wob * t) * env * vol)
+    return out
+write_wav('bossatk', seq(heavy(85, 50, 0.22, 0.9, 0.04), heavy(50, 62, 0.18, 0.55, 0.06)))
 
 # ---------- BGM: 8-bit 风格循环(约 13 秒) ----------
 # 简单小调旋律: A4 C5 E5 G5 琶音 + 低音 A3
