@@ -99,13 +99,17 @@ for i in range(n):
     boss.append(math.sin(2 * math.pi * f * t) * env * 0.8)
 write_wav('boss', boss)
 
-# bossatk: Boss 攻击玩家重锤(手机可听频段; 迭代史: v1 85→50Hz 纯低频手机扬声器放不出→用户"根本没听到"→v2 上移)
-# v2 = 260Hz方波瞬态起音(砸击感) + 200→130Hz三角波下滑(重锤主体) + 120Hz余韵
-write_wav('bossatk', seq(
-    tone(260, 0.05, 0.75, 'square', 35),
-    tone(200, 0.20, 0.9, 'triangle', 9, 130),
-    tone(120, 0.16, 0.45, 'triangle', 8)
-))
+# bossatk: Boss 攻击玩家重锤(打击感迭代史: v1 85→50Hz纯低频手机放不出"没听到" → v2 260方波+200→130三角波"不够重没打击感" → v3.1 定稿)
+# v3.1 = 方波150→100Hz下滑(硬质重锤, 从头响) + 60ms噪声瞬态叠加前段(撞击感, 与方波同起=真打击声) + 90Hz三角波余韵
+# ⚠️ 方波+噪声叠加易削波: 方波0.85/噪声0.6/amp0.8, peak≈-0.1dB 无削波(曾 +0.65dB 削波失真)
+def _bossatk_body():
+    _b = tone(150, 0.22, 0.85, 'square', 11, 100)
+    _noise_n = int(SR * 0.06)
+    for _i in range(_noise_n):
+        _t = _i / SR
+        _b[_i] += random.uniform(-1, 1) * math.exp(-50 * _t) * 0.6
+    return _b
+write_wav('bossatk', seq(_bossatk_body(), tone(90, 0.18, 0.45, 'triangle', 9)))
 
 # ---------- BGM: 8-bit 风格循环(约 13 秒) ----------
 # 简单小调旋律: A4 C5 E5 G5 琶音 + 低音 A3
