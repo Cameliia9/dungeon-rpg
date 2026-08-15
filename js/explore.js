@@ -541,7 +541,10 @@ function rightX() { return S.LW * 0.52 }
 // ⚠️ 大号 emoji 图标统一手动居中: textAlign 'center' 对 emoji 的宽度测量与实际渲染
 // 不一致(真机偏左/偏右, 用户报"图案不在卡片居中"), 用 textWidth 半宽偏移 + left 对齐
 function centerEmoji(ctx, str, cx, y, size, color) {
-  const sw = ui.textWidth(ctx, str, size)
+  let sw = ui.textWidth(ctx, str, size)
+  // ⚠️ 符号型 emoji(带变体选择符 FE0F, 如 ⚠️)在真机 canvas 渲染自带内边距,
+  // measureText 宽度偏小 → 左对齐时图标偏右(用户报 trap 危险图标不齐), 补偿 +15%
+  if (str.indexOf('\uFE0F') >= 0) sw *= 1.15
   text(ctx, str, cx - sw / 2, y, size, color || COLORS.text, 'left')
 }
 
