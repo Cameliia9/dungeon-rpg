@@ -90,6 +90,7 @@ function play(name, vol) {
 function playBgm(key, opts) {
   opts = opts || {}
   if (!BGM_SRC[key]) return
+  if (!settings.bgmOn) return  // ⚠️ 音乐开关关闭时任何 BGM 都不播(2026-08-15 修复: 之前切场景会绕过开关重播)
   try {
     if (!bgmCtx) {
       bgmCtx = wx.createInnerAudioContext()
