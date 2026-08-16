@@ -14,6 +14,7 @@ let leftState = 'door', rightState = 'door'
 let activeSide = null
 let footerExpanded = true
 let trapResult = null
+let springResult = null  // 神秘池子结果(2026-08-15): { drank:true, ok, amount } 显示结果卡用
 let roomsPerFloor = 15
 let enterTime = Date.now()   // 探索页入场时间(动画)
 
@@ -33,6 +34,7 @@ function saveExploreState() {
       leftEvent, rightEvent,
       leftState, rightState,
       trapResult,
+      springResult,
       footerExpanded,
       gate: gate ? { toFloor: gate.toFloor } : null
     })
@@ -60,6 +62,7 @@ function restoreExploreState() {
       leftState = st.leftState || 'door'
       rightState = st.rightState || 'door'
       trapResult = st.trapResult || null
+      springResult = st.springResult || null
       if (typeof st.footerExpanded === 'boolean') footerExpanded = st.footerExpanded
       activeSide = leftState !== 'door' ? 'left' : (rightState !== 'door' ? 'right' : null)
       // ⚠️ 切场景回来(背包/商店等)保持展开放大效果: activeSide 有展开事件时, cardAnim 设为 expand 终态
@@ -121,7 +124,12 @@ function buildSimpleEvent(type) {
   switch (type) {
     case 'treasure': return { type, gold: Math.floor((15 + floor * 8 + Math.random() * floor * 15) * 0.6) }  // 宝箱金币-40%
     case 'coins': return { type, gold: Math.floor(10 + floor * 3 + Math.random() * floor * 8) }
-    case 'spring': return { type, heal: Math.max(1, Math.floor((p.totalMaxHp - p.hp) * 0.3)) }
+    case 'spring':
+      // 神秘池子(2026-08-15用户设计): 喝/不喝二选一, 喝按难度概率赌
+      // 简单: 60%回复30% / 40%扣10%; 困难: 50%回复30% / 50%扣10%; 噩梦: 40%回复20% / 60%扣15%
+      if (p.difficulty === 'nightmare') return { type, successRate: 0.4, healPercent: 0.2, damagePercent: 0.15 }
+      if (p.difficulty === 'hard') return { type, successRate: 0.5, healPercent: 0.3, damagePercent: 0.1 }
+      return { type, successRate: 0.6, healPercent: 0.3, damagePercent: 0.1 }
     case 'trap': return { type, damage: Math.max(1, Math.floor(p.hp * 0.15)), dodgeChance: 0.15 }
     case 'deadend': return { type }
     case 'buffStone': return { type, attackBonus: 2 }
@@ -156,6 +164,7 @@ function generateEvents() {
   rightState = 'door'
   activeSide = null
   trapResult = null
+  springResult = null
   cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
   roomsPerFloor = GE.getRoomsPerFloor(S.player.floor)
   saveExploreState()
@@ -267,6 +276,7 @@ function touch(x, y) {
   else if (state === 'altar') hitBottom = cy + 108
   else if (state === 'monster') hitBottom = cy + 86
   else if (state === 'camp') hitBottom = cy + 106  // 营地: 离开按钮底(两行描述+按钮下移)
+  else if (state === 'spring') hitBottom = cy + 106  // 神秘池子: 不喝按钮底(同营地布局)
   if (y > cardTop && y < hitBottom) {
 
     if (state === 'door') {
@@ -305,6 +315,14 @@ function touch(x, y) {
       const mbw = w * 0.8
       if (yy > cy + 38 && yy < cy + 68) {
         if (xx > cx - mbw / 2 && xx < cx + mbw / 2) campRest(side, evt)
+      } else if (yy > cy + 76 && yy < cy + 106) {
+        if (xx > cx - mbw / 2 && xx < cx + mbw / 2) finishSide(side)
+      }
+    } else if (state === 'spring') {
+      // 神秘池子: 喝一口(cy+38~68) / 不喝(cy+76~106), 与 drawSpringCard 同公式
+      const mbw = w * 0.8
+      if (yy > cy + 38 && yy < cy + 68) {
+        if (xx > cx - mbw / 2 && xx < cx + mbw / 2) drinkSpring(side, evt)
       } else if (yy > cy + 76 && yy < cy + 106) {
         if (xx > cx - mbw / 2 && xx < cx + mbw / 2) finishSide(side)
       }
@@ -371,7 +389,9 @@ function pickSide(side) {
     case 'coins':
       p.gold += evt.gold; setState(side, 'result'); S.savePlayer(); break
     case 'spring':
-      p.heal(evt.heal); setState(side, 'result'); S.savePlayer(); break
+      // 神秘池子: 显示喝/不喝选项卡(2026-08-15用户设计, 不再直接回血)
+      setState(side, 'spring')
+      break
     case 'trap': {
       const dodged = Math.random() < evt.dodgeChance
       let dmg = 0
@@ -831,6 +851,8 @@ function drawCard(x, y, w, h, side, slideIn) {
     drawAltarCard(cx, cy, evt, side, w)
   } else if (state === 'camp') {
     drawCampCard(cx, cy, evt, side, w)
+  } else if (state === 'spring') {
+    drawSpringCard(cx, cy, evt, side, w)
   }
 
   // 恢复内容缩放
@@ -847,7 +869,13 @@ function drawResultCard(cx, cy, evt, w) {
   switch (evt.type) {
     case 'treasure': icon = '📦'; title = '宝箱'; desc = '获得' + evt.gold + '金币'; descColor = '#f0c040'; break
     case 'coins': icon = '🪙'; title = '散落金币'; desc = '捡到' + evt.gold + '金币'; descColor = '#f0c040'; break
-    case 'spring': icon = '💧'; title = '生命泉水'; desc = '恢复' + evt.heal + '生命'; descColor = '#2ecc71'; break
+    case 'spring':
+      // 神秘池子结果(2026-08-15): 喝后显示回复/扣血(springResult)
+      icon = '💧'
+      title = springResult && springResult.ok ? '甘甜可口！' : '这是什么味道...'
+      desc = springResult && springResult.ok ? '恢复' + springResult.amount + '生命' : '扣除' + springResult.amount + '生命'
+      descColor = springResult && springResult.ok ? '#2ecc71' : '#e74c3c'
+      break
     case 'trap':
       icon = '⚠️'; title = trapResult && trapResult.dodged ? '闪避成功' : '触发陷阱'
       desc = trapResult && trapResult.dodged ? '毫发无伤' : '受到' + (trapResult ? trapResult.damage : 0) + '伤害'
@@ -1010,6 +1038,48 @@ function campRest(side, evt) {
     saveExploreState()
     wx.showToast({ title: '安全休息，生命回满', icon: 'success' })
   }
+}
+
+// 神秘池子: 喝一口(按难度概率: 成功回复上限% / 失败扣当前生命%)
+function drinkSpring(side, evt) {
+  const p = S.player
+  const ok = Math.random() < (evt.successRate || 0.6)
+  if (ok) {
+    const amount = Math.max(1, Math.floor(p.totalMaxHp * (evt.healPercent || 0.3)))
+    p.heal(amount)
+    springResult = { drank: true, ok: true, amount }
+  } else {
+    const dmg = Math.max(1, Math.floor(p.hp * (evt.damagePercent || 0.1)))
+    p.hp = Math.max(0, p.hp - dmg)
+    springResult = { drank: true, ok: false, amount: dmg }
+  }
+  setState(side, 'result')
+  // 先查死亡再存档: 池子扣血致死不能把0血存档留下
+  if (p.isDead()) {
+    clearExploreState()
+    try { wx.removeStorageSync('dungeon_save') } catch (e) {}
+    S.switchScene('menu')
+    return
+  }
+  S.savePlayer()
+  saveExploreState()
+}
+
+function drawSpringCard(cx, cy, evt, side, w) {
+  const ctx = S.ctx
+  const p = S.player
+  const success = Math.round((evt.successRate || 0.6) * 100)
+  const healP = Math.round((evt.healPercent || 0.3) * 100)
+  const dmgP = Math.round((evt.damagePercent || 0.1) * 100)
+  // 神秘池子卡: 💧 标题 + 描述(神秘液体, 写明概率) + 喝/不喝按钮
+  centerEmoji(ctx, '💧', cx, cy - 58, 36)
+  text(ctx, '神秘池子', cx, cy - 32, 16, COLORS.gold, 'center', true)
+  // 描述两行: 不明液体 + 概率后果(一行放不下会截断)
+  text(ctx, '池中装着神秘液体', cx, cy - 8, 12, '#8ac4ff')
+  text(ctx, success + '%回复' + healP + '%，' + (100 - success) + '%扣' + dmgP + '%', cx, cy + 12, 12, '#ffaa55')
+  const bw = w * 0.8
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 38, bw, 30, '🫗 喝一口', () => drinkSpring(side, evt), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '🚶 不喝', () => finishSide(side), ui.BTN.secondary))
 }
 
 // 状态栏高度常量: 展开279px(全部), 收起160px(血条+名称+属性, 不显示按钮)
