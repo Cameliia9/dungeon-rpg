@@ -9,6 +9,13 @@ const audio = require('./audio')
 
 let S = null
 let type = null   // shop | inventory | forge
+
+// 装备回收倍率按难度: easy 60% / hard 50% / nightmare 40% (2026-08-15 用户要求; 实收与按钮显示共用)
+function recycleRate(p) {
+  if (p.difficulty === 'hard') return 0.5
+  if (p.difficulty === 'nightmare') return 0.4
+  return 0.6
+}
 let list = []     // 当前列表项
 let btns = []
 let scroll = 0
@@ -260,11 +267,12 @@ function handleItem(it) {
   if (type === 'shop') {
     // 回收分类空提示(不可点击)
     if (it._recycleEmpty) { build(); return }
-    // 回收旧装备(回收分类专用): 原价50%(2026-08-15 40%→50%用户要求), Boss掉落装备不可回收(已在列表过滤)
+    // 回收旧装备(回收分类专用): 按难度倍率(easy60%/hard50%/nightmare40%, 2026-08-15用户要求),
+    // Boss掉落装备不可回收(已在列表过滤)
     if (it._recycle) {
       const orig = p.inventory[it.invIdx]
       if (!orig) { build(); return }
-      const price = Math.floor(orig.price * 0.5)
+      const price = Math.floor(orig.price * recycleRate(p))
       p.inventory.splice(it.invIdx, 1)
       p.gold += price
       S.savePlayer()
@@ -516,8 +524,8 @@ function drawItemRow(ctx, it, y, h) {
       while (desc.length > 1 && ui.textWidth(ctx, sub2 + desc, 11) > rightEdge - x) desc = desc.slice(0, -1)
       text(ctx, sub2, x, y + 55, 11, '#ffaa00', 'left')
       text(ctx, desc, x + subW2 + 6, y + 55, 11, '#666666', 'left')
-      // ♻️ 回收按钮(橙色, 显示回收价)
-      drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, '♻️ ' + Math.floor(it.price * 0.5), null, ui.BTN.forge))
+      // ♻️ 回收按钮(橙色, 显示回收价; 倍率与实收一致 recycleRate)
+      drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, '♻️ ' + Math.floor(it.price * recycleRate(p)), null, ui.BTN.forge))
       return
     }
     // 行1: 名称(粗体, 截断)
