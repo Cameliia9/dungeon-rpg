@@ -260,11 +260,11 @@ function handleItem(it) {
   if (type === 'shop') {
     // 回收分类空提示(不可点击)
     if (it._recycleEmpty) { build(); return }
-    // 回收旧装备(回收分类专用): 原价40%, Boss掉落装备不可回收(已在列表过滤)
+    // 回收旧装备(回收分类专用): 原价50%(2026-08-15 40%→50%用户要求), Boss掉落装备不可回收(已在列表过滤)
     if (it._recycle) {
       const orig = p.inventory[it.invIdx]
       if (!orig) { build(); return }
-      const price = Math.floor(orig.price * 0.4)
+      const price = Math.floor(orig.price * 0.5)
       p.inventory.splice(it.invIdx, 1)
       p.gold += price
       S.savePlayer()
@@ -517,7 +517,7 @@ function drawItemRow(ctx, it, y, h) {
       text(ctx, sub2, x, y + 55, 11, '#ffaa00', 'left')
       text(ctx, desc, x + subW2 + 6, y + 55, 11, '#666666', 'left')
       // ♻️ 回收按钮(橙色, 显示回收价)
-      drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, '♻️ ' + Math.floor(it.price * 0.4), null, ui.BTN.forge))
+      drawBtn(ctx, makeBtn(btnX, y + 21, btnW, 34, '♻️ ' + Math.floor(it.price * 0.5), null, ui.BTN.forge))
       return
     }
     // 行1: 名称(粗体, 截断)
