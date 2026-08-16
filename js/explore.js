@@ -15,6 +15,7 @@ let activeSide = null
 let footerExpanded = true
 let trapResult = null
 let springResult = null  // 神秘池子结果(2026-08-15): { drank:true, ok, amount } 显示结果卡用
+let campResult = null    // 营地休息结果(2026-08-15): { ambush:true(遇怪先显示遭遇怪物再战斗) } | { ambush:false(安全回满) }
 let roomsPerFloor = 15
 let enterTime = Date.now()   // 探索页入场时间(动画)
 
@@ -35,6 +36,7 @@ function saveExploreState() {
       leftState, rightState,
       trapResult,
       springResult,
+      campResult,
       footerExpanded,
       gate: gate ? { toFloor: gate.toFloor } : null
     })
@@ -63,6 +65,7 @@ function restoreExploreState() {
       rightState = st.rightState || 'door'
       trapResult = st.trapResult || null
       springResult = st.springResult || null
+      campResult = st.campResult || null
       if (typeof st.footerExpanded === 'boolean') footerExpanded = st.footerExpanded
       activeSide = leftState !== 'door' ? 'left' : (rightState !== 'door' ? 'right' : null)
       // ⚠️ 切场景回来(背包/商店等)保持展开放大效果: activeSide 有展开事件时, cardAnim 设为 expand 终态
@@ -165,6 +168,7 @@ function generateEvents() {
   activeSide = null
   trapResult = null
   springResult = null
+  campResult = null
   cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
   roomsPerFloor = GE.getRoomsPerFloor(S.player.floor)
   saveExploreState()
@@ -308,8 +312,11 @@ function touch(x, y) {
         if (xx > cx - mbw / 2 && xx < cx + mbw / 2) fleeMonster(side)
       }
     } else if (state === 'result') {
-      // 好的按钮(红色80%, cy+34)
-      if (yy > cy + 34 && yy < cy + 68) finishSide(side)
+      // 好的/应战按钮(红色80%, cy+34): 营地遇怪时"应战"→startBattle, 其他→finishSide
+      if (yy > cy + 34 && yy < cy + 68) {
+        if (evt && evt.type === 'camp' && campResult && campResult.ambush) startBattle(side, false)
+        else finishSide(side)
+      }
     } else if (state === 'camp') {
       // 营地: 休息(cy+38~68) / 离开(cy+76~106), 与 drawCampCard 同公式
       const mbw = w * 0.8
@@ -883,7 +890,14 @@ function drawResultCard(cx, cy, evt, w) {
       break
     case 'buffStone': icon = '🗿'; title = '增益石碑'; desc = '攻击+' + evt.attackBonus; descColor = '#f0c040'; break
     case 'oldGear': icon = '🦺'; title = '破旧装备'; desc = '防御+' + evt.defense; descColor = COLORS.blue; break
-    case 'camp': icon = '🏕️'; title = '休息营地'; desc = '安全休息，生命回满'; descColor = '#2ecc71'; break
+    case 'camp':
+      // 营地休息结果(2026-08-15): 遇怪先显示"遭遇怪物！"(不直接跳战斗), 安全则回满提示
+      if (campResult && campResult.ambush) {
+        icon = '⚠️'; title = '遭遇怪物！'; desc = '休息惊动了附近的怪物！'; descColor = '#e74c3c'
+      } else {
+        icon = '🏕️'; title = '休息营地'; desc = '安全休息，生命回满'; descColor = '#2ecc71'
+      }
+      break
   }
   // 对齐原版: 图标36px + 标题16px金色粗体 + 描述12px彩色 + 好的按钮(红色80%)
   centerEmoji(ctx, icon, cx, cy - 58, 36)
@@ -891,7 +905,9 @@ function drawResultCard(cx, cy, evt, w) {
   while (desc.length > 1 && ui.textWidth(ctx, desc, 12) > w - 24) desc = desc.slice(0, -1)  // 防溢出
   text(ctx, desc, cx, cy + 10, 12, descColor)
   const side = activeSide || 'left'
-  drawBtn(ctx, makeBtn(cx - w * 0.4, cy + 34, w * 0.8, 34, '好的', () => finishSide(side), ui.BTN.primary))
+  // 营地遇怪: 按钮变"⚔️ 应战"→点击进战斗; 其他(含安全休息)都是"好的"→finishSide
+  const isAmbush = evt.type === 'camp' && campResult && campResult.ambush
+  drawBtn(ctx, makeBtn(cx - w * 0.4, cy + 34, w * 0.8, 34, isAmbush ? '⚔️ 应战' : '好的', () => isAmbush ? startBattle(side, false) : finishSide(side), isAmbush ? ui.BTN.danger : ui.BTN.primary))
 }
 
 function drawMonsterCard(cx, cy, m, w) {
@@ -1024,15 +1040,19 @@ function campRest(side, evt) {
   const p = S.player
   const rate = evt.dangerRate || 0.3
   if (Math.random() < rate) {
-    // 遇怪: 生成该主题随机怪并进战斗(用营地事件覆盖侧, 战斗结束 finishSide)
+    // 遇怪: 生成该主题随机怪, 先显示"遭遇怪物！"信息卡(用户要求, 不直接跳战斗)
+    // result卡的按钮变"⚔️ 应战", 点击后才 startBattle
     const m = GE.getRandomMonster(p.floor, p.difficulty)
     if (side === 'left') leftEvent = { type: 'monster', monster: m }
     else rightEvent = { type: 'monster', monster: m }
+    campResult = { ambush: true }
+    setState(side, 'result')
+    S.savePlayer()
     saveExploreState()
-    startBattle(side, false)
   } else {
     // 安全: 回满血
     p.heal(p.totalMaxHp)
+    campResult = { ambush: false }
     S.savePlayer()
     setState(side, 'result')
     saveExploreState()
