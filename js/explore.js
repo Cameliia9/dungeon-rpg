@@ -983,9 +983,9 @@ function drawCampCard(cx, cy, evt, side, w) {
   // 营地卡: 🏕️ 标题 + 后果描述(两行, 一行放不下会截断) + 休息/离开按钮(对齐怪兽卡风格)
   centerEmoji(ctx, '🏕️', cx, cy - 58, 36)
   text(ctx, '休息营地', cx, cy - 32, 16, COLORS.gold, 'center', true)
-  // 后果描述分两行(用户要求写清后果; 单行约216px超卡片137px会截断到"30%")
+  // 后果描述分两行(用户指定: 遇到来时怪物; 单行约216px超卡片137px会截断)
   text(ctx, '休息可回满血，但 ' + rate + '%', cx, cy - 8, 12, '#ffaa55')
-  text(ctx, '概率遭遇该主题怪物', cx, cy + 12, 12, '#ffaa55')
+  text(ctx, '概率遇到来时怪物', cx, cy + 12, 12, '#ffaa55')
   const bw = w * 0.8
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 38, bw, 30, '🔥 休息', () => campRest(side, evt), ui.BTN.primary))
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '🚶 离开', () => finishSide(side), ui.BTN.secondary))
