@@ -24,11 +24,10 @@ const AFFIXES = [
   { name: '精英', hpMul: 1.3, atkMul: 1.3, defMul: 1.3, expMul: 2, goldMul: 2, desc: '全属性提升，奖励翻倍' }
 ]
 
-// 根据层数与难度决定是否附加词缀（越深越容易遇到）
+// 词缀(精英)怪概率: 固定按难度(2026-08-15用户指定: 简单15%/困难20%/噩梦40%), 不再随层数变化
 function rollAffix(floor, difficulty) {
-  const base = 0.08 + floor * 0.012
-  const diffBonus = difficulty === 'nightmare' ? 0.1 : difficulty === 'hard' ? 0.05 : 0
-  if (Math.random() < base + diffBonus) {
+  const rate = difficulty === 'nightmare' ? 0.4 : difficulty === 'hard' ? 0.2 : 0.15
+  if (Math.random() < rate) {
     return AFFIXES[Math.floor(Math.random() * AFFIXES.length)]
   }
   return null
