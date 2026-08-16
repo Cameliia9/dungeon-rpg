@@ -16,6 +16,7 @@ let footerExpanded = true
 let trapResult = null
 let springResult = null  // 神秘池子结果(2026-08-15): { drank:true, ok, amount } 显示结果卡用
 let campResult = null    // 营地休息结果(2026-08-15): { ambush:true(遇怪先显示遭遇怪物再战斗) } | { ambush:false(安全回满) }
+let blacksmithResult = null  // 流浪铁匠结果(2026-08-16): { name, from, to } 显示结果卡用
 let roomsPerFloor = 15
 let enterTime = Date.now()   // 探索页入场时间(动画)
 
@@ -37,6 +38,7 @@ function saveExploreState() {
       trapResult,
       springResult,
       campResult,
+      blacksmithResult,
       footerExpanded,
       gate: gate ? { toFloor: gate.toFloor } : null
     })
@@ -66,6 +68,7 @@ function restoreExploreState() {
       trapResult = st.trapResult || null
       springResult = st.springResult || null
       campResult = st.campResult || null
+      blacksmithResult = st.blacksmithResult || null
       if (typeof st.footerExpanded === 'boolean') footerExpanded = st.footerExpanded
       activeSide = leftState !== 'door' ? 'left' : (rightState !== 'door' ? 'right' : null)
       // ⚠️ 切场景回来(背包/商店等)保持展开放大效果: activeSide 有展开事件时, cardAnim 设为 expand 终态
@@ -112,7 +115,7 @@ function ctx() { return S.ctx }
 
 function genEvent() {
   // 85% 怪 / 15% 事件
-  const types = ['treasure', 'spring', 'merchant', 'trap', 'camp', 'altar', 'deadend', 'coins', 'buffStone', 'oldGear']
+  const types = ['treasure', 'spring', 'merchant', 'trap', 'camp', 'altar', 'deadend', 'coins', 'buffStone', 'oldGear', 'blacksmith']
   if (Math.random() < 0.85) {
     const m = GE.getRandomMonster(S.player.floor, S.player.difficulty)
     return { type: 'monster', monster: m }
@@ -154,6 +157,14 @@ function buildSimpleEvent(type) {
       for (const it of items) it.price = Math.floor(it.price * (1 + (floor - 1) * 0.02))
       return { type: 'merchant', items, themeName: theme.name, merchantName: theme.merchantName || '神秘商人', merchantIcon: theme.merchantIcon || '🧙' }
     }
+    case 'blacksmith': {
+      // 流浪铁匠(2026-08-16用户新增事件): 免费强化一件穿戴装备
+      // 穿戴4槽全满级/无装备时不生成该事件(换金币兜底, 避免白板事件)
+      const slots = ['weapon', 'top', 'pants', 'accessory']
+      const forgeable = slots.some(s => p[s] && (p[s].enhanceLevel || 0) < p.maxEnhanceLevel)
+      if (!forgeable) return buildSimpleEvent('coins')
+      return { type: 'blacksmith' }
+    }
     default: return { type: 'deadend' }
   }
 }
@@ -169,6 +180,7 @@ function generateEvents() {
   trapResult = null
   springResult = null
   campResult = null
+  blacksmithResult = null
   cardAnim = { phase: 'idle', start: 0, side: null, dur: 400 }
   roomsPerFloor = GE.getRoomsPerFloor(S.player.floor)
   saveExploreState()
@@ -277,6 +289,11 @@ function touch(x, y) {
   const yy = sy === 1 ? y : (y - cy) / sy + cy
   let hitBottom = cardTop + cardH
   if (state === 'merchant') hitBottom = cy + 235
+  else if (state === 'blacksmith') {
+    // 流浪铁匠: 动态高度 = 标题区(cy-127) + 可强化装备行(行距50) + 离开按钮(42)
+    const n = forgeableSlots().length
+    hitBottom = cy - 69 + n * 50 + 42
+  }
   else if (state === 'altar') hitBottom = cy + 108
   else if (state === 'monster') hitBottom = cy + 86
   else if (state === 'camp') hitBottom = cy + 106  // 营地: 离开按钮底(两行描述+按钮下移)
@@ -286,7 +303,7 @@ function touch(x, y) {
     if (state === 'door') {
       // 另一侧事件进行中(怪物/商人/祭坛/结果)时, 本侧门不可点
       const otherState = side === 'left' ? rightState : leftState
-      const busyOther = otherState === 'monster' || otherState === 'merchant' || otherState === 'altar' || otherState === 'result'
+      const busyOther = otherState === 'monster' || otherState === 'merchant' || otherState === 'altar' || otherState === 'result' || otherState === 'blacksmith'
       if (evt && evt.type === 'stairs') {
         if (yy > cy + 38 && yy < cy + 76) {
           if (busyOther) { wx.showToast({ title: '请先完成当前事件', icon: 'none' }); return }
@@ -353,6 +370,19 @@ function touch(x, y) {
       if (yy > cy + 4 && yy < cy + 34) altarOffer(side, 'attack', evt)
       else if (yy > cy + 40 && yy < cy + 70) altarOffer(side, 'defense', evt)
       else if (yy > cy + 76 && yy < cy + 106) finishSide(side)
+    } else if (state === 'blacksmith') {
+      // 流浪铁匠: 可强化装备行(46px高, 行距50: 名称+当前强化上行, 强化按钮下行) + 离开按钮
+      // ⚠️ 命中区与绘制同步(装备卡=整卡宽 iw=w, 按钮 yy+11~35, 行距50, 行数=forgeableSlots())
+      const slots2 = forgeableSlots()
+      let yy3 = cy - 69
+      for (let i = 0; i < slots2.length; i++) {
+        if (yy > yy3 - 2 && yy < yy3 + 44) {
+          const iw = w, ix = cx - iw / 2
+          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy3 + 11 && yy < yy3 + 35) { blacksmithForge(side, slots2[i]); return }
+        }
+        yy3 += 50
+      }
+      if (yy > yy3 + 6 && yy < yy3 + 42) finishSide(side)
     } else if (state === 'blocked') {
       // 封锁不可点击
     }
@@ -438,6 +468,10 @@ function pickSide(side) {
       break
     case 'altar':
       setState(side, 'altar')
+      break
+    case 'blacksmith':
+      // 流浪铁匠: 显示穿戴装备强化列表(免费强化一件)
+      setState(side, 'blacksmith')
       break
   }
   saveExploreState()
@@ -860,6 +894,8 @@ function drawCard(x, y, w, h, side, slideIn) {
     drawCampCard(cx, cy, evt, side, w)
   } else if (state === 'spring') {
     drawSpringCard(cx, cy, evt, side, w)
+  } else if (state === 'blacksmith') {
+    drawBlacksmithCard(cx, cy, evt, side, w)
   }
 
   // 恢复内容缩放
@@ -897,6 +933,13 @@ function drawResultCard(cx, cy, evt, w) {
       } else {
         icon = '🏕️'; title = '休息营地'; desc = '安全休息，生命回满'; descColor = '#2ecc71'
       }
+      break
+    case 'blacksmith':
+      // 流浪铁匠结果(2026-08-16): 免费强化成功, 显示装备名与强化等级
+      icon = '🔨'
+      title = '强化成功！'
+      desc = blacksmithResult ? (blacksmithResult.name + ' +' + blacksmithResult.from + ' → +' + blacksmithResult.to) : '装备已强化'
+      descColor = '#f0c040'
       break
   }
   // 对齐原版: 图标36px + 标题16px金色粗体 + 描述12px彩色 + 好的按钮(红色80%)
@@ -1100,6 +1143,62 @@ function drawSpringCard(cx, cy, evt, side, w) {
   const bw = w * 0.8
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 38, bw, 30, '🫗 喝一口', () => drinkSpring(side, evt), ui.BTN.primary))
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '🚶 不喝', () => finishSide(side), ui.BTN.secondary))
+}
+
+// 穿戴装备槽位(铁匠卡显示顺序, 含双饰品槽)
+const BLACKSMITH_SLOTS = ['weapon', 'top', 'pants', 'accessory1', 'accessory2']
+const BLACKSMITH_SLOT_NAMES = { weapon: '🗡️', top: '👕', pants: '👖', accessory1: '💍', accessory2: '💍' }
+
+// 可强化的穿戴槽(有装备且未满级) — 绘制与 touch 共用, 保证行数/位置一致
+function forgeableSlots() {
+  const p = S.player
+  return BLACKSMITH_SLOTS.filter(s => p[s] && (p[s].enhanceLevel || 0) < p.maxEnhanceLevel)
+}
+
+function drawBlacksmithCard(cx, cy, evt, side, w) {
+  const ctx = S.ctx
+  const p = S.player
+  // 流浪铁匠卡(对齐商人卡布局): 🔨 + 标题 + 描述 + 可强化装备列表 + 离开
+  text(ctx, '🔨', cx, cy - 127, 40)
+  text(ctx, '流浪铁匠', cx, cy - 97, 18, COLORS.gold, 'center', true)
+  text(ctx, '免费帮你强化一件装备', cx, cy - 75, 12, COLORS.textDim)
+
+  // 可强化装备列表（每行: 槽位图标+名称上行, 当前强化+按钮下行; 行距50 与 touch 命中区同步）
+  const slots = forgeableSlots()
+  let yy = cy - 69
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i]
+    const it = p[slot]
+    const lv = it.enhanceLevel || 0
+    const iw = w, ix = cx - iw / 2
+    roundRect(ctx, ix, yy - 2, iw, 46, 6, '#1a1a2e', '#2a2a4a', 1)
+    // 名称(左上, 截断到按钮左侧)
+    let nm = BLACKSMITH_SLOT_NAMES[slot] + ' ' + it.name
+    while (nm.length > 1 && ui.textWidth(ctx, nm, 14) > (ix + iw - 84) - (ix + 8)) nm = nm.slice(0, -1)
+    text(ctx, nm, ix + 8, yy + 8, 14, COLORS.gold, 'left', true)
+    // 当前强化(左下)
+    text(ctx, '强化 +' + lv + ' / +' + p.maxEnhanceLevel, ix + 8, yy + 30, 11, '#8a8a9a', 'left')
+    // 强化按钮(右下)
+    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 11, 56, 24, '强化', () => blacksmithForge(side, slot), { ...ui.BTN.gold, size: 11 }))
+    yy += 50
+  }
+  // 离开按钮(卡片内)
+  drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
+}
+
+// 流浪铁匠: 免费强化一件穿戴装备(不扣金币, 与铁匠铺付费强化区分)
+function blacksmithForge(side, slot) {
+  const p = S.player
+  const item = p[slot]
+  if (!item) return
+  const lv = item.enhanceLevel || 0
+  if (lv >= p.maxEnhanceLevel) return
+  item.enhanceLevel = lv + 1
+  blacksmithResult = { name: item.name, from: lv, to: lv + 1 }
+  setState(side, 'result')
+  S.savePlayer()
+  saveExploreState()
+  audio.play('enhance')  // 强化成功音(与铁匠铺共用)
 }
 
 // 状态栏高度常量: 展开279px(全部), 收起160px(血条+名称+属性, 不显示按钮)
