@@ -426,26 +426,31 @@ function touchMoveSettings(x, y) {
 }
 function touchEndSettings() { settingsDrag = null }
 
+// 难度按钮专属配色(2026-08-15 用户要求三难度颜色区分): 简单绿/困难橙黄/噩梦红
+const DIFF_BTN_STYLE = {
+  easy: { bg1: '#1e5c33', bg2: '#2f8a4f', border: '#4dd97a', fg: '#d8ffe8', r: 12, size: 16 },
+  hard: { bg1: '#6b4f14', bg2: '#9c7a1e', border: '#e8c04d', fg: '#fff3d8', r: 12, size: 16 },
+  nightmare: { bg1: '#701d24', bg2: '#a8323b', border: '#ff5c66', fg: '#ffd8dc', r: 12, size: 16 }
+}
+
 function buildDifficulty() {
   btns = []
-  // 对齐原版: 每个难度按钮带属性描述(HP/ATK/GOLD/敌人倍率)
   const bw = Math.min(220, LW * 0.7), bh = 64, cx = LW / 2
   let y = LH * 0.24
   btns.push({
-    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('easy'), { ...ui.BTN.primary, size: 15 }),
-    mainLabel: '🟢 简单', diff: 'easy', desc: 'HP 100 · ATK 12 · GOLD 50 · 敌人×1.0', descColor: '#a0ffa0'
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('easy'), DIFF_BTN_STYLE.easy),
+    mainLabel: '🟢 简单', diff: 'easy'
   }); y += bh + 12
   btns.push({
-    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('hard'), { ...ui.BTN.secondary, size: 15 }),
-    mainLabel: '🟡 困难', diff: 'hard', desc: 'HP 95 · ATK 11 · GOLD 35 · 敌人攻×1.25', descColor: '#ffe080'
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('hard'), DIFF_BTN_STYLE.hard),
+    mainLabel: '🟡 困难', diff: 'hard'
   }); y += bh + 12
   btns.push({
-    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('nightmare'), { ...ui.BTN.danger, size: 15 }),
-    mainLabel: '🔴 噩梦', diff: 'nightmare', desc: 'HP 90 · ATK 10 · GOLD 20 · 敌人攻×1.5', descColor: '#ff8080'
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('nightmare'), DIFF_BTN_STYLE.nightmare),
+    mainLabel: '🔴 噩梦', diff: 'nightmare'
   }); y += bh + 12
-  // 描述文字区(选中难度后显示, 切换时原地淡出/淡入) 与 进入按钮之间留空隙
-  // 进入按钮: 选中难度后才可点(disabled 样式)
-  enterBtnY = y + bh + 40
+  // 描述文字区(按钮下方) + 噩梦红字(描述下方单独行) + 进入按钮(最下方, 往下移)
+  enterBtnY = y + bh + 70
   btns.push(makeBtn(cx - bw / 2, enterBtnY, bw, bh - 18, '⚔️ 进入', () => { if (selDiff) startNew(selDiff) }, { ...ui.BTN.primary, size: 15 }))
 }
 
@@ -639,9 +644,7 @@ function drawDifficulty() {
 
   const dur = 1500, dist = 28  // 文字淡入1.5s(用户指定)
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
-  const p2 = ui.animProgress(sceneEnterTime, 60, dur)
   text(ctx, '选择难度', LW / 2, LH * 0.12 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
-  text(ctx, '难度越高，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）', LW / 2, LH * 0.18 + (1 - p2) * dist, 12, COLORS.textDim, 'center', false, p2)
 
   const delays = [120, 180, 240, 300]
   for (let i = 0; i < btns.length; i++) {
@@ -655,34 +658,30 @@ function drawDifficulty() {
       isDisabled = !selDiff
       theme = isDisabled ? ui.BTN.disabled : { ...ui.BTN.primary, fg: '#ffffff' }
     } else if (selDiff === b.diff) {
-      theme = { ...b.style, border: '#ffd700', bg1: 'rgba(255,215,0,0.20)', bg2: 'rgba(255,215,0,0.10)' }
+      theme = { ...b.style, border: '#ffd700', bg1: 'rgba(255,215,0,0.25)', bg2: 'rgba(255,215,0,0.12)' }
     }
     drawBtn(ctx, { ...b, style: theme }, null, p)
     if (b.mainLabel) {
-      text(ctx, b.mainLabel, b.x + b.w / 2, b.y + 20, 15, selDiff === b.diff ? '#ffd700' : COLORS.text, 'center', true, p)
-      text(ctx, b.desc, b.x + b.w / 2, b.y + 41, 11, b.descColor, 'center', true, p)
+      text(ctx, b.mainLabel, b.x + b.w / 2, b.y + b.h / 2 + 1, 16, selDiff === b.diff ? '#ffd700' : (b.style.fg || COLORS.text), 'center', true, p)
     }
   }
 
   // 描述文字(选中难度后显示): 分行, 切换时旧文字原地淡出(0~350ms)→新文字原地淡入(350~800ms)
-  // 布局: 描述区在进入按钮上方(整体上移, 多行向上生长), 噩梦红字放描述右侧垂直居中(不压按钮)
+  // 布局: 描述区在按钮下方/进入按钮上方(向上生长), 噩梦红字在描述下方单独一行(不与描述并排)
   const t = selSwitchAt ? (Date.now() - selSwitchAt) / 800 : 1
   const lineH = 24
-  const descBlockY = enterBtnY - 36  // 描述区最后一行基线(向上生长: 行数越多整体越往上)
+  const descBlockY = enterBtnY - 72  // 描述区最后一行基线(向上生长: 行数越多整体越往上, 给红字留行)
   // 画描述行(淡出/淡入共用 alpha 和 行数组)
   const drawDesc = (lines, a) => {
     if (a <= 0 || !lines) return
     const totalH = lines.length * lineH
     const top = descBlockY - totalH + lineH / 2  // 首行中线(多行整体在按钮上方)
     lines.forEach((ln, i) => {
-      // 噩梦: 描述整体偏左(右侧留给红字, 新旧淡出/淡入位置一致); 其他难度居中
-      // cx=LW*0.26: 最长行195px右缘≈195 < 红字左缘203, 不重叠
-      const cx = (lines === DIFF_DESC.nightmare) ? LW * 0.26 : LW / 2
-      text(ctx, ln, cx, top + i * lineH, 13, '#d0d0e0', 'center', true, a)
+      text(ctx, ln, LW / 2, top + i * lineH, 13, '#d0d0e0', 'center', true, a)
     })
-    // 噩梦红字: 描述右侧垂直居中, right对齐不压按钮(右缘贴LW-16, 左缘与描述右缘不重叠)
+    // 噩梦红字: 描述下方单独一行, 居中(不与描述并排, 不压进入按钮)
     if (lines === DIFF_DESC.nightmare) {
-      text(ctx, '根本不可能！', LW - 16, top + totalH / 2 - lineH / 2, 26, '#ff3333', 'right', true, a)
+      text(ctx, '根本不可能！', LW / 2, descBlockY + lineH, 26, '#ff3333', 'center', true, a)
     }
   }
   if (selDiff) {
