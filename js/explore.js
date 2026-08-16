@@ -132,8 +132,9 @@ function buildSimpleEvent(type) {
       return { type, cost: 30 + 20 * (themeNum - 1), maxCount: 3, altarCount: 0 }
     }
     case 'camp':
-      // ⚠️ 修复(2026-08-15): 之前误返回merchant导致营地从未出现, 玩家反馈"从来没遇到过"
-      return { type: 'camp' }
+      // 营地: 休息/离开二选一(2026-08-15用户要求); 休息按难度概率遇该主题怪(easy30/hard40/nightmare50)
+      // ⚠️ 修复史: 曾误返回merchant导致营地从未出现(玩家反馈), 已修
+      return { type: 'camp', dangerRate: p.difficulty === 'nightmare' ? 0.5 : p.difficulty === 'hard' ? 0.4 : 0.3 }
     case 'merchant': {
       // ⚠️ 补上(2026-08-15): camp误返回merchant期间商人靠bug出现, 营地修复后必须补真正的商人case
       const theme = Data.getThemeForFloor(floor)
@@ -298,6 +299,14 @@ function touch(x, y) {
     } else if (state === 'result') {
       // 好的按钮(红色80%, cy+34)
       if (yy > cy + 34 && yy < cy + 68) finishSide(side)
+    } else if (state === 'camp') {
+      // 营地: 休息(cy+14~44) / 离开(cy+52~82), 与 drawCampCard 同公式
+      const mbw = w * 0.8
+      if (yy > cy + 14 && yy < cy + 44) {
+        if (xx > cx - mbw / 2 && xx < cx + mbw / 2) campRest(side, evt)
+      } else if (yy > cy + 52 && yy < cy + 82) {
+        if (xx > cx - mbw / 2 && xx < cx + mbw / 2) finishSide(side)
+      }
     } else if (state === 'deadend') {
       // 返回按钮(cy+42)
       if (yy > cy + 42 && yy < cy + 76) blockSide(side)
@@ -396,9 +405,8 @@ function pickSide(side) {
       p.tempDefenseBuff = (p.tempDefenseBuff || 0) + evt.defense
       setState(side, 'result'); S.savePlayer(); break
     case 'camp':
-      setState(side, 'result')
-      p.heal(p.totalMaxHp)
-      S.savePlayer()
+      // 营地: 显示休息/离开选项卡(2026-08-15用户要求, 不再直接回满血)
+      setState(side, 'camp')
       break
     case 'altar':
       setState(side, 'altar')
@@ -820,6 +828,8 @@ function drawCard(x, y, w, h, side, slideIn) {
     drawMerchantCard(cx, cy, evt, side, w)
   } else if (state === 'altar') {
     drawAltarCard(cx, cy, evt, side, w)
+  } else if (state === 'camp') {
+    drawCampCard(cx, cy, evt, side, w)
   }
 
   // 恢复内容缩放
@@ -963,6 +973,43 @@ function altarOffer(side, type, evt) {
   saveExploreState()
   wx.showToast({ title: '献祭成功！', icon: 'success' })
   if (evt.altarCount >= evt.maxCount) setTimeout(() => finishSide(side), 400)
+}
+
+function drawCampCard(cx, cy, evt, side, w) {
+  const ctx = S.ctx
+  const p = S.player
+  const rate = Math.round((evt.dangerRate || 0.3) * 100)
+  // 营地卡: 🏕️ 标题 + 后果描述(写清休息的风险) + 休息/离开按钮(对齐怪兽卡风格)
+  centerEmoji(ctx, '🏕️', cx, cy - 58, 36)
+  text(ctx, '休息营地', cx, cy - 32, 16, COLORS.gold, 'center', true)
+  // 后果描述: 休息可回满血, 但 rate% 概率遭遇该主题怪物(写卡片上, 用户要求)
+  let desc = '休息可回满血，但 ' + rate + '% 概率遭遇该主题怪物'
+  while (desc.length > 1 && ui.textWidth(ctx, desc, 12) > w - 24) desc = desc.slice(0, -1)
+  text(ctx, desc, cx, cy - 8, 12, '#ffaa55')
+  const bw = w * 0.8
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 14, bw, 30, '🔥 休息', () => campRest(side, evt), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 52, bw, 30, '🚶 离开', () => finishSide(side), ui.BTN.secondary))
+}
+
+// 营地休息: 按概率遭遇该主题怪物(遇怪进战斗)或安全回满血
+function campRest(side, evt) {
+  const p = S.player
+  const rate = evt.dangerRate || 0.3
+  if (Math.random() < rate) {
+    // 遇怪: 生成该主题随机怪并进战斗(用营地事件覆盖侧, 战斗结束 finishSide)
+    const m = GE.getRandomMonster(p.floor, p.difficulty)
+    if (side === 'left') leftEvent = { type: 'monster', monster: m }
+    else rightEvent = { type: 'monster', monster: m }
+    saveExploreState()
+    startBattle(side, false)
+  } else {
+    // 安全: 回满血
+    p.heal(p.totalMaxHp)
+    S.savePlayer()
+    setState(side, 'result')
+    saveExploreState()
+    wx.showToast({ title: '安全休息，生命回满', icon: 'success' })
+  }
 }
 
 // 状态栏高度常量: 展开279px(全部), 收起160px(血条+名称+属性, 不显示按钮)

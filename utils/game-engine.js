@@ -78,7 +78,8 @@ class Player {
   }
 
   get totalMaxHp() {
-    let h = this.maxHp + this.level * 10
+    // ⚠️ (level-1)*10: 初始Lv1不加成(=maxHp 100), 升级成长不变(每级仍+14: maxHp+4 + 等级+10)
+    let h = this.maxHp + (this.level - 1) * 10
     for (const slot of ['accessory1', 'accessory2']) {
       if (this[slot]) h += (this[slot].hp || 0) + this.getEnhanceBonus(this[slot])  // 无血量饰品(暴击/闪避款)加0
     }
