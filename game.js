@@ -158,6 +158,7 @@ let prevDiff = null        // 切换前的难度(描述文字旧文字淡出用)
 let selSwitchAt = 0        // 难度切换时间(描述文字淡出/淡入 + 背景亮度缓动基准)
 let enterBtnY = 0          // 进入按钮y(描述文字画在其上方)
 let curDark = 0            // 背景暗度当前值(缓动动画中; 必须声明否则严格模式ReferenceError)
+let ashParticles = null    // 难度页灰烬粒子池(首次draw时填充; 声明避免严格模式ReferenceError)
 let savedGame = false      // 是否有存档
 let panels = null          // 面板层(商店/背包/铁匠铺), null=无
 
@@ -649,6 +650,55 @@ function drawDifficulty() {
     ctx.fillRect(0, 0, LW, LH)
   }
 
+  // ===== 难度压迫感氛围(2026-08-16 用户选A血雾+C灰烬): 强度随 curDark 缓动(选难度后逐渐浮现) =====
+  // 强度 0~1: 简单≈0 / 困难≈0.55 / 噩梦=1 (curDark 0/0.45/0.82 归一化)
+  const gloom = Math.min(1, curDark / 0.82)
+  if (gloom > 0.03) {
+    const now = Date.now() / 1000
+    // A 血雾翻涌: 底部/两侧暗红雾团缓缓漂移(噩梦最浓)
+    ctx.save()
+    const fogCol = [120, 18, 26]  // 暗红
+    for (let i = 0; i < 3; i++) {
+      const fx = LW * (0.15 + 0.35 * i) + Math.sin(now * 0.35 + i * 2.4) * 26
+      const fy = LH * (0.72 + 0.16 * i) + Math.cos(now * 0.28 + i * 1.8) * 18
+      const fr = LW * (0.34 + 0.12 * i)
+      const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr)
+      const a = gloom * (0.30 - 0.07 * i)
+      g.addColorStop(0, 'rgba(' + fogCol[0] + ',' + fogCol[1] + ',' + fogCol[2] + ',' + a.toFixed(3) + ')')
+      g.addColorStop(1, 'rgba(' + fogCol[0] + ',' + fogCol[1] + ',' + fogCol[2] + ',0)')
+      ctx.fillStyle = g
+      ctx.beginPath()
+      ctx.arc(fx, fy, fr, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    // C 灰烬飘落: 暗色粒子缓缓下落+左右摇曳; 噩梦时偏暗红火星色
+    // 粒子池: 复用模块级数组(首次填充), 每帧按时间推进
+    if (!ashParticles) {
+      ashParticles = []
+      for (let i = 0; i < 26; i++) ashParticles.push({
+        x: Math.random() * LW, y: Math.random() * LH,
+        spd: 14 + Math.random() * 26,      // 下落速度 px/s
+        sway: 10 + Math.random() * 18,     // 左右摆幅
+        ph: Math.random() * Math.PI * 2,   // 相位
+        size: 1.2 + Math.random() * 2.2
+      })
+    }
+    // 粒子颜色: 暗灰→暗红(随gloom加深)
+    const ar = 90 + 60 * gloom, ag = 88 - 40 * gloom, ab = 96 - 50 * gloom
+    for (const p of ashParticles) {
+      p.y += p.spd * (1 / 60)
+      if (p.y > LH + 8) { p.y = -8; p.x = Math.random() * LW }
+      const px = p.x + Math.sin(now * 1.1 + p.ph) * p.sway
+      ctx.globalAlpha = (0.22 + 0.28 * gloom) * (0.6 + 0.4 * Math.sin(now * 2 + p.ph))
+      ctx.fillStyle = 'rgb(' + ar + ',' + ag + ',' + ab + ')'
+      ctx.beginPath()
+      ctx.arc(px, p.y, p.size, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.restore()
+    ctx.globalAlpha = 1
+  }
+
   // 左上角返回箭头(← 文字箭头, 统一: 22px 纯白, 与探索页顶部一致; 原为纯三角形被用户否)
   text(ctx, '←', 26, 44, 22, '#ffffff', 'center', true)
 
@@ -668,9 +718,17 @@ function drawDifficulty() {
       isDisabled = !selDiff
       theme = isDisabled ? ui.BTN.disabled : { ...ui.BTN.primary, fg: '#ffffff' }
     } else if (selDiff === b.diff) {
-      theme = { ...b.style, border: '#ffd700', bg1: 'rgba(255,215,0,0.25)', bg2: 'rgba(255,215,0,0.12)' }
+      // 选中: 金色边框, 背景保持原难度色(不叠加半透明金=变脏变暗; 用户否掉旧选中样式)
+      theme = { ...b.style, border: '#ffd700' }
+    }
+    // 选中难度按钮: 金色外发光(对齐探索页选中卡 glow; drawBtn 不主动清 shadow, 需 save/restore)
+    if (!isEnter && selDiff === b.diff) {
+      ctx.save()
+      ctx.shadowColor = 'rgba(255,215,0,0.85)'
+      ctx.shadowBlur = 14
     }
     drawBtn(ctx, { ...b, style: theme }, null, p)
+    if (!isEnter && selDiff === b.diff) ctx.restore()
     if (b.mainLabel) {
       text(ctx, b.mainLabel, b.x + b.w / 2, b.y + b.h / 2 + 1, 16, selDiff === b.diff ? '#ffd700' : (b.style.fg || COLORS.text), 'center', true, p)
     }
