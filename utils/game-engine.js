@@ -134,10 +134,10 @@ class Player {
     this.baseAttack += 1  // 升级收益削一档: 每级攻+3(1+2), 2级不碾压小怪
     this.baseDefense += 1
     this.maxHp += 4       // 每级血+14(4+10)
-    // ⚠️ 升级回复改为"回复到上限的固定比例"(简单70%/困难60%/噩梦50%):
-    // 血量低于该比例时回满到比例线, 高于则保持现状(不扣血)
-    const target = Math.floor(this.totalMaxHp * this.levelUpHealRatio)
-    this.hp = Math.max(this.hp, Math.min(this.totalMaxHp, target))
+    // ⚠️ 升级回复=回复上限的固定比例血量(2026-08-15用户指定: 简单70%/困难60%/噩梦50%):
+    // 回复量=floor(上限×比例), 封顶到上限(不是回复到比例线, 高血也会加)
+    const healAmt = Math.floor(this.totalMaxHp * this.levelUpHealRatio)
+    this.hp = Math.min(this.totalMaxHp, this.hp + healAmt)
   }
 
   takeDamage(rawDamage) {
