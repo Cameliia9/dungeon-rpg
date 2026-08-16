@@ -697,26 +697,6 @@ function drawDifficulty() {
     }
     ctx.restore()
     ctx.globalAlpha = 1
-
-    // B2 心跳红晕(2026-08-16 用户选): 边缘暗红光晕随心跳节奏脉动(咚-哒双脉冲), 噩梦更快更亮
-    // 心跳周期按难度: 困难1.15s / 噩梦0.8s(更急促); 简单gloom≈0自然无
-    const period = selDiff === 'nightmare' ? 0.8 : 1.15
-    const ht = (now % period) / period  // 0~1 心跳相位
-    // 真实心跳包络: lub(主脉冲) + dub(次脉冲), 高斯形
-    const lub = Math.exp(-Math.pow((ht - 0.10) * 11, 2))
-    const dub = Math.exp(-Math.pow((ht - 0.46) * 15, 2)) * 0.55
-    const pulse = Math.max(lub, dub)
-    if (pulse > 0.04) {
-      const hr = Math.max(LW, LH) * 0.72
-      const g2 = ctx.createRadialGradient(LW / 2, LH / 2, hr * 0.42, LW / 2, LH / 2, hr)
-      const ha = (gloom * pulse * 0.42).toFixed(3)
-      g2.addColorStop(0, 'rgba(150,22,32,0)')
-      g2.addColorStop(1, 'rgba(150,22,32,' + ha + ')')
-      ctx.fillStyle = g2
-      ctx.beginPath()
-      ctx.arc(LW / 2, LH / 2, hr, 0, Math.PI * 2)
-      ctx.fill()
-    }
   }
 
   // 左上角返回箭头(← 文字箭头, 统一: 22px 纯白, 与探索页顶部一致; 原为纯三角形被用户否)
