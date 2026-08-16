@@ -991,7 +991,7 @@ function drawCampCard(cx, cy, evt, side, w) {
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '🚶 离开', () => finishSide(side), ui.BTN.secondary))
 }
 
-// 营地休息: 按概率遭遇该主题怪物(遇怪进战斗)或安全回满血
+// 营地休息: 按概率遇到来时怪物(遇怪进战斗)或安全回满血
 function campRest(side, evt) {
   const p = S.player
   const rate = evt.dangerRate || 0.3
