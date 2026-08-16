@@ -192,6 +192,12 @@ function generateEvents() {
 function buttons() { return [] }
 
 function touch(x, y) {
+  // 顶部返回箭头(← 左上角, 与绘制同步: 26,72 附近; x<60 && y<90 命中)
+  if (!gate && x < 60 && y < 90) {
+    audio.play('click')
+    exitExplore()
+    return
+  }
   // 大门状态: 推开按钮→进入下一主题; footer区域(退出/折叠/面板)仍放行; 卡片区忽略
   if (gate) {
     // ⚠️ 与 drawGate 同公式: 入场动画只淡入无位移, 按钮坐标固定(绘制=touch 一致)

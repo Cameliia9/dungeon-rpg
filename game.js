@@ -649,15 +649,8 @@ function drawDifficulty() {
     ctx.fillRect(0, 0, LW, LH)
   }
 
-  // 左上角实心返回箭头(← 三角, 比旧"返回"按钮更小更轻)
-  const arY = 44, arX = 30
-  ctx.fillStyle = 'rgba(255,255,255,0.75)'
-  ctx.beginPath()
-  ctx.moveTo(arX + 7, arY - 14)
-  ctx.lineTo(arX - 7, arY)
-  ctx.lineTo(arX + 7, arY + 14)
-  ctx.closePath()
-  ctx.fill()
+  // 左上角返回箭头(← 文字箭头, 统一: 22px 纯白, 与探索页顶部一致; 原为纯三角形被用户否)
+  text(ctx, '←', 26, 44, 22, '#ffffff', 'center', true)
 
   const dur = 1500, dist = 28  // 文字淡入1.5s(用户指定)
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
