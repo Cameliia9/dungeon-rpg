@@ -457,11 +457,11 @@ function selectDiff(d) {
   selSwitchAt = Date.now()  // 动画基准: 0~350ms 旧文字淡出, 350~800ms 新文字淡入
 }
 
-// 难度描述文案(按选中难度)
+// 难度描述文案(按选中难度, 分行数组: 每行宽度受控不超屏)
 const DIFF_DESC = {
-  easy: '敌人强度正常，精英怪物很少出现，装备回收价格：60%',
-  hard: '敌人强度增加，精英怪物出现概率增加，装备回收价格：50%',
-  nightmare: '敌人强度大大增加，不幸事件变多，精英怪物出现概率大大增加，装备回收价格：40%'
+  easy: ['敌人强度正常，精英怪物很少出现', '装备回收价格：60%'],
+  hard: ['敌人强度增加，精英怪物出现概率增加', '装备回收价格：50%'],
+  nightmare: ['敌人强度大大增加，不幸事件变多', '精英怪物出现概率大大增加', '装备回收价格：40%']
 }
 // 背景亮度(0正常~1很暗): easy=0 / hard=0.45 / nightmare=0.82
 const DIFF_DARK = { easy: 0, hard: 0.45, nightmare: 0.82 }
@@ -664,23 +664,35 @@ function drawDifficulty() {
     }
   }
 
-  // 描述文字(选中难度后显示): 切换时旧文字原地淡出(0~350ms)→新文字原地淡入(350~800ms)
+  // 描述文字(选中难度后显示): 分行, 切换时旧文字原地淡出(0~350ms)→新文字原地淡入(350~800ms)
+  // 布局: 描述区在进入按钮上方(整体上移, 多行向上生长), 噩梦红字放描述右侧垂直居中(不压按钮)
   const t = selSwitchAt ? (Date.now() - selSwitchAt) / 800 : 1
-  const descY = enterBtnY - 30  // 描述文字在进入按钮上方
+  const lineH = 24
+  const descBlockY = enterBtnY - 36  // 描述区最后一行基线(向上生长: 行数越多整体越往上)
+  // 画描述行(淡出/淡入共用 alpha 和 行数组)
+  const drawDesc = (lines, a) => {
+    if (a <= 0 || !lines) return
+    const totalH = lines.length * lineH
+    const top = descBlockY - totalH + lineH / 2  // 首行中线(多行整体在按钮上方)
+    lines.forEach((ln, i) => {
+      // 噩梦: 描述整体偏左(右侧留给红字, 新旧淡出/淡入位置一致); 其他难度居中
+      // cx=LW*0.26: 最长行195px右缘≈195 < 红字左缘203, 不重叠
+      const cx = (lines === DIFF_DESC.nightmare) ? LW * 0.26 : LW / 2
+      text(ctx, ln, cx, top + i * lineH, 13, '#d0d0e0', 'center', true, a)
+    })
+    // 噩梦红字: 描述右侧垂直居中, right对齐不压按钮(右缘贴LW-16, 左缘与描述右缘不重叠)
+    if (lines === DIFF_DESC.nightmare) {
+      text(ctx, '根本不可能！', LW - 16, top + totalH / 2 - lineH / 2, 26, '#ff3333', 'right', true, a)
+    }
+  }
   if (selDiff) {
     // 旧文字淡出(切换后 0~350ms, prevDiff 非空且动画未过半)
     if (prevDiff && t < 0.44) {
-      const outA = Math.max(0, 1 - t / 0.44)
-      text(ctx, DIFF_DESC[prevDiff], LW / 2, descY, 13, '#d0d0e0', 'center', true, outA)
-      if (prevDiff === 'nightmare') text(ctx, '根本不可能！', LW / 2, descY + 34, 26, '#ff3333', 'center', true, outA)
+      drawDesc(DIFF_DESC[prevDiff], Math.max(0, 1 - t / 0.44))
     }
     // 新文字淡入(350ms 后)
     const inA = t < 0.44 ? 0 : Math.min(1, (t - 0.44) / 0.56)
-    if (inA > 0) {
-      text(ctx, DIFF_DESC[selDiff], LW / 2, descY, 13, '#d0d0e0', 'center', true, inA)
-      // 噩梦: 旁边大号加粗红字"根本不可能！"
-      if (selDiff === 'nightmare') text(ctx, '根本不可能！', LW / 2, descY + 34, 26, '#ff3333', 'center', true, inA)
-    }
+    drawDesc(DIFF_DESC[selDiff], inA)
     if (t >= 1) prevDiff = null  // 动画完成, 清旧难度
   }
 }
