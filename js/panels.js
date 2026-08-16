@@ -9,6 +9,7 @@ const audio = require('./audio')
 
 let S = null
 let type = null   // shop | inventory | forge
+let blacksmithPick = false  // 铁匠选择模式(2026-08-16): 点装备=免费强化交给铁匠(不装备/不卸下)
 
 // 装备回收倍率按难度: easy 60% / hard 50% / nightmare 40% (2026-08-15 用户要求; 实收与按钮显示共用)
 function recycleRate(p) {
@@ -59,6 +60,7 @@ const PW = () => S.LW - 32
 function create(name, shared) {
   S = shared
   type = name
+  blacksmithPick = !!S.panelPickMode  // 铁匠选择模式: 探索页铁匠事件打开时置 'blacksmith'
   scroll = 0
   btns = []
   enterTime = Date.now()
@@ -207,6 +209,7 @@ function wheel(delta) {
 // 松手(重写): 未拖动=点击。先命中 item/eqRow(边缘的item也能点), 未命中再边缘翻页
 function touchEnd() {
   if (touchStartY === null) return
+  const p = S.player
   if (!dragged) {
     const cy = touchStartY + scroll
     let hit = false
@@ -218,6 +221,20 @@ function touchEnd() {
       }
       if (el.kind === 'eqRow' && cy > el.y && cy < el.y + el.h) {
         const cx0 = M + 15, cw = PW() - 30
+        // 铁匠选择模式: 点穿戴装备=免费强化交给铁匠(覆盖右侧卸下按钮)
+        if (blacksmithPick && el.item) {
+          const it2 = el.item
+          const lv2 = it2.enhanceLevel || 0
+          if (lv2 >= p.maxEnhanceLevel) { wx.showToast({ title: '已达强化上限', icon: 'none' }); return }
+          it2.enhanceLevel = lv2 + 1
+          S.savePlayer()
+          audio.play('enhance')  // 打铁音
+          const cb2 = S.onBlacksmithPick
+          close()
+          if (cb2) cb2(it2, lv2, lv2 + 1)
+          hit = true
+          break
+        }
         if (el.item && touchStartX > cx0 + cw - 76 && touchStartX < cx0 + cw - 12) {
           unequipSlot(el.slot)
           hit = true
@@ -299,6 +316,22 @@ function handleItem(it) {
     audio.play('coin')  // 购买金币音
     wx.showToast({ title: '购买 ' + it.name, icon: 'success' })
   } else if (type === 'inventory') {
+    // 铁匠选择模式(2026-08-16): 点装备=免费强化交给铁匠; 药水不能强化
+    if (blacksmithPick) {
+      if (it.type === 'potion') { wx.showToast({ title: '药水不能强化', icon: 'none' }); return }
+      const orig = p.inventory[it.invIdx]
+      if (!orig) { build(); return }
+      const lv = orig.enhanceLevel || 0
+      if (lv >= p.maxEnhanceLevel) { wx.showToast({ title: '已达强化上限', icon: 'none' }); return }
+      // 免费强化(不扣金币), 强化后关闭面板由探索页显示结果卡
+      orig.enhanceLevel = lv + 1
+      S.savePlayer()
+      audio.play('enhance')  // 打铁音
+      const cb = S.onBlacksmithPick
+      close()
+      if (cb) cb(orig, lv, lv + 1)
+      return
+    }
     if (it.type === 'potion') {
       p.inventory.splice(it.invIdx, 1)
       p.heal(Math.floor(p.totalMaxHp * (it.healPercent || 0.3)))
@@ -345,6 +378,10 @@ function handleItem(it) {
 }
 
 function close() {
+  // 清理铁匠选择模式残留(否则下次开背包仍是选择模式)
+  if (S.panelPickMode) S.panelPickMode = null
+  if (S.onBlacksmithPick) S.onBlacksmithPick = null
+  blacksmithPick = false
   if (S.setPanels) S.setPanels(null)
   else S.panels = null
 }

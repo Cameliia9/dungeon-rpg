@@ -113,6 +113,9 @@ let gateAnim = null
 
 function ctx() { return S.ctx }
 
+// 穿戴装备槽位(铁匠事件兜底检查用: 有未满级装备才生成事件; 含双饰品槽)
+const BLACKSMITH_SLOTS = ['weapon', 'top', 'pants', 'accessory1', 'accessory2']
+
 function genEvent() {
   // 85% 怪 / 15% 事件
   const types = ['treasure', 'spring', 'merchant', 'trap', 'camp', 'altar', 'deadend', 'coins', 'buffStone', 'oldGear', 'blacksmith']
@@ -158,10 +161,10 @@ function buildSimpleEvent(type) {
       return { type: 'merchant', items, themeName: theme.name, merchantName: theme.merchantName || '神秘商人', merchantIcon: theme.merchantIcon || '🧙' }
     }
     case 'blacksmith': {
-      // 流浪铁匠(2026-08-16用户新增事件): 免费强化一件穿戴装备
-      // 穿戴4槽全满级/无装备时不生成该事件(换金币兜底, 避免白板事件)
-      const slots = ['weapon', 'top', 'pants', 'accessory']
-      const forgeable = slots.some(s => p[s] && (p[s].enhanceLevel || 0) < p.maxEnhanceLevel)
+      // 流浪铁匠(2026-08-16用户新增事件): 免费强化一件穿戴装备(从背包选)
+      // 穿戴/背包全满级或无装备时不生成该事件(换金币兜底, 避免白板事件)
+      const forgeable = BLACKSMITH_SLOTS.some(s => p[s] && (p[s].enhanceLevel || 0) < p.maxEnhanceLevel) ||
+        p.inventory.some(it => it.type !== 'potion' && (it.enhanceLevel || 0) < p.maxEnhanceLevel)
       if (!forgeable) return buildSimpleEvent('coins')
       return { type: 'blacksmith' }
     }
@@ -289,11 +292,7 @@ function touch(x, y) {
   const yy = sy === 1 ? y : (y - cy) / sy + cy
   let hitBottom = cardTop + cardH
   if (state === 'merchant') hitBottom = cy + 235
-  else if (state === 'blacksmith') {
-    // 流浪铁匠: 动态高度 = 标题区(cy-127) + 可强化装备行(行距50) + 离开按钮(42)
-    const n = forgeableSlots().length
-    hitBottom = cy - 69 + n * 50 + 42
-  }
+  else if (state === 'blacksmith') hitBottom = cy + 106  // 流浪铁匠: 打开背包/离开按钮底(同营地布局)
   else if (state === 'altar') hitBottom = cy + 108
   else if (state === 'monster') hitBottom = cy + 86
   else if (state === 'camp') hitBottom = cy + 106  // 营地: 离开按钮底(两行描述+按钮下移)
@@ -371,18 +370,13 @@ function touch(x, y) {
       else if (yy > cy + 40 && yy < cy + 70) altarOffer(side, 'defense', evt)
       else if (yy > cy + 76 && yy < cy + 106) finishSide(side)
     } else if (state === 'blacksmith') {
-      // 流浪铁匠: 可强化装备行(46px高, 行距50: 名称+当前强化上行, 强化按钮下行) + 离开按钮
-      // ⚠️ 命中区与绘制同步(装备卡=整卡宽 iw=w, 按钮 yy+11~35, 行距50, 行数=forgeableSlots())
-      const slots2 = forgeableSlots()
-      let yy3 = cy - 69
-      for (let i = 0; i < slots2.length; i++) {
-        if (yy > yy3 - 2 && yy < yy3 + 44) {
-          const iw = w, ix = cx - iw / 2
-          if (xx > ix + iw - 66 && xx < ix + iw - 10 && yy > yy3 + 11 && yy < yy3 + 35) { blacksmithForge(side, slots2[i]); return }
-        }
-        yy3 += 50
+      // 流浪铁匠: 打开背包选一件(cy+38~68) / 离开(cy+76~106), 与 drawBlacksmithCard 同公式
+      const mbw = w * 0.8
+      if (yy > cy + 38 && yy < cy + 68) {
+        if (xx > cx - mbw / 2 && xx < cx + mbw / 2) openBlacksmithBag(side)
+      } else if (yy > cy + 76 && yy < cy + 106) {
+        if (xx > cx - mbw / 2 && xx < cx + mbw / 2) finishSide(side)
       }
-      if (yy > yy3 + 6 && yy < yy3 + 42) finishSide(side)
     } else if (state === 'blocked') {
       // 封锁不可点击
     }
@@ -1145,60 +1139,30 @@ function drawSpringCard(cx, cy, evt, side, w) {
   drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '🚶 不喝', () => finishSide(side), ui.BTN.secondary))
 }
 
-// 穿戴装备槽位(铁匠卡显示顺序, 含双饰品槽)
-const BLACKSMITH_SLOTS = ['weapon', 'top', 'pants', 'accessory1', 'accessory2']
-const BLACKSMITH_SLOT_NAMES = { weapon: '🗡️', top: '👕', pants: '👖', accessory1: '💍', accessory2: '💍' }
-
-// 可强化的穿戴槽(有装备且未满级) — 绘制与 touch 共用, 保证行数/位置一致
-function forgeableSlots() {
-  const p = S.player
-  return BLACKSMITH_SLOTS.filter(s => p[s] && (p[s].enhanceLevel || 0) < p.maxEnhanceLevel)
+// 铁匠事件: 打开背包选择一件装备免费强化(2026-08-16用户要求: 不列装备行, 装不下5件)
+// 打开面板前挂回调: panels 强化成功后调用, 关闭面板回探索页显示结果卡
+function openBlacksmithBag(side) {
+  const panels = require('./panels')
+  S.panelPickMode = 'blacksmith'
+  S.onBlacksmithPick = (item, from, to) => {
+    blacksmithResult = { name: item.name, from, to }
+    setState(side, 'result')
+    saveExploreState()
+  }
+  const p = panels.create('inventory', S)
+  if (S.setPanels) S.setPanels(p)
 }
 
 function drawBlacksmithCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
-  const p = S.player
-  // 流浪铁匠卡(对齐商人卡布局): 🔨 + 标题 + 描述 + 可强化装备列表 + 离开
-  text(ctx, '🔨', cx, cy - 127, 40)
-  text(ctx, '流浪铁匠', cx, cy - 97, 18, COLORS.gold, 'center', true)
-  text(ctx, '免费帮你强化一件装备', cx, cy - 75, 12, COLORS.textDim)
-
-  // 可强化装备列表（每行: 槽位图标+名称上行, 当前强化+按钮下行; 行距50 与 touch 命中区同步）
-  const slots = forgeableSlots()
-  let yy = cy - 69
-  for (let i = 0; i < slots.length; i++) {
-    const slot = slots[i]
-    const it = p[slot]
-    const lv = it.enhanceLevel || 0
-    const iw = w, ix = cx - iw / 2
-    roundRect(ctx, ix, yy - 2, iw, 46, 6, '#1a1a2e', '#2a2a4a', 1)
-    // 名称(左上, 截断到按钮左侧)
-    let nm = BLACKSMITH_SLOT_NAMES[slot] + ' ' + it.name
-    while (nm.length > 1 && ui.textWidth(ctx, nm, 14) > (ix + iw - 84) - (ix + 8)) nm = nm.slice(0, -1)
-    text(ctx, nm, ix + 8, yy + 8, 14, COLORS.gold, 'left', true)
-    // 当前强化(左下)
-    text(ctx, '强化 +' + lv + ' / +' + p.maxEnhanceLevel, ix + 8, yy + 30, 11, '#8a8a9a', 'left')
-    // 强化按钮(右下)
-    drawBtn(ctx, makeBtn(ix + iw - 66, yy + 11, 56, 24, '强化', () => blacksmithForge(side, slot), { ...ui.BTN.gold, size: 11 }))
-    yy += 50
-  }
-  // 离开按钮(卡片内)
-  drawBtn(ctx, makeBtn(cx - w * 0.36, yy + 6, w * 0.72, 36, '离开', () => finishSide(side), ui.BTN.secondary))
-}
-
-// 流浪铁匠: 免费强化一件穿戴装备(不扣金币, 与铁匠铺付费强化区分)
-function blacksmithForge(side, slot) {
-  const p = S.player
-  const item = p[slot]
-  if (!item) return
-  const lv = item.enhanceLevel || 0
-  if (lv >= p.maxEnhanceLevel) return
-  item.enhanceLevel = lv + 1
-  blacksmithResult = { name: item.name, from: lv, to: lv + 1 }
-  setState(side, 'result')
-  S.savePlayer()
-  saveExploreState()
-  audio.play('enhance')  // 强化成功音(与铁匠铺共用)
+  // 流浪铁匠卡(按钮版): 🔨 + 标题 + 描述 + 打开背包选一件/离开
+  centerEmoji(ctx, '🔨', cx, cy - 58, 36)
+  text(ctx, '流浪铁匠', cx, cy - 32, 16, COLORS.gold, 'center', true)
+  text(ctx, '免费帮你强化一件装备', cx, cy - 8, 12, COLORS.textDim)
+  text(ctx, '打开背包选一件交给铁匠', cx, cy + 12, 12, '#ffaa55')
+  const bw = w * 0.8
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 38, bw, 30, '🎒 打开背包', () => openBlacksmithBag(side), ui.BTN.gold))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '🚶 离开', () => finishSide(side), ui.BTN.secondary))
 }
 
 // 状态栏高度常量: 展开279px(全部), 收起160px(血条+名称+属性, 不显示按钮)

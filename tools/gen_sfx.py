@@ -77,8 +77,28 @@ write_wav('bounce', seq(jelly(240, 460, 0.08, 0.7, 0.05), jelly(460, 620, 0.06, 
 # levelup: 欢快上行琶音 C5-E5-G5-C6
 write_wav('levelup', seq(tone(523, 0.10, 0.6, 'square', 10), tone(659, 0.10, 0.6, 'square', 10), tone(784, 0.10, 0.6, 'square', 10), tone(1047, 0.25, 0.7, 'square', 6)))
 
-# enhance: 清脆叮(高频双音)
-write_wav('enhance', seq(tone(880, 0.12, 0.6, 'sine', 10), tone(1320, 0.20, 0.5, 'sine', 7)))
+# enhance: 打铁声(锤击瞬态 + 金属"当"高频非谐波共鸣两下: 1050Hz重当+1400Hz轻叮, 快速衰减)
+# 迭代史: 原880+1320清脆叮 → v2 方波660低通+330低频尾音(用户否"不是打铁"=像咚) → v3.1定稿
+#   (实测: RMS-16.0 / >800Hz-16.8金属亮 / <800Hz-23.7无低频咚; 金属板泛音比1:1.5:2.24:2.95)
+def _enhance():
+    _strike1 = _metal_strike(1050, 0.18, 1.0, 32)
+    _strike2 = _metal_strike(1400, 0.14, 0.55, 38)
+    _n3 = int(SR * 0.008)
+    _n1 = [random.uniform(-1, 1) * math.exp(-150 * t) * 0.35 for t in [i / SR for i in range(_n3)]]
+    _n2 = [random.uniform(-1, 1) * math.exp(-150 * t) * 0.2 for t in [i / SR for i in range(int(SR * 0.006))]]
+    return seq(_n1, _strike1, silence(0.09), _n2, _strike2)
+def _metal_strike(freq, dur, vol, decay, ratios=(1.0, 1.5, 2.24, 2.95)):
+    _n4 = int(SR * dur)
+    _out = []
+    for _i in range(_n4):
+        _t = _i / SR
+        _ph = 2 * math.pi * freq * _t
+        _s = math.sin(_ph)
+        for _k, _r in enumerate(ratios[1:], start=1):
+            _s += math.sin(_ph * _r) / (_k + 1)
+        _out.append(_s * math.exp(-decay * _t) * vol)
+    return _out
+write_wav('enhance', _enhance(), amp=0.95)
 
 # coin: 金币叮铃(E6+B6 双音)
 write_wav('coin', seq(tone(1319, 0.08, 0.5, 'sine', 12), tone(1976, 0.15, 0.45, 'sine', 9)))
