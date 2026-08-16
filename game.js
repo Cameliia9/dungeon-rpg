@@ -473,8 +473,9 @@ const DIFF_DARK = { easy: 0, hard: 0.45, nightmare: 0.82 }
 
 function startNew(difficulty) {
   player = new GE.Player('冒险者', difficulty)
-  if (difficulty === 'hard') { player.maxHp = 95; player.hp = 95; player.baseAttack = 11; player.gold = 35 }
-  if (difficulty === 'nightmare') { player.maxHp = 90; player.hp = 90; player.baseAttack = 10; player.gold = 20 }
+  // ⚠️ 血量上限统一100(2026-08-15用户要求), 初始血量按难度递减: 简单100/困难90/噩梦80(高难开局血不满)
+  if (difficulty === 'hard') { player.maxHp = 100; player.hp = 90; player.baseAttack = 11; player.gold = 35 }
+  if (difficulty === 'nightmare') { player.maxHp = 100; player.hp = 80; player.baseAttack = 10; player.gold = 20 }
   savePlayer()
   try { wx.removeStorageSync('explore_state') } catch (e) {}  // 新游戏清除探索存档
   switchScene('story')  // 先展示故事背景, 点"开始远征"再进游戏主页
