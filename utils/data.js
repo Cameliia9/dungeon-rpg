@@ -100,11 +100,11 @@ const monsters = {
 
   // ---- 21-25层 龙之巢穴 ----
   dragon: [
-    { name: '幼龙', hp: 757, attack: 160, defense: 60, exp: 222, gold: 58, level: 19, critChance: 0.15, dodgeChance: 0.10, desc: '尚未成年的小龙，已具龙威', icon: '🐲' },
-    { name: '龙人战士', hp: 935, attack: 170, defense: 68, exp: 240, gold: 62, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士', icon: '🐉' },
-    { name: '龙人法师', hp: 1020, attack: 178, defense: 72, exp: 252, gold: 66, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者', icon: '🧙' },
-    { name: '亚龙', hp: 1046, attack: 182, defense: 73, exp: 264, gold: 70, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙', icon: '🦖' },
-    { name: '精英龙裔', hp: 1250, attack: 178, defense: 74, exp: 285, gold: 74, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
+    { name: '幼龙', hp: 757, attack: 170, defense: 60, exp: 222, gold: 58, level: 19, critChance: 0.15, dodgeChance: 0.10, desc: '尚未成年的小龙，已具龙威', icon: '🐲' },
+    { name: '龙人战士', hp: 935, attack: 180, defense: 68, exp: 240, gold: 62, level: 20, critChance: 0.15, dodgeChance: 0.05, desc: '披鳞执盾的龙裔战士', icon: '🐉' },
+    { name: '龙人法师', hp: 1020, attack: 188, defense: 72, exp: 252, gold: 66, level: 21, critChance: 0.20, dodgeChance: 0.08, desc: '吟唱龙语的龙裔施法者', icon: '🧙' },
+    { name: '亚龙', hp: 1046, attack: 192, defense: 73, exp: 264, gold: 70, level: 22, critChance: 0.15, dodgeChance: 0.08, desc: '接近成年龙的强大亚龙', icon: '🦖' },
+    { name: '精英龙裔', hp: 1250, attack: 188, defense: 74, exp: 285, gold: 74, level: 23, critChance: 0.22, dodgeChance: 0.10, desc: '龙裔中的精锐战士', icon: '⚔️' }
   ]
 }
 
@@ -175,7 +175,7 @@ const bosses = [
   },
   {
     name: '远古邪龙',
-    hp: 1700, attack: 185, defense: 50, exp: 1600, gold: 680,
+    hp: 1700, attack: 190, defense: 50, exp: 1600, gold: 680,
     level: 18,
     floorOfAppearance: 25,
     critChance: 0.20, dodgeChance: 0.15,
