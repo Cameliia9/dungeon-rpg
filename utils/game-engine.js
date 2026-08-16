@@ -578,13 +578,11 @@ function getRandomMonster(floor, difficulty) {
     scaled.gold = Math.floor(template.gold * Math.pow(1.10, grow))
   }
   scaled.level = displayLevel
-  // 难度缩放: 攻击/防御/奖励大幅，HP 小幅
+  // 难度缩放: 攻击/防御/HP 大幅; ⚠️ 经验金币不按难度缩放(2026-08-15 用户要求三难度掉落一致)
   if (d.atk > 1 || d.hp > 1) {
     scaled.hp = Math.floor(scaled.hp * d.hp)
     scaled.attack = Math.floor(scaled.attack * d.atk)
     scaled.defense = Math.floor(scaled.defense * d.atk)
-    scaled.exp = Math.floor(scaled.exp * d.atk)
-    scaled.gold = Math.floor(scaled.gold * d.atk)
   }
   // 词缀
   const affix = rollAffix(floor, difficulty)
@@ -603,14 +601,16 @@ function getBossForFloor(floor, difficulty) {
   const extra = Math.max(0, index - (GameData.bosses.length - 1))
   const atkScale = Math.pow(1.15, extra) * d.atk
   const hpScale = Math.pow(1.15, extra) * d.hp
+  // ⚠️ 经验金币只乘层数强化, 不乘难度(2026-08-15 用户要求三难度掉落一致)
+  const rewardScale = Math.pow(1.15, extra)
 
   const scaled = {
     ...template,
     hp: Math.floor(template.hp * hpScale),
     attack: Math.floor(template.attack * atkScale),
     defense: Math.floor(template.defense * atkScale),
-    exp: Math.floor(template.exp * atkScale),
-    gold: Math.floor(template.gold * atkScale),
+    exp: Math.floor(template.exp * rewardScale),
+    gold: Math.floor(template.gold * rewardScale),
     level: Math.floor(template.level * atkScale)
   }
   const boss = new Monster(scaled)
