@@ -131,10 +131,16 @@ function buildSimpleEvent(type) {
       const themeNum = Math.ceil(floor / 5)  // 1-5层=主题1, 6-10=2, 11-15=3, 16-20=4, 21-25=5
       return { type, cost: 30 + 20 * (themeNum - 1), maxCount: 3, altarCount: 0 }
     }
-    case 'camp': {
+    case 'camp':
+      // ⚠️ 修复(2026-08-15): 之前误返回merchant导致营地从未出现, 玩家反馈"从来没遇到过"
+      return { type: 'camp' }
+    case 'merchant': {
+      // ⚠️ 补上(2026-08-15): camp误返回merchant期间商人靠bug出现, 营地修复后必须补真正的商人case
       const theme = Data.getThemeForFloor(floor)
       const goods = Data.themeMerchantGoods[theme.id]
-      return { type: 'merchant', items: goods ? goods.items.map(g => ({ ...g })) : [], themeName: theme.name, merchantIcon: theme.icon }
+      const items = goods ? goods.items.map(g => ({ ...g })) : []
+      for (const it of items) it.price = Math.floor(it.price * (1 + (floor - 1) * 0.02))
+      return { type: 'merchant', items, themeName: theme.name, merchantName: theme.merchantName || '神秘商人', merchantIcon: theme.merchantIcon || '🧙' }
     }
     default: return { type: 'deadend' }
   }
