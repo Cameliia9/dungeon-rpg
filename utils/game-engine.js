@@ -6,11 +6,11 @@
 
 const GameData = require('./data')
 
-// 难度系数: 影响怪物强度（攻击/防御/经验/金币大幅，HP 小幅）
+// 难度系数: 影响怪物强度(2026-08-15用户指定: 攻防 简单1.0/困难1.1/噩梦1.2, 血量同倍率)
 const DIFFICULTY_MULT = {
   easy: { atk: 1.0, hp: 1.0 },
-  hard: { atk: 1.3, hp: 1.15 },
-  nightmare: { atk: 1.5, hp: 1.35 }  // 噩梦: 攻防+50%血+35%, 满配五五开需药水强化(用户指定)
+  hard: { atk: 1.1, hp: 1.1 },
+  nightmare: { atk: 1.2, hp: 1.2 }  // 噩梦: 攻防血+20%
 }
 
 // ==================== 词缀系统 ====================
@@ -121,27 +121,24 @@ class Player {
     return leveled
   }
 
-  // 升级回复比例（恢复已损失生命值的百分比，按难度）
+  // 升级回复: 回复到生命值上限的固定比例(2026-08-15用户指定: 简单70%/困难60%/噩梦50%)
   get levelUpHealRatio() {
     switch (this.difficulty) {
       case 'hard': return 0.6
-      case 'nightmare': return 0.4
-      default: return 0.8
+      case 'nightmare': return 0.5
+      default: return 0.7
     }
   }
 
   levelUp() {
-    // 记录升级前的损失生命值
-    const lostBefore = Math.max(0, this.totalMaxHp - this.hp)
     this.level++
     this.baseAttack += 1  // 升级收益削一档: 每级攻+3(1+2), 2级不碾压小怪
     this.baseDefense += 1
     this.maxHp += 4       // 每级血+14(4+10)
-    // 升级不回复满血，只恢复已损失生命的比例（easy 80% / hard 60% / nightmare 40%）
-    // 用整数百分比避免浮点误差（如 1-0.8=0.19999999999999996）
-    const healPercent = Math.round(this.levelUpHealRatio * 100)
-    const remaining = Math.floor(lostBefore * (100 - healPercent) / 100)
-    this.hp = Math.max(1, this.totalMaxHp - remaining)
+    // ⚠️ 升级回复改为"回复到上限的固定比例"(简单70%/困难60%/噩梦50%):
+    // 血量低于该比例时回满到比例线, 高于则保持现状(不扣血)
+    const target = Math.floor(this.totalMaxHp * this.levelUpHealRatio)
+    this.hp = Math.max(this.hp, Math.min(this.totalMaxHp, target))
   }
 
   takeDamage(rawDamage) {
