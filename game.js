@@ -449,8 +449,8 @@ function buildDifficulty() {
     ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('nightmare'), DIFF_BTN_STYLE.nightmare),
     mainLabel: '🔴 噩梦', diff: 'nightmare'
   }); y += bh + 12
-  // 描述文字区(按钮下方) + 噩梦红字(描述下方单独行) + 进入按钮(最下方, 往下移)
-  enterBtnY = y + bh + 70
+  // 描述文字区(按钮下方, 4行) + 噩梦红字(描述下方单独行) + 进入按钮(最下方)
+  enterBtnY = y + bh + 100
   btns.push(makeBtn(cx - bw / 2, enterBtnY, bw, bh - 18, '⚔️ 进入', () => { if (selDiff) startNew(selDiff) }, { ...ui.BTN.primary, size: 15 }))
 }
 
@@ -462,11 +462,26 @@ function selectDiff(d) {
   selSwitchAt = Date.now()  // 动画基准: 0~350ms 旧文字淡出, 350~800ms 新文字淡入
 }
 
-// 难度描述文案(按选中难度, 分行数组: 每行宽度受控不超屏)
+// 难度描述文案(按选中难度, 分行数组: 每行宽度受控不超屏; 2026-08-15 丰富版覆盖全部难度差异)
 const DIFF_DESC = {
-  easy: ['敌人强度正常，精英怪物很少出现', '装备回收价格：60%'],
-  hard: ['敌人强度增加，精英怪物出现概率增加', '装备回收价格：50%'],
-  nightmare: ['敌人强度大大增加，不幸事件变多', '精英怪物出现概率大大增加', '装备回收价格：40%']
+  easy: [
+    '敌人强度正常（攻防血×1.0）',
+    '精英怪物很少出现',
+    '开局满血，升级回复70%',
+    '装备回收价格：60%'
+  ],
+  hard: [
+    '敌人更强（攻防血×1.1）',
+    '精英怪物出现概率增加',
+    '开局90血，升级回复60%',
+    '装备回收价格：50%'
+  ],
+  nightmare: [
+    '敌人大幅增强（攻防血×1.2）',
+    '不幸事件变多，精英怪概率大增',
+    '开局仅80血，升级回复50%',
+    '装备回收价格：40%'
+  ]
 }
 // 背景亮度(0正常~1很暗): easy=0 / hard=0.45 / nightmare=0.82
 const DIFF_DARK = { easy: 0, hard: 0.45, nightmare: 0.82 }
