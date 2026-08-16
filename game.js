@@ -655,15 +655,15 @@ function drawDifficulty() {
   const gloom = Math.min(1, curDark / 0.82)
   if (gloom > 0.03) {
     const now = Date.now() / 1000
-    // A 血雾翻涌: 底部/两侧暗红雾团缓缓漂移(噩梦最浓)
+    // A 血雾翻涌: 底部/两侧暗红雾团缓缓漂移(噩梦最浓); 2026-08-16微调: 3→5团, 浓度0.30→0.36
     ctx.save()
     const fogCol = [120, 18, 26]  // 暗红
-    for (let i = 0; i < 3; i++) {
-      const fx = LW * (0.15 + 0.35 * i) + Math.sin(now * 0.35 + i * 2.4) * 26
-      const fy = LH * (0.72 + 0.16 * i) + Math.cos(now * 0.28 + i * 1.8) * 18
-      const fr = LW * (0.34 + 0.12 * i)
+    for (let i = 0; i < 5; i++) {
+      const fx = LW * (0.08 + 0.21 * i) + Math.sin(now * 0.35 + i * 1.9) * 28
+      const fy = LH * (0.70 + 0.12 * i) + Math.cos(now * 0.28 + i * 1.5) * 20
+      const fr = LW * (0.32 + 0.10 * i)
       const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, fr)
-      const a = gloom * (0.30 - 0.07 * i)
+      const a = gloom * (0.36 - 0.06 * i)
       g.addColorStop(0, 'rgba(' + fogCol[0] + ',' + fogCol[1] + ',' + fogCol[2] + ',' + a.toFixed(3) + ')')
       g.addColorStop(1, 'rgba(' + fogCol[0] + ',' + fogCol[1] + ',' + fogCol[2] + ',0)')
       ctx.fillStyle = g
@@ -672,12 +672,12 @@ function drawDifficulty() {
       ctx.fill()
     }
     // C 灰烬飘落: 暗色粒子缓缓下落+左右摇曳; 噩梦时偏暗红火星色
-    // 粒子池: 复用模块级数组(首次填充), 每帧按时间推进
+    // 粒子池: 复用模块级数组(首次填充), 每帧按时间推进; 2026-08-16微调: 26→36粒, 速度14-40→16-44
     if (!ashParticles) {
       ashParticles = []
-      for (let i = 0; i < 26; i++) ashParticles.push({
+      for (let i = 0; i < 36; i++) ashParticles.push({
         x: Math.random() * LW, y: Math.random() * LH,
-        spd: 14 + Math.random() * 26,      // 下落速度 px/s
+        spd: 16 + Math.random() * 28,      // 下落速度 px/s
         sway: 10 + Math.random() * 18,     // 左右摆幅
         ph: Math.random() * Math.PI * 2,   // 相位
         size: 1.2 + Math.random() * 2.2
