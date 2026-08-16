@@ -153,6 +153,11 @@ function skipLogoAnim() {
 let player = null          // 当前玩家
 let scene = 'menu'         // 当前场景
 let btns = []              // 当前场景按钮
+let selDiff = null         // 难度选择: 当前选中(easy/hard/nightmare, null=未选) — 选中后才可点进入
+let prevDiff = null        // 切换前的难度(描述文字旧文字淡出用)
+let selSwitchAt = 0        // 难度切换时间(描述文字淡出/淡入 + 背景亮度缓动基准)
+let enterBtnY = 0          // 进入按钮y(描述文字画在其上方)
+let curDark = 0            // 背景暗度当前值(缓动动画中; 必须声明否则严格模式ReferenceError)
 let savedGame = false      // 是否有存档
 let panels = null          // 面板层(商店/背包/铁匠铺), null=无
 
@@ -425,21 +430,41 @@ function buildDifficulty() {
   btns = []
   // 对齐原版: 每个难度按钮带属性描述(HP/ATK/GOLD/敌人倍率)
   const bw = Math.min(220, LW * 0.7), bh = 64, cx = LW / 2
-  let y = LH * 0.30
+  let y = LH * 0.24
   btns.push({
-    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => startNew('easy'), { ...ui.BTN.primary, size: 15 }),
-    mainLabel: '🟢 简单', desc: 'HP 100 · ATK 12 · GOLD 50 · 敌人×1.0', descColor: '#a0ffa0'
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('easy'), { ...ui.BTN.primary, size: 15 }),
+    mainLabel: '🟢 简单', diff: 'easy', desc: 'HP 100 · ATK 12 · GOLD 50 · 敌人×1.0', descColor: '#a0ffa0'
   }); y += bh + 12
   btns.push({
-    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => startNew('hard'), { ...ui.BTN.secondary, size: 15 }),
-    mainLabel: '🟡 困难', desc: 'HP 95 · ATK 11 · GOLD 35 · 敌人攻×1.25', descColor: '#ffe080'
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('hard'), { ...ui.BTN.secondary, size: 15 }),
+    mainLabel: '🟡 困难', diff: 'hard', desc: 'HP 95 · ATK 11 · GOLD 35 · 敌人攻×1.25', descColor: '#ffe080'
   }); y += bh + 12
   btns.push({
-    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => startNew('nightmare'), { ...ui.BTN.danger, size: 15 }),
-    mainLabel: '🔴 噩梦', desc: 'HP 90 · ATK 10 · GOLD 20 · 敌人攻×1.5', descColor: '#ff8080'
-  }); y += bh + 24
-  btns.push(makeBtn(cx - bw / 2, y, bw, bh, '↩️ 返回', () => switchScene('menu'), ui.BTN.secondary))
+    ...makeBtn(cx - bw / 2, y, bw, bh, '', () => selectDiff('nightmare'), { ...ui.BTN.danger, size: 15 }),
+    mainLabel: '🔴 噩梦', diff: 'nightmare', desc: 'HP 90 · ATK 10 · GOLD 20 · 敌人攻×1.5', descColor: '#ff8080'
+  }); y += bh + 12
+  // 描述文字区(选中难度后显示, 切换时原地淡出/淡入) 与 进入按钮之间留空隙
+  // 进入按钮: 选中难度后才可点(disabled 样式)
+  enterBtnY = y + bh + 40
+  btns.push(makeBtn(cx - bw / 2, enterBtnY, bw, bh - 18, '⚔️ 进入', () => { if (selDiff) startNew(selDiff) }, { ...ui.BTN.primary, size: 15 }))
 }
+
+// 难度选中: 只记状态不跳转, 触发描述文字切换动画(旧淡出→新淡入) + 背景亮度缓动
+function selectDiff(d) {
+  if (selDiff === d) return
+  if (selDiff) prevDiff = selDiff  // 记录旧难度(旧文字淡出)
+  selDiff = d
+  selSwitchAt = Date.now()  // 动画基准: 0~350ms 旧文字淡出, 350~800ms 新文字淡入
+}
+
+// 难度描述文案(按选中难度)
+const DIFF_DESC = {
+  easy: '敌人强度正常，精英怪物很少出现，装备回收价格：60%',
+  hard: '敌人强度增加，精英怪物出现概率增加，装备回收价格：50%',
+  nightmare: '敌人强度大大增加，不幸事件变多，精英怪物出现概率大大增加，装备回收价格：40%'
+}
+// 背景亮度(0正常~1很暗): easy=0 / hard=0.45 / nightmare=0.82
+const DIFF_DARK = { easy: 0, hard: 0.45, nightmare: 0.82 }
 
 function startNew(difficulty) {
   player = new GE.Player('冒险者', difficulty)
@@ -591,23 +616,72 @@ function drawDifficulty() {
   ctx.fillStyle = bgGradient()
   ctx.fillRect(0, 0, LW, LH)
 
+  // 背景亮度缓动: 按选中难度变暗(衔接动画, 缓慢; selDiff为null=正常亮度)
+  const targetDark = selDiff ? DIFF_DARK[selDiff] : 0
+  if (curDark === undefined) curDark = 0
+  // 缓动: 向目标逼近(每帧约12%, 越接近越慢, ~1s完成)
+  curDark += (targetDark - curDark) * 0.12
+  if (Math.abs(curDark - targetDark) < 0.005) curDark = targetDark
+  if (curDark > 0.01) {
+    ctx.fillStyle = 'rgba(0,0,0,' + curDark.toFixed(3) + ')'
+    ctx.fillRect(0, 0, LW, LH)
+  }
+
+  // 左上角实心返回箭头(← 三角, 比旧"返回"按钮更小更轻)
+  const arY = 44, arX = 30
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'
+  ctx.beginPath()
+  ctx.moveTo(arX + 7, arY - 14)
+  ctx.lineTo(arX - 7, arY)
+  ctx.lineTo(arX + 7, arY + 14)
+  ctx.closePath()
+  ctx.fill()
+
   const dur = 1500, dist = 28  // 文字淡入1.5s(用户指定)
   const p1 = ui.animProgress(sceneEnterTime, 0, dur)
   const p2 = ui.animProgress(sceneEnterTime, 60, dur)
-  text(ctx, '选择难度', LW / 2, LH * 0.14 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
-  text(ctx, '难度越高，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）', LW / 2, LH * 0.20 + (1 - p2) * dist, 12, COLORS.textDim, 'center', false, p2)
+  text(ctx, '选择难度', LW / 2, LH * 0.12 + (1 - p1) * dist, 32, COLORS.gold, 'center', true, p1)
+  text(ctx, '难度越高，敌人越强（简单×1.0 · 困难×1.25 · 噩梦×1.5）', LW / 2, LH * 0.18 + (1 - p2) * dist, 12, COLORS.textDim, 'center', false, p2)
 
   const delays = [120, 180, 240, 300]
   for (let i = 0; i < btns.length; i++) {
     const p = ui.animProgress(sceneEnterTime, delays[i], dur)
-    // 只做淡入，不做位移
-    drawBtn(ctx, btns[i], null, p)
-    // 难度按钮: 主文字 + 属性描述(对齐原版)
-    if (btns[i].mainLabel) {
-      const b = btns[i]
-      text(ctx, b.mainLabel, b.x + b.w / 2, b.y + 20, 15, COLORS.text, 'center', true, p)
+    const b = btns[i]
+    const isEnter = b.label === '⚔️ 进入'
+    // 难度按钮选中高亮: 金色边框+更亮背景; 进入按钮未选难度时 disabled
+    let theme = b.style
+    let isDisabled = false
+    if (isEnter) {
+      isDisabled = !selDiff
+      theme = isDisabled ? ui.BTN.disabled : { ...ui.BTN.primary, fg: '#ffffff' }
+    } else if (selDiff === b.diff) {
+      theme = { ...b.style, border: '#ffd700', bg1: 'rgba(255,215,0,0.20)', bg2: 'rgba(255,215,0,0.10)' }
+    }
+    drawBtn(ctx, { ...b, style: theme }, null, p)
+    if (b.mainLabel) {
+      text(ctx, b.mainLabel, b.x + b.w / 2, b.y + 20, 15, selDiff === b.diff ? '#ffd700' : COLORS.text, 'center', true, p)
       text(ctx, b.desc, b.x + b.w / 2, b.y + 41, 11, b.descColor, 'center', true, p)
     }
+  }
+
+  // 描述文字(选中难度后显示): 切换时旧文字原地淡出(0~350ms)→新文字原地淡入(350~800ms)
+  const t = selSwitchAt ? (Date.now() - selSwitchAt) / 800 : 1
+  const descY = enterBtnY - 30  // 描述文字在进入按钮上方
+  if (selDiff) {
+    // 旧文字淡出(切换后 0~350ms, prevDiff 非空且动画未过半)
+    if (prevDiff && t < 0.44) {
+      const outA = Math.max(0, 1 - t / 0.44)
+      text(ctx, DIFF_DESC[prevDiff], LW / 2, descY, 13, '#d0d0e0', 'center', true, outA)
+      if (prevDiff === 'nightmare') text(ctx, '根本不可能！', LW / 2, descY + 34, 26, '#ff3333', 'center', true, outA)
+    }
+    // 新文字淡入(350ms 后)
+    const inA = t < 0.44 ? 0 : Math.min(1, (t - 0.44) / 0.56)
+    if (inA > 0) {
+      text(ctx, DIFF_DESC[selDiff], LW / 2, descY, 13, '#d0d0e0', 'center', true, inA)
+      // 噩梦: 旁边大号加粗红字"根本不可能！"
+      if (selDiff === 'nightmare') text(ctx, '根本不可能！', LW / 2, descY + 34, 26, '#ff3333', 'center', true, inA)
+    }
+    if (t >= 1) prevDiff = null  // 动画完成, 清旧难度
   }
 }
 
@@ -675,6 +749,12 @@ wx.onTouchStart((e) => {
     // (storySkipAt===0 动画中; 跳过/自然播完=1; 非0时按钮正常)
     if (scene === 'story' && storySkipAt === 0) {
       storySkipAt = 1
+      return
+    }
+    // 难度页左上角实心返回箭头(左上角44x44区域)
+    if (scene === 'difficulty' && x < 60 && y < 88) {
+      audio.play('click')
+      switchScene('menu')
       return
     }
     const b = hitBtn(btns, x, y)
