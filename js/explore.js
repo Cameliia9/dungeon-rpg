@@ -266,6 +266,7 @@ function touch(x, y) {
   if (state === 'merchant') hitBottom = cy + 235
   else if (state === 'altar') hitBottom = cy + 108
   else if (state === 'monster') hitBottom = cy + 86
+  else if (state === 'camp') hitBottom = cy + 106  // 营地: 离开按钮底(两行描述+按钮下移)
   if (y > cardTop && y < hitBottom) {
 
     if (state === 'door') {
@@ -300,11 +301,11 @@ function touch(x, y) {
       // 好的按钮(红色80%, cy+34)
       if (yy > cy + 34 && yy < cy + 68) finishSide(side)
     } else if (state === 'camp') {
-      // 营地: 休息(cy+14~44) / 离开(cy+52~82), 与 drawCampCard 同公式
+      // 营地: 休息(cy+38~68) / 离开(cy+76~106), 与 drawCampCard 同公式
       const mbw = w * 0.8
-      if (yy > cy + 14 && yy < cy + 44) {
+      if (yy > cy + 38 && yy < cy + 68) {
         if (xx > cx - mbw / 2 && xx < cx + mbw / 2) campRest(side, evt)
-      } else if (yy > cy + 52 && yy < cy + 82) {
+      } else if (yy > cy + 76 && yy < cy + 106) {
         if (xx > cx - mbw / 2 && xx < cx + mbw / 2) finishSide(side)
       }
     } else if (state === 'deadend') {
@@ -979,16 +980,15 @@ function drawCampCard(cx, cy, evt, side, w) {
   const ctx = S.ctx
   const p = S.player
   const rate = Math.round((evt.dangerRate || 0.3) * 100)
-  // 营地卡: 🏕️ 标题 + 后果描述(写清休息的风险) + 休息/离开按钮(对齐怪兽卡风格)
+  // 营地卡: 🏕️ 标题 + 后果描述(两行, 一行放不下会截断) + 休息/离开按钮(对齐怪兽卡风格)
   centerEmoji(ctx, '🏕️', cx, cy - 58, 36)
   text(ctx, '休息营地', cx, cy - 32, 16, COLORS.gold, 'center', true)
-  // 后果描述: 休息可回满血, 但 rate% 概率遭遇该主题怪物(写卡片上, 用户要求)
-  let desc = '休息可回满血，但 ' + rate + '% 概率遭遇该主题怪物'
-  while (desc.length > 1 && ui.textWidth(ctx, desc, 12) > w - 24) desc = desc.slice(0, -1)
-  text(ctx, desc, cx, cy - 8, 12, '#ffaa55')
+  // 后果描述分两行(用户要求写清后果; 单行约216px超卡片137px会截断到"30%")
+  text(ctx, '休息可回满血，但 ' + rate + '%', cx, cy - 8, 12, '#ffaa55')
+  text(ctx, '概率遭遇该主题怪物', cx, cy + 12, 12, '#ffaa55')
   const bw = w * 0.8
-  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 14, bw, 30, '🔥 休息', () => campRest(side, evt), ui.BTN.primary))
-  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 52, bw, 30, '🚶 离开', () => finishSide(side), ui.BTN.secondary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 38, bw, 30, '🔥 休息', () => campRest(side, evt), ui.BTN.primary))
+  drawBtn(ctx, makeBtn(cx - bw / 2, cy + 76, bw, 30, '🚶 离开', () => finishSide(side), ui.BTN.secondary))
 }
 
 // 营地休息: 按概率遭遇该主题怪物(遇怪进战斗)或安全回满血
